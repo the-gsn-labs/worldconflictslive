@@ -851,6 +851,40 @@ renderAlerts();
 renderConflictList();
 renderMarkets();
 fetchMarketData();
+detectNewConflicts();
+
+// Auto-refresh every 4 hours
+setInterval(detectNewConflicts, 4 * 60 * 60 * 1000);
+
+async function detectNewConflicts() {
+  try {
+    const resp = await fetch('/api/detect-conflicts');
+    const data = await resp.json();
+    if (data.conflicts && data.conflicts.length > 0) {
+      data.conflicts.forEach(c => {
+        const exists = conflicts.find(x => x.title === c.title);
+        if (!exists) {
+          conflicts.push({
+            id: conflicts.length,
+            flags: c.flags || '🌍',
+            title: c.title,
+            region: c.region || 'Unknown',
+            sev: c.severity || 'medium',
+            sevClass: `sev-${c.severity || 'medium'}`,
+            query: c.query || c.title,
+            markets: c.markets || ['gold'],
+            summary: c.summary || '',
+            timeline: []
+          });
+        }
+      });
+      renderConflictList();
+      showToast(`🌍 ${data.conflicts.length} conflict(s) detected from latest news`);
+    }
+  } catch(e) {
+    console.log('Conflict detection error:', e);
+  }
+}
 </script>
 </body>
 </html>
