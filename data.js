@@ -1,4 +1,4 @@
-const LANGUAGES=[ 
+const LANGUAGES=[
 {code:'am',flag:'🇪🇹',native:'አማርኛ'},
 {code:'ar',flag:'🇸🇦',native:'العربية',rtl:true},
 {code:'bn',flag:'🇧🇩',native:'বাংলা'},
@@ -54,7 +54,7 @@ nav_map:'Map',nav_unrest:'Unrest',nav_cyber:'Cyber',nav_markets:'Markets',nav_al
 cat_military:'⚔️ Military',cat_unrest:'✊ Unrest',cat_humanitarian:'🕊️ Crises',cat_terrorism:'💥 Terror',
 tab_all:'All',tab_state:'🏛️ State',tab_aligned:'🗳️ Aligned',tab_indep:'✊ Indep.',tab_opp:'📢 Opp.',tab_timeline:'📅 Timeline',tab_economic:'💰 Economic',
 back:'← Back',read_full:'Read Full Article at Source →',close:'Close',
-source_class:T('source_class'),why_moving:'Why this is moving',related:'Related conflicts',
+source_class:'source_class',why_moving:'Why this is moving',related:'Related conflicts',
 breaking_news:'Breaking developments · Updated every 60 seconds',
 markets_sub:'Conflict-driven price movements · Tap any asset for chart + context',
 unrest_title:'CIVIL UNREST',unrest_sub:'Protests · Coups · Revolutions · Election Crises',
@@ -66,7 +66,7 @@ timeline_showing:'Showing timeline',see_all_conflicts:'See all conflicts',
 all_conflicts_title:'All Conflicts',
 filter_all:'All',filter_military:'⚔️ Military',filter_unrest:'✊ Unrest',
 filter_humanitarian:'🕊️ Humanitarian',filter_terrorism:'💥 Terrorism',filter_critical:'🔴 Critical',
-filter_breaking:'🔴 Breaking',filter_market:'📈 Market',filter_following:T('detail_following'),
+filter_breaking:'🔴 Breaking',filter_market:'📈 Market',filter_following:'detail_following',
 filter_protest:'✊ Protest',filter_coup:'👁️ Coup',filter_revolution:'🔥 Revolution',filter_election:'🗳️ Election Crisis',
 go_premium:'GO PREMIUM',upgrade:'UPGRADE NOW',prem_price:'$1.99 / MONTH · CANCEL ANYTIME',
 prem_1:'✓ All articles — every source, no limits',prem_2:'✓ Live market data 60s refresh',
@@ -105,10 +105,10 @@ ai_feat_5:'"How is Fox News vs Al Jazeera covering this differently?" — media 
 ai_unlock_cta:'UNLOCK AI ANALYST — $1.99/MO →',ai_trial_note:'Cancel anytime · Free 7-day trial',
 
 detail_all_sides:'All sides · Live news',detail_read:'READ →',
-detail_loading:T('detail_loading'),detail_follow:T('detail_follow'),detail_following:T('detail_following'),
+detail_loading:'detail_loading',detail_follow:'detail_follow',detail_following:'detail_following',
 detail_share:'Share',detail_back:'← Back',
-detail_no_timeline:T('detail_no_timeline'),
-detail_econ_context:T('detail_econ_context'),
+detail_no_timeline:'detail_no_timeline',
+detail_econ_context:'detail_econ_context',
 
 map_wordmark_sub:'Every source · Every side · No agenda',
 map_timeline_label:'Showing timeline',map_all_time:'All time',
@@ -117,7 +117,7 @@ map_legend_critical:'Critical',map_legend_high:'High',map_legend_terrorism:'Terr
 map_legend_unrest:'Unrest',map_legend_humanitarian:'Humanitarian',
 
 alert_breaking:'Breaking',alert_market:'Market',alert_following:'Following',
-alert_mark_read:'Mark all read',alert_empty:T('alert_empty'),
+alert_mark_read:'Mark all read',alert_empty:'alert_empty',
 
 market_12m:'12-Month Price History',market_why:'Why this is moving',
 market_related_conflicts:'Related conflicts',
@@ -133,14 +133,13 @@ modal_email_privacy:'No spam. Unsubscribe anytime. Your data is never sold.',
 modal_unlock_desc:'Free users get 3 articles per source category. Upgrade to read every perspective without limits.',
 modal_unlock_cta:'UPGRADE FOR $1.99/MO →',modal_unlock_stay:'Stay on free plan',
 
-no_events:T('no_events'),no_events_filter:'No events match this filter',
+no_events:'no_events',no_events_filter:'No events match this filter',
 live:'LIVE',conflicts_label:'CONFLICTS',
 type_military:'⚔️ Armed Conflict',type_unrest_all:'✊ Civil Unrest',
 type_unrest_protest:'✊ Mass Protest',type_unrest_coup:'👁️ Coup',
 type_unrest_revolution:'🔥 Revolution',type_unrest_election:'🗳️ Election Crisis',
 type_humanitarian:'🕊️ Humanitarian Crisis',type_terrorism:'💥 Terrorism',type_cyber:'💻 Cyber Operation',
-source_class_label:T('source_class'),
-,
+source_class_label:'Source Classification',
   // Market/asset types
   asset_commodity:'Commodity',asset_crypto:'Crypto',asset_equity:'Equity',
   asset_forex:'Forex',asset_bond:'Bond',asset_etf:'ETF',
