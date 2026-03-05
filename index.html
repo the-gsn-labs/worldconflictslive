@@ -1,62 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>World Conflicts Live</title>
+<title>World Conflicts Live — Every Source · Every Side · No Agenda</title>
+<meta name="description" content="Real-time conflict tracking. Every source, every side, no agenda."/>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-/* ═══════════════════════════════════════
-   CSS VARIABLES & RESET
-═══════════════════════════════════════ */
-:root {
-  --ink:#0b0d0c; --surface:#111310; --surface2:#181a17; --surface3:#1e2019;
-  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
-  --paper:#f0ebe0; --paper2:rgba(240,235,224,0.7);
-  --red:#c0392b; --amber:#d4820a; --green:#27ae60; --blue:#2980b9;
-  --mono:'JetBrains Mono',monospace;
-  --display:'Bebas Neue',sans-serif;
-  --serif:'Crimson Pro',serif;
-  --nav-h:52px; --ticker-h:22px;
+:root{
+  --ink:#0b0d0c;--surface:#111310;--surface2:#181a17;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --paper:#f0ebe0;--red:#c0392b;--amber:#d4820a;--green:#27ae60;
+  --mono:'JetBrains Mono',monospace;--display:'Bebas Neue',sans-serif;--serif:'Crimson Pro',serif;
+  --nav-h:52px;--ticker-h:22px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{font-size:16px;}
-body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow-x:hidden;font-size:16px;line-height:1.6;}
+body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow-x:hidden;}
 a{color:inherit;text-decoration:none;}
 button{font-family:inherit;cursor:pointer;}
+[dir="rtl"]{direction:rtl;text-align:right;}
 
-/* ═══════════════════════════════════════
-   SINGLE TICKER
-═══════════════════════════════════════ */
-.ticker-wrap{position:fixed;top:0;left:0;right:0;z-index:600;background:var(--red);height:var(--ticker-h);display:flex;align-items:center;overflow:hidden;}
+/* TICKER */
+.ticker-wrap{position:fixed;top:0;left:0;right:0;z-index:700;background:var(--red);height:var(--ticker-h);display:flex;align-items:center;overflow:hidden;}
 .ticker-lbl{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.6);padding:0 10px;flex-shrink:0;display:flex;align-items:center;background:rgba(0,0,0,0.22);letter-spacing:.08em;text-transform:uppercase;height:100%;}
-.ticker-inner{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:#fff;white-space:nowrap;}
-.tc{animation:ticker 90s linear infinite;}
+.ticker-inner{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:#fff;white-space:nowrap;animation:ticker 90s linear infinite;}
 @keyframes ticker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
 .t-up{color:#7effa0;}.t-dn{color:#ffb3b3;}
 
-/* ═══════════════════════════════════════
-   DESKTOP TOP NAV
-═══════════════════════════════════════ */
-.top-nav{display:none;position:fixed;top:var(--ticker-h);left:0;right:0;z-index:500;background:rgba(10,12,11,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:var(--nav-h);}
-.top-nav-inner{max-width:1600px;margin:0 auto;display:flex;align-items:center;padding:0 24px;height:100%;gap:0;}
-.top-wordmark{font-family:var(--display);font-size:22px;letter-spacing:.05em;flex-shrink:0;margin-right:32px;line-height:1;}
+/* ALERT BANNER */
+.alert-banner{display:none;position:fixed;top:var(--ticker-h);left:0;right:0;z-index:690;background:linear-gradient(90deg,#7a0000,#c0392b);padding:9px 16px;font-family:var(--mono);font-size:11px;color:#fff;cursor:pointer;animation:slideDown .4s ease;}
+.alert-banner.show{display:flex;align-items:center;gap:10px;}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:none}}
+.ab-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1s infinite;flex-shrink:0;}
+.ab-close{margin-left:auto;opacity:.6;font-size:16px;padding:0 4px;background:none;border:none;color:#fff;cursor:pointer;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* TOP NAV */
+.top-nav{display:none;position:fixed;left:0;right:0;z-index:600;background:rgba(10,12,11,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:var(--nav-h);}
+.top-nav-inner{max-width:1600px;margin:0 auto;display:flex;align-items:center;padding:0 24px;height:100%;}
+.top-wordmark{font-family:var(--display);font-size:22px;letter-spacing:.05em;flex-shrink:0;margin-right:28px;cursor:pointer;}
 .top-wordmark span{color:var(--red);}
 .top-nav-links{display:flex;gap:2px;flex:1;}
-.top-nav-btn{padding:8px 16px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.45);background:none;border:none;border-radius:6px;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.top-nav-btn{padding:8px 14px;font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,0.45);background:none;border:none;border-radius:6px;cursor:pointer;transition:all .18s;white-space:nowrap;}
 .top-nav-btn:hover{color:var(--paper);background:rgba(255,255,255,0.05);}
 .top-nav-btn.active{color:var(--paper);background:rgba(192,57,43,0.15);border:1px solid rgba(192,57,43,0.25);}
-.top-nav-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
-.live-badge{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.1em;}
+.top-nav-right{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.1em;}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1.4s ease-in-out infinite;flex-shrink:0;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ═══════════════════════════════════════
-   MOBILE BOTTOM NAV
-═══════════════════════════════════════ */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#0d0f0d;border-top:1px solid var(--border);display:flex;z-index:500;padding:5px 0 env(safe-area-inset-bottom,5px);}
+/* MOBILE NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#0d0f0d;border-top:1px solid var(--border);display:flex;z-index:600;padding:5px 0 env(safe-area-inset-bottom,5px);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer;border:none;background:none;color:rgba(255,255,255,0.28);transition:color .2s;}
 .nav-item.active{color:var(--paper);}
 .nav-icon{font-size:18px;line-height:1;}
@@ -64,17 +59,11 @@ button{font-family:inherit;cursor:pointer;}
 .nav-pip{width:14px;height:2px;border-radius:1px;background:var(--red);opacity:0;transition:opacity .2s;margin-top:1px;}
 .nav-item.active .nav-pip{opacity:1;}
 
-/* ═══════════════════════════════════════
-   LAYOUT SYSTEM
-═══════════════════════════════════════ */
+/* LAYOUT */
 .app-body{padding-top:var(--ticker-h);padding-bottom:72px;}
-
-/* Mobile screens */
 .screen{display:none;min-height:calc(100vh - var(--ticker-h) - 72px);animation:fadeIn .22s ease;}
 .screen.active{display:block;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
-
-/* Shared layout helpers */
 .page-head{padding:16px 18px 12px;}
 .page-title{font-family:var(--display);font-size:32px;letter-spacing:.04em;line-height:1;}
 .page-sub{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
@@ -88,296 +77,211 @@ button{font-family:inherit;cursor:pointer;}
 .sev-high{background:#d4820a;box-shadow:0 0 5px #d4820a66;}
 .sev-medium{background:#c8b800;}
 .sev-low{background:#27ae60;}
-
-/* Shared UI */
-.toast{position:fixed;top:calc(var(--ticker-h) + 8px);left:50%;transform:translateX(-50%);background:#1e201d;border:1px solid rgba(255,255,255,0.12);color:var(--paper);border-radius:10px;padding:12px 20px;font-family:var(--mono);font-size:11px;white-space:nowrap;z-index:700;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 32px rgba(0,0,0,0.6);}
+.up{color:#27ae60;}.dn{color:#c0392b;}
+.up-bg{background:rgba(39,174,96,0.15);color:#27ae60;padding:2px 7px;border-radius:4px;}
+.dn-bg{background:rgba(192,57,43,0.15);color:#c0392b;padding:2px 7px;border-radius:4px;}
+.toast{position:fixed;top:calc(var(--ticker-h)+8px);left:50%;transform:translateX(-50%);background:#1e201d;border:1px solid rgba(255,255,255,0.12);color:var(--paper);border-radius:10px;padding:12px 20px;font-family:var(--mono);font-size:11px;white-space:nowrap;z-index:800;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 32px rgba(0,0,0,0.6);}
 .toast.show{opacity:1;}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:600;align-items:flex-end;justify-content:center;backdrop-filter:blur(8px);}
-.modal-overlay.open{display:flex;}
-.modal-sheet{background:#141614;border-radius:20px 20px 0 0;width:100%;max-width:560px;border-top:1px solid rgba(255,255,255,0.1);animation:slideUp .3s cubic-bezier(.16,1,.3,1);max-height:88vh;overflow-y:auto;}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
-.modal-handle{width:36px;height:3px;border-radius:2px;background:rgba(255,255,255,0.12);margin:14px auto 0;}
-.modal-pad{padding:20px 22px 40px;}
 .spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 20px;gap:14px;}
 .spinner{width:26px;height:26px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:.1em;}
 .error-box{margin:16px 18px;background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.22);border-radius:10px;padding:15px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.5);line-height:1.8;}
-
-/* Buttons */
-.btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;display:block;}
 .btn:active{transform:scale(.98);}
 .btn-red{background:var(--red);color:#fff;}
 .btn-amber{background:var(--amber);color:#0b0d0c;}
 .btn-ghost{background:transparent;color:rgba(255,255,255,0.3);border:1px solid var(--border);}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:700;align-items:flex-end;justify-content:center;backdrop-filter:blur(8px);}
+.modal-overlay.open{display:flex;}
+.modal-sheet{background:#141614;border-radius:20px 20px 0 0;width:100%;max-width:600px;border-top:1px solid rgba(255,255,255,0.1);animation:slideUp .3s cubic-bezier(.16,1,.3,1);max-height:92vh;overflow-y:auto;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+.modal-handle{width:36px;height:3px;border-radius:2px;background:rgba(255,255,255,0.12);margin:14px auto 0;}
+.modal-pad{padding:20px 22px 40px;}
 .email-input{width:100%;padding:13px 15px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:9px;color:var(--paper);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:10px;}
 .email-input:focus{border-color:rgba(255,255,255,0.2);}
-.email-input::placeholder{color:rgba(255,255,255,0.22);}
 
-/* ═══════════════════════════════════════
-   MAP
-═══════════════════════════════════════ */
+/* MAP */
 .map-header{padding:14px 18px 10px;display:flex;justify-content:space-between;align-items:center;}
-.wordmark{font-family:var(--display);font-size:26px;letter-spacing:.05em;line-height:1;}
+.wordmark{font-family:var(--display);font-size:26px;letter-spacing:.05em;line-height:1;cursor:pointer;}
 .wordmark span{color:var(--red);}
+.live-row{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.1em;}
 #conflict-map{width:100%;height:280px;z-index:1;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.leaflet-container{background:#0c0e0c !important;font-family:var(--mono) !important;}
-.leaflet-tile{filter:brightness(.62) saturate(.4) hue-rotate(95deg);}
-.leaflet-control-zoom{border:1px solid var(--border2) !important;border-radius:8px !important;overflow:hidden;}
-.leaflet-control-zoom a{background:#141614 !important;color:rgba(255,255,255,0.6) !important;border-bottom:1px solid var(--border) !important;width:30px !important;height:30px !important;line-height:30px !important;font-size:17px !important;}
+.leaflet-container{background:#0c0e0c !important;}
+.leaflet-tile{filter:brightness(.68) saturate(.4) hue-rotate(100deg);}
 .leaflet-control-attribution{display:none !important;}
-.leaflet-popup-content-wrapper{background:#161816 !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 36px rgba(0,0,0,0.7) !important;padding:0 !important;}
-.leaflet-popup-content{margin:0 !important;padding:0 !important;font-size:16px !important;}
+.leaflet-popup-content-wrapper{background:#161816 !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 36px rgba(0,0,0,.7) !important;padding:0 !important;}
+.leaflet-popup-content{margin:0 !important;padding:0 !important;}
 .leaflet-popup-tip{background:#161816 !important;}
-.leaflet-popup-close-button{color:rgba(255,255,255,0.4) !important;font-size:20px !important;top:8px !important;right:10px !important;}
-.map-hint{text-align:center;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.2);padding:4px 0;letter-spacing:.07em;}
+.leaflet-popup-close-button{color:rgba(255,255,255,.4) !important;top:8px !important;right:10px !important;}
 .conflict-marker{display:flex;flex-direction:column;align-items:center;cursor:pointer;}
-.marker-pin{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid currentColor;background:rgba(8,10,9,0.88);backdrop-filter:blur(8px);animation:mpulse 2.2s ease-out infinite;}
+.marker-pin{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid currentColor;background:rgba(8,10,9,.88);backdrop-filter:blur(8px);animation:mpulse 2.5s ease-out infinite;}
 @keyframes mpulse{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
-.marker-label{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,0.65);white-space:nowrap;margin-top:2px;letter-spacing:.05em;text-shadow:0 1px 4px rgba(0,0,0,1),0 0 8px rgba(0,0,0,1);}
+.marker-label{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.65);white-space:nowrap;margin-top:2px;letter-spacing:.05em;text-shadow:0 1px 4px #000,0 0 8px #000;}
+.map-hint{text-align:center;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.2);padding:4px 0;}
 .map-popup{padding:14px 16px;}
 .mpp-flags{font-size:20px;margin-bottom:4px;letter-spacing:2px;}
-.mpp-title{font-family:var(--display);font-size:18px;letter-spacing:.03em;color:var(--paper);margin-bottom:2px;line-height:1.1;}
-.mpp-region{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;}
-.mpp-summary{font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;font-style:italic;margin-bottom:10px;}
+.mpp-title{font-family:var(--display);font-size:18px;letter-spacing:.03em;color:var(--paper);margin-bottom:2px;}
+.mpp-region{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
 .mpp-btn{width:100%;padding:9px;background:var(--red);color:#fff;border:none;border-radius:7px;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;}
-
-/* Category tabs under map */
 .cat-tabs{display:flex;border-bottom:1px solid var(--border);}
-.cat-tab{flex:1;padding:11px 6px;font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,0.3);cursor:pointer;text-align:center;background:none;border:none;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
+.cat-tab{flex:1;padding:11px 5px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.3);cursor:pointer;text-align:center;background:none;border:none;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
 .cat-tab.active{color:var(--paper);border-bottom-color:var(--red);}
 
-/* ═══════════════════════════════════════
-   EVENT CARDS
-═══════════════════════════════════════ */
+/* EVENTS */
 .event-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:10px;cursor:pointer;transition:border-color .2s,transform .15s;}
-.event-card:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-1px);}
-.ec-flags{font-size:20px;flex-shrink:0;letter-spacing:2px;}
+.event-card:hover{border-color:rgba(255,255,255,.14);transform:translateY(-1px);}
 .ec-title{font-family:var(--display);font-size:19px;letter-spacing:.03em;line-height:1.05;flex:1;}
-.ec-meta{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.3);margin-top:3px;}
-.ec-summary{font-size:15px;color:rgba(255,255,255,0.5);line-height:1.6;font-style:italic;margin-bottom:9px;}
+.ec-meta{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);margin-top:3px;}
+.ec-summary{font-size:15px;color:rgba(255,255,255,.5);line-height:1.6;font-style:italic;margin-bottom:9px;}
 .type-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;}
-.tb-military{background:rgba(192,57,43,0.2);color:#f57a6a;border:1px solid rgba(192,57,43,0.3);}
-.tb-unrest{background:rgba(212,130,10,0.2);color:#f5c96a;border:1px solid rgba(212,130,10,0.3);}
-.tb-humanitarian{background:rgba(39,174,96,0.15);color:#7ef5a9;border:1px solid rgba(39,174,96,0.25);}
-.tb-terrorism{background:rgba(130,30,160,0.2);color:#d07ef5;border:1px solid rgba(160,30,160,0.3);}
+.tb-military{background:rgba(192,57,43,.2);color:#f57a6a;border:1px solid rgba(192,57,43,.3);}
+.tb-unrest{background:rgba(212,130,10,.2);color:#f5c96a;border:1px solid rgba(212,130,10,.3);}
+.tb-humanitarian{background:rgba(39,174,96,.15);color:#7ef5a9;border:1px solid rgba(39,174,96,.25);}
+.tb-terrorism{background:rgba(130,30,160,.2);color:#d07ef5;border:1px solid rgba(160,30,160,.3);}
 .mkt-ribbon{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-top:10px;border-top:1px solid var(--border);margin-top:9px;}
 .mkt-ribbon::-webkit-scrollbar{display:none;}
 .mkt-chip{display:flex;flex-direction:column;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:7px 11px;flex-shrink:0;min-width:68px;cursor:pointer;transition:border-color .18s;}
-.mkt-chip:hover{border-color:rgba(255,255,255,0.2);}
-.mc-name{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:2px;}
+.mkt-chip:hover{border-color:rgba(255,255,255,.2);}
+.mc-name{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);margin-bottom:2px;}
 .mc-val{font-family:var(--mono);font-size:13px;font-weight:500;}
 .mc-chg{font-family:var(--mono);font-size:9px;margin-top:1px;}
-.up{color:var(--green);}.dn{color:var(--red);}
 
-/* ═══════════════════════════════════════
-   MARKETS / MOVERS
-═══════════════════════════════════════ */
-.mkt-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .2s;}
-.mkt-card:hover{border-color:rgba(255,255,255,0.14);}
-.mkc-head{padding:15px 16px 10px;display:flex;align-items:center;gap:13px;}
-.mkc-name{font-size:16px;font-weight:600;}
-.mkc-ticker{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;}
-.mkc-price{font-family:var(--mono);font-size:19px;font-weight:500;}
-.mkc-chg{font-family:var(--mono);font-size:11px;margin-top:2px;}
-.up-bg{background:rgba(39,174,96,0.15);color:var(--green);padding:2px 7px;border-radius:4px;}
-.dn-bg{background:rgba(192,57,43,0.15);color:var(--red);padding:2px 7px;border-radius:4px;}
-.sparkline{padding:0 16px 10px;}
-.spark-svg{width:100%;height:40px;}
-.mkt-links{padding:0 16px 13px;display:flex;gap:7px;flex-wrap:wrap;}
-.mkt-link-tag{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.2);cursor:pointer;}
-
-/* Movers section */
-.movers-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px 16px;}
-.mover-col-title{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:12px 18px 7px;display:flex;align-items:center;gap:7px;}
-.mover-row{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .18s;}
-.mover-row:hover{border-color:rgba(255,255,255,0.16);}
-.mr-icon{font-size:20px;flex-shrink:0;}
-.mr-name{font-size:14px;font-weight:600;line-height:1.2;}
-.mr-ticker{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.3);}
-.mr-price{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right;}
-.mr-chg{font-family:var(--mono);font-size:10px;text-align:right;margin-top:1px;}
-
-/* ═══════════════════════════════════════
-   DETAIL / NEWS
-═══════════════════════════════════════ */
+/* DETAIL */
 .detail-hero{padding:16px 18px 18px;background:linear-gradient(180deg,#180a07,#0b0d0c);border-bottom:1px solid var(--border);}
-.back-btn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,0.35);cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:5px;border:none;background:none;text-transform:uppercase;padding:0;}
+.back-btn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.35);cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:5px;border:none;background:none;text-transform:uppercase;padding:0;}
 .d-title{font-family:var(--display);font-size:32px;letter-spacing:.03em;line-height:1;margin-bottom:7px;}
 .news-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
 .news-tabs::-webkit-scrollbar{display:none;}
-.ntab{padding:11px 12px;font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,0.32);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;border:none;background:none;}
+.ntab{padding:11px 12px;font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.32);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;border:none;background:none;}
 .ntab.active{color:var(--paper);border-bottom-color:var(--red);}
 .article-card{padding:15px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
-.article-card:hover{background:rgba(255,255,255,0.02);}
-.art-outlet{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:.05em;}
-.art-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.2);margin-left:auto;}
+.article-card:hover{background:rgba(255,255,255,.02);}
+.art-outlet{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.05em;}
+.art-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);margin-left:auto;}
 .art-headline{font-size:16px;font-weight:600;line-height:1.35;margin:5px 0;}
-.art-excerpt{font-size:14px;color:rgba(255,255,255,0.45);line-height:1.65;font-style:italic;margin-bottom:8px;}
-.tl-item{display:flex;gap:14px;padding:0 18px 18px;}
-.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:3px;}
-.tl-line{width:1px;background:rgba(255,255,255,0.08);}
-.tl-date{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.28);margin-bottom:4px;}
-.tl-event{font-size:14px;line-height:1.65;color:rgba(255,255,255,0.72);}
-.tl-tag{display:inline-block;font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:3px;margin-top:5px;}
+.art-excerpt{font-size:14px;color:rgba(255,255,255,.45);line-height:1.65;font-style:italic;margin-bottom:8px;}
+.align-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.04em;}
 .locked-article{padding:15px 18px;border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
 .locked-blur{filter:blur(5px);opacity:.38;pointer-events:none;user-select:none;}
-.locked-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:rgba(11,13,12,0.65);backdrop-filter:blur(2px);cursor:pointer;}
-.locked-badge{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(212,130,10,0.3);padding:4px 12px;border-radius:999px;background:rgba(212,130,10,0.1);}
-.locked-price{font-family:var(--mono);font-size:12px;color:rgba(255,255,255,0.5);}
+.locked-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:rgba(11,13,12,.65);backdrop-filter:blur(2px);cursor:pointer;}
+.locked-badge{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(212,130,10,.3);padding:4px 12px;border-radius:999px;background:rgba(212,130,10,.1);}
+.tl-item{display:flex;gap:14px;padding:0 18px 18px;}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:3px;}
+.tl-date{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);margin-bottom:4px;}
+.tl-event{font-size:14px;line-height:1.65;color:rgba(255,255,255,.72);}
+.tl-tag{display:inline-block;font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:3px;margin-top:5px;}
 
-/* Price Impact & Economic Fallout panel */
-.econ-panel{margin:15px 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
-.econ-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
-.econ-title{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);}
-.econ-context{padding:13px 16px;font-size:14px;color:rgba(255,255,255,0.52);line-height:1.75;font-style:italic;border-bottom:1px solid var(--border);}
-.econ-row{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
-.econ-row:last-child{border-bottom:none;}
-.econ-row:hover{background:rgba(255,255,255,0.02);}
-.er-icon{font-size:20px;flex-shrink:0;}
-.er-name{font-size:14px;font-weight:600;}
-.er-why{font-size:12px;color:rgba(255,255,255,0.38);font-style:italic;line-height:1.5;}
-.er-price{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right;flex-shrink:0;}
-.er-chg{font-family:var(--mono);font-size:10px;text-align:right;margin-top:2px;}
+/* MARKETS */
+.mkt-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .2s;}
+.mkt-card:hover{border-color:rgba(255,255,255,.14);}
+.mkc-head{padding:15px 16px 10px;display:flex;align-items:center;gap:13px;}
+.mkc-price{font-family:var(--mono);font-size:19px;font-weight:500;}
+.mkt-context{padding:10px 16px 14px;border-top:1px solid var(--border);font-size:13px;color:rgba(255,255,255,.5);line-height:1.75;font-style:italic;}
+.mkt-links{padding:0 16px 13px;display:flex;gap:7px;flex-wrap:wrap;}
+.mkt-link-tag{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(192,57,43,.1);color:var(--red);border:1px solid rgba(192,57,43,.2);cursor:pointer;transition:background .15s;}
+.mkt-link-tag:hover{background:rgba(192,57,43,.2);}
+.mover-row{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .18s;}
+.mover-row:hover{border-color:rgba(255,255,255,.16);}
+.mr-name{font-size:14px;font-weight:600;line-height:1.2;}
+.mr-ticker{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);}
 
-/* ═══════════════════════════════════════
-   ALERTS
-═══════════════════════════════════════ */
+/* ALERTS */
 .alert-item{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:background .15s;}
-.alert-item:hover{background:rgba(255,255,255,0.02);}
+.alert-item:hover{background:rgba(255,255,255,.02);}
 .alert-item.unread{border-left:2px solid var(--red);padding-left:16px;}
 .al-conflict{font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:.1em;margin-bottom:3px;}
 .al-title{font-size:15px;font-weight:600;line-height:1.35;margin-bottom:3px;}
-.al-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.22);}
+.al-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);}
 
-/* ═══════════════════════════════════════
-   ALIGNMENT BADGES
-═══════════════════════════════════════ */
-.align-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.05em;}
-
-/* ═══════════════════════════════════════
-   LANGUAGE GRID
-═══════════════════════════════════════ */
+/* LANGUAGE */
 .lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 18px 28px;}
-.lang-btn{padding:11px 7px;background:var(--surface);border:1px solid var(--border);border-radius:11px;cursor:pointer;text-align:center;transition:all .18s;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:.04em;}
-.lang-btn:hover,.lang-btn.active{border-color:var(--red);color:var(--paper);background:rgba(192,57,43,0.12);}
+.lang-btn{padding:11px 7px;background:var(--surface);border:1px solid var(--border);border-radius:11px;cursor:pointer;text-align:center;transition:all .18s;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.04em;}
+.lang-btn:hover,.lang-btn.active{border-color:var(--red);color:var(--paper);background:rgba(192,57,43,.12);}
 .lang-flag{font-size:20px;display:block;margin-bottom:4px;}
 
-/* ═══════════════════════════════════════
-   PROFILE
-═══════════════════════════════════════ */
+/* ECON */
+.econ-panel{margin:15px 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.econ-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
+.econ-title{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);}
+.econ-context{padding:13px 16px;font-size:14px;color:rgba(255,255,255,.52);line-height:1.75;font-style:italic;border-bottom:1px solid var(--border);}
+.econ-row{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.econ-row:last-child{border-bottom:none;}
+.econ-row:hover{background:rgba(255,255,255,.02);}
+.er-name{font-size:14px;font-weight:600;}
+.er-why{font-size:12px;color:rgba(255,255,255,.38);font-style:italic;line-height:1.5;}
+.er-price{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right;flex-shrink:0;}
+.er-chg{font-family:var(--mono);font-size:10px;text-align:right;margin-top:2px;}
+
+/* PROFILE */
 .profile-hero{padding:20px 18px 24px;background:linear-gradient(180deg,#111310,#0b0d0c);border-bottom:1px solid var(--border);text-align:center;}
-.premium-box{margin:18px;background:linear-gradient(135deg,#1a1300,#18100a);border:1px solid rgba(212,130,10,0.3);border-radius:14px;padding:20px;}
+.premium-box{margin:18px;background:linear-gradient(135deg,#1a1300,#18100a);border:1px solid rgba(212,130,10,.3);border-radius:14px;padding:20px;}
 .settings-row{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);cursor:pointer;}
-.settings-row span{font-size:15px;}
-.toggle{width:40px;height:22px;border-radius:11px;background:rgba(255,255,255,0.1);position:relative;transition:background .2s;flex-shrink:0;}
+.toggle{width:40px;height:22px;border-radius:11px;background:rgba(255,255,255,.1);position:relative;transition:background .2s;flex-shrink:0;}
 .toggle.on{background:var(--red);}
 .t-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;}
 .toggle.on .t-knob{left:21px;}
 
-/* ═══════════════════════════════════════
-   DESKTOP RESPONSIVE (≥ 900px)
-═══════════════════════════════════════ */
+/* DESKTOP */
 @media(min-width:900px){
   :root{--nav-h:56px;}
-  .top-nav{display:flex;}
+  .top-nav{display:flex;top:var(--ticker-h);}
   .bottom-nav{display:none;}
   .app-body{padding-top:calc(var(--ticker-h) + var(--nav-h));padding-bottom:0;}
   .screen{min-height:calc(100vh - var(--ticker-h) - var(--nav-h));}
-
-  /* Desktop layout containers */
-  .desktop-wrapper{max-width:1600px;margin:0 auto;padding:0 24px;}
-  
-  /* Map screen - 2col */
-  #screen-map .desktop-wrapper{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;padding-top:20px;}
+  .dw{max-width:1600px;margin:0 auto;padding:20px 24px 40px;}
+  #screen-map .dw{display:grid;grid-template-columns:1fr 420px;gap:20px;}
   #screen-map .map-col{position:sticky;top:calc(var(--ticker-h) + var(--nav-h) + 20px);}
   #screen-map .map-header{padding:0 0 12px;}
-  #conflict-map{height:380px;border-radius:14px;border:1px solid var(--border);}
+  #conflict-map{height:420px;border-radius:14px;border:1px solid var(--border);}
   #screen-map .scroll-row{padding:10px 0;}
-  #screen-map .list-col{padding-bottom:40px;}
   #screen-map #conflict-list{padding:0;}
-  #screen-map .ad-strip{margin:0 0 12px;}
-
-  /* Unrest screen */
-  #screen-unrest .desktop-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-top:20px;align-items:start;}
-  #screen-unrest .page-head{grid-column:1/-1;padding:0 0 12px;}
-  #screen-unrest .scroll-row{grid-column:1/-1;padding:0 0 10px;}
-  
-  /* Markets - 2col */
-  #screen-markets .desktop-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-top:20px;}
+  #screen-markets .dw{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
   #screen-markets .page-head{grid-column:1/-1;padding:0 0 12px;}
-  #screen-markets .mkt-intro{grid-column:1/-1;}
   .movers-section{grid-column:1/-1;}
-  
-  /* Detail - wider */
-  #screen-detail .desktop-wrapper{max-width:900px;padding-top:20px;}
-  #screen-detail .detail-hero{border-radius:14px 14px 0 0;}
-  
-  /* Alerts */
-  #screen-alerts .desktop-wrapper{max-width:800px;padding-top:20px;}
-  
-  /* Language */
-  #screen-language .desktop-wrapper{max-width:800px;padding-top:20px;}
+  #screen-detail .dw,#screen-alerts .dw,#screen-language .dw{max-width:900px;}
+  #screen-profile .dw{max-width:700px;}
   .lang-grid{grid-template-columns:repeat(5,1fr);}
-  
-  /* Profile */
-  #screen-profile .desktop-wrapper{max-width:700px;padding-top:20px;}
-
-  /* General padding adjustments */
   .page-head{padding:0 0 14px;}
-  .inner-pad{padding:0;}
   .scroll-row{padding:0 0 10px;}
-  .event-card,.mkt-card{margin-bottom:12px;}
 }
-
 @media(min-width:1200px){
-  #screen-map .desktop-wrapper{grid-template-columns:1fr 440px;}
-  #conflict-map{height:440px;}
+  #screen-map .dw{grid-template-columns:1fr 480px;}
+  #conflict-map{height:480px;}
   .lang-grid{grid-template-columns:repeat(6,1fr);}
 }
 </style>
 </head>
 <body>
 
-<!-- SINGLE TICKER -->
-<div class="ticker-wrap">
-  <span class="ticker-lbl">📡 LIVE</span>
-  <div style="overflow:hidden;flex:1;">
-    <div class="ticker-inner tc" id="ticker-all">◆ Loading…</div>
-  </div>
-</div>
+<div class="ticker-wrap"><span class="ticker-lbl">📡 LIVE</span><div style="overflow:hidden;flex:1;"><div class="ticker-inner" id="ticker-all">◆ Loading…</div></div></div>
+<div class="alert-banner" id="alert-banner" onclick="handleBannerClick()"><div class="ab-dot"></div><span id="ab-text"></span><button class="ab-close" onclick="event.stopPropagation();dismissBanner()">✕</button></div>
 
-<!-- DESKTOP TOP NAV -->
 <nav class="top-nav" id="top-nav">
   <div class="top-nav-inner">
-    <div class="top-wordmark">WORLD<span>CONFLICTS</span>LIVE</div>
+    <div class="top-wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div>
     <div class="top-nav-links">
       <button class="top-nav-btn active" onclick="switchTab('map',this)">🗺️ Map</button>
-      <button class="top-nav-btn" onclick="switchTab('unrest',this)">✊ Civil Unrest</button>
+      <button class="top-nav-btn" onclick="switchTab('unrest',this)">✊ Unrest</button>
       <button class="top-nav-btn" onclick="switchTab('markets',this)">📈 Markets</button>
       <button class="top-nav-btn" onclick="switchTab('alerts',this)">🔔 Alerts</button>
       <button class="top-nav-btn" onclick="switchTab('language',this)">🌐 Language</button>
       <button class="top-nav-btn" onclick="switchTab('profile',this)">⚙️ Settings</button>
     </div>
-    <div class="top-nav-right">
-      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-    </div>
+    <div class="top-nav-right"><div class="live-dot"></div>LIVE</div>
   </div>
 </nav>
 
-<!-- APP BODY -->
 <div class="app-body">
 
-<!-- MAP SCREEN -->
-<div class="screen active" id="screen-map">
-<div class="desktop-wrapper">
+<!-- MAP -->
+<div class="screen active" id="screen-map"><div class="dw">
   <div class="map-col">
     <div class="map-header">
-      <div>
-        <div class="wordmark">WORLD<span>CONFLICTS</span>LIVE</div>
-        <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;">Every source · Every side · No agenda</div>
-      </div>
-      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      <div><div class="wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;">Every source · Every side · No agenda</div></div>
+      <div class="live-row"><div class="live-dot"></div>LIVE</div>
     </div>
     <div id="conflict-map"></div>
     <div class="map-hint">🤏 Pinch to zoom · Tap pins for details</div>
@@ -388,9 +292,9 @@ button{font-family:inherit;cursor:pointer;}
       <span class="pill" onclick="filterMap('humanitarian',this)">🕊️ Humanitarian</span>
       <span class="pill" onclick="filterMap('terrorism',this)">💥 Terrorism</span>
     </div>
-    <div class="ad-strip" style="margin:0 0 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:11px;">
-      <div style="flex:1;"><div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.18);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;">Sponsored</div><div style="font-size:14px;color:rgba(255,255,255,0.45);">Track conflict-driven market moves in real time</div></div>
-      <div style="font-family:var(--mono);font-size:11px;color:var(--amber);cursor:pointer;flex-shrink:0;" onclick="showToast('Opening…')">Learn →</div>
+    <div style="margin:0 18px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:11px;">
+      <div style="flex:1;"><div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.18);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;">Sponsored</div><div style="font-size:14px;color:rgba(255,255,255,.45);">Track conflict-driven market moves in real time</div></div>
+      <button style="font-family:var(--mono);font-size:11px;color:var(--amber);background:none;border:none;cursor:pointer;" onclick="openModal('modal-premium')">Learn →</button>
     </div>
   </div>
   <div class="list-col">
@@ -398,18 +302,16 @@ button{font-family:inherit;cursor:pointer;}
       <button class="cat-tab active" onclick="setCatTab(this,'military')">⚔️ Military</button>
       <button class="cat-tab" onclick="setCatTab(this,'unrest')">✊ Unrest</button>
       <button class="cat-tab" onclick="setCatTab(this,'humanitarian')">🕊️ Crises</button>
-      <button class="cat-tab" onclick="setCatTab(this,'terrorism')">💥 Terrorism</button>
+      <button class="cat-tab" onclick="setCatTab(this,'terrorism')">💥 Terror</button>
     </div>
     <div style="padding:12px 18px 0;" id="conflict-list"><div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">Loading…</div></div></div>
   </div>
-</div>
-</div>
+</div></div>
 
-<!-- UNREST SCREEN -->
-<div class="screen" id="screen-unrest">
-<div class="desktop-wrapper">
-  <div class="page-head" style="grid-column:1/-1"><div class="page-title">CIVIL UNREST</div><div class="page-sub">Protests · Coups · Revolutions · Election Crises</div></div>
-  <div class="scroll-row" style="grid-column:1/-1;padding:0 18px 14px;">
+<!-- UNREST -->
+<div class="screen" id="screen-unrest"><div class="dw">
+  <div class="page-head"><div class="page-title">CIVIL UNREST</div><div class="page-sub">Protests · Coups · Revolutions · Election Crises</div></div>
+  <div class="scroll-row" style="padding:0 18px 14px;">
     <span class="pill active" onclick="filterUnrest('all',this)">All</span>
     <span class="pill" onclick="filterUnrest('protest',this)">✊ Protest</span>
     <span class="pill" onclick="filterUnrest('coup',this)">👁️ Coup</span>
@@ -417,44 +319,37 @@ button{font-family:inherit;cursor:pointer;}
     <span class="pill" onclick="filterUnrest('election',this)">🗳️ Election Crisis</span>
   </div>
   <div style="padding:0 18px;" id="unrest-list"></div>
-</div>
-</div>
+</div></div>
 
-<!-- MARKETS SCREEN -->
-<div class="screen" id="screen-markets">
-<div class="desktop-wrapper">
-  <div class="page-head"><div class="page-title">MARKETS</div><div class="page-sub">Conflict-driven price movements</div></div>
-  <div class="mkt-intro error-box" style="grid-column:1/-1;">⚡ Active conflicts are driving volatility across energy, commodities, currencies and defence equities. Tap any asset for conflict analysis.</div>
+<!-- MARKETS -->
+<div class="screen" id="screen-markets"><div class="dw">
+  <div class="page-head"><div class="page-title">MARKETS</div><div class="page-sub">Conflict-driven price movements · Tap any asset for chart + context</div></div>
   <div class="movers-section">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-      <div><div class="mover-col-title"><span style="color:var(--green);">▲</span> <span style="color:rgba(255,255,255,0.5);">Top 5 Benefiting</span></div><div id="winners-list" style="padding:0 18px 10px;display:flex;flex-direction:column;gap:8px;"></div></div>
-      <div><div class="mover-col-title"><span style="color:var(--red);">▼</span> <span style="color:rgba(255,255,255,0.5);">Top 5 Declining</span></div><div id="losers-list" style="padding:0 18px 10px;display:flex;flex-direction:column;gap:8px;"></div></div>
+      <div><div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:12px 18px 7px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.5);"><span style="color:var(--green);">▲</span>Top 5 Benefiting</div><div id="winners-list" style="padding:0 18px 10px;display:flex;flex-direction:column;gap:8px;"></div></div>
+      <div><div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:12px 18px 7px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.5);"><span style="color:var(--red);">▼</span>Top 5 Declining</div><div id="losers-list" style="padding:0 18px 10px;display:flex;flex-direction:column;gap:8px;"></div></div>
     </div>
   </div>
   <div style="padding:0 18px;grid-column:1/-1;" id="markets-list"><div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">Fetching live data…</div></div></div>
-</div>
-</div>
+</div></div>
 
-<!-- DETAIL SCREEN -->
-<div class="screen" id="screen-detail">
-<div class="desktop-wrapper">
+<!-- DETAIL -->
+<div class="screen" id="screen-detail"><div class="dw">
   <div class="detail-hero">
     <button class="back-btn" onclick="goBack()">← Back</button>
     <div style="font-size:24px;margin-bottom:5px;letter-spacing:3px;" id="d-flags"></div>
     <div class="d-title" id="d-title"></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:5px;" id="d-meta"></div>
   </div>
-  <!-- Classification legend -->
   <div style="padding:13px 18px 10px;">
-    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:8px;">Source Classification</div>
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:8px;">Source Classification</div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">
-      <span class="align-badge" style="background:rgba(30,80,160,0.3);color:#89c4f5;border:1px solid rgba(137,196,245,0.25);">🏛️ State-funded</span>
-      <span class="align-badge" style="background:rgba(160,60,20,0.3);color:#f5b36a;border:1px solid rgba(245,179,106,0.25);">🗳️ Politically aligned</span>
-      <span class="align-badge" style="background:rgba(30,130,70,0.3);color:#7ef5a9;border:1px solid rgba(126,245,169,0.25);">✊ Independent</span>
-      <span class="align-badge" style="background:rgba(150,30,130,0.3);color:#f57ef5;border:1px solid rgba(245,126,245,0.25);">📢 Opposition</span>
-      <span class="align-badge" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);">❓ Unverified</span>
+      <span class="align-badge" style="background:rgba(30,80,160,.3);color:#89c4f5;border:1px solid rgba(137,196,245,.25);">🏛️ State-funded</span>
+      <span class="align-badge" style="background:rgba(160,60,20,.3);color:#f5b36a;border:1px solid rgba(245,179,106,.25);">🗳️ Politically aligned</span>
+      <span class="align-badge" style="background:rgba(30,130,70,.3);color:#7ef5a9;border:1px solid rgba(126,245,169,.25);">✊ Independent</span>
+      <span class="align-badge" style="background:rgba(150,30,130,.3);color:#f57ef5;border:1px solid rgba(245,126,245,.25);">📢 Opposition</span>
     </div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.42);font-style:italic;line-height:1.7;" id="d-summary"></div>
+    <div style="font-size:14px;color:rgba(255,255,255,.42);font-style:italic;line-height:1.7;" id="d-summary"></div>
   </div>
   <div id="econ-panel-wrap"></div>
   <div class="news-tabs">
@@ -463,20 +358,17 @@ button{font-family:inherit;cursor:pointer;}
     <button class="ntab" onclick="setNTab(this,2)">🗳️ Aligned</button>
     <button class="ntab" onclick="setNTab(this,3)">✊ Indep.</button>
     <button class="ntab" onclick="setNTab(this,4)">📢 Opp.</button>
-    <button class="ntab" onclick="setNTab(this,5)">❓ Unverified</button>
-    <button class="ntab" onclick="setNTab(this,6)">📅 Timeline</button>
-    <button class="ntab" onclick="setNTab(this,7)">💰 Economic</button>
+    <button class="ntab" onclick="setNTab(this,5)">📅 Timeline</button>
+    <button class="ntab" onclick="setNTab(this,6)">💰 Economic</button>
   </div>
   <div id="news-feed"></div>
   <div id="tl-feed" style="display:none;padding-top:18px;"></div>
   <div id="econ-feed" style="display:none;padding:14px 18px;"></div>
-</div>
-</div>
+</div></div>
 
-<!-- ALERTS SCREEN -->
-<div class="screen" id="screen-alerts">
-<div class="desktop-wrapper">
-  <div class="page-head"><div class="page-title">ALERTS</div><div class="page-sub">Breaking developments worldwide</div></div>
+<!-- ALERTS -->
+<div class="screen" id="screen-alerts"><div class="dw">
+  <div class="page-head"><div class="page-title">ALERTS</div><div class="page-sub">Breaking developments · Updated every 60 seconds</div></div>
   <div class="scroll-row" style="padding:0 18px 12px;">
     <span class="pill active" onclick="filterAlerts('all',this)">All</span>
     <span class="pill" onclick="filterAlerts('breaking',this)">🔴 Breaking</span>
@@ -484,44 +376,40 @@ button{font-family:inherit;cursor:pointer;}
     <span class="pill" onclick="filterAlerts('following',this)">★ Following</span>
   </div>
   <div id="alerts-list"></div>
-</div>
-</div>
+  <div style="padding:14px 18px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);text-align:center;" id="alerts-ts"></div>
+</div></div>
 
-<!-- LANGUAGE SCREEN -->
-<div class="screen" id="screen-language">
-<div class="desktop-wrapper">
-  <div class="page-head"><div class="page-title">🌐 LANGUAGE</div><div class="page-sub">Select your language · Elige tu idioma · Choisissez votre langue</div></div>
-  <div id="translate-status" style="margin:0 18px 12px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.35);"></div>
+<!-- LANGUAGE -->
+<div class="screen" id="screen-language"><div class="dw">
+  <div class="page-head"><div class="page-title">🌐 LANGUAGE</div><div class="page-sub">AI-powered translation · 45+ languages</div></div>
+  <div style="padding:0 18px 12px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.35);min-height:20px;" id="translate-status"></div>
   <div class="lang-grid" id="lang-grid"></div>
-</div>
-</div>
+</div></div>
 
-<!-- PROFILE SCREEN -->
-<div class="screen" id="screen-profile">
-<div class="desktop-wrapper">
+<!-- PROFILE -->
+<div class="screen" id="screen-profile"><div class="dw">
   <div class="profile-hero">
     <div style="font-size:52px;margin-bottom:10px;">🧭</div>
     <div style="font-family:var(--display);font-size:28px;letter-spacing:.04em;">WORLD ANALYST</div>
-    <div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;">Free Plan · Member since Mar 2025</div>
+    <div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);margin-top:4px;">Free Plan · Member since Mar 2025</div>
   </div>
   <div class="premium-box">
     <div style="font-family:var(--display);font-size:24px;color:var(--amber);letter-spacing:.04em;margin-bottom:4px;">GO PREMIUM</div>
-    <div style="font-family:var(--mono);font-size:10px;color:rgba(212,130,10,0.55);letter-spacing:.1em;margin-bottom:14px;">$1.99 / MONTH · CANCEL ANYTIME</div>
-    <div style="font-size:15px;color:rgba(255,255,255,0.65);line-height:2;">✓ All articles — every source, no limits<br/>✓ Live market data 60s refresh<br/>✓ Full historical timelines<br/>✓ AI translations — 45+ languages<br/>✓ Push + email alerts<br/>✓ Zero ads. Ever.</div>
+    <div style="font-family:var(--mono);font-size:10px;color:rgba(212,130,10,.55);letter-spacing:.1em;margin-bottom:14px;">$1.99 / MONTH · CANCEL ANYTIME</div>
+    <div style="font-size:15px;color:rgba(255,255,255,.65);line-height:2;">✓ All articles — every source, no limits<br/>✓ Live market data 60s refresh<br/>✓ Full historical timelines<br/>✓ AI translations — 45+ languages<br/>✓ Real-time push + email alerts<br/>✓ Zero ads. Ever.</div>
     <button class="btn btn-amber" style="margin-top:14px;" onclick="openModal('modal-premium')">UPGRADE NOW</button>
   </div>
-  <div style="padding:0 18px;margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.25);padding:14px 0 7px;">Settings</div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span>Breaking conflict alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span>Market impact alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span>Daily digest email</span><div class="toggle"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span>Source classification labels</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span>Security alerts for my account</span><div class="toggle on"><div class="t-knob"></div></div></div>
-</div>
-</div>
+  <div style="padding:0 18px;margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:14px 0 7px;">Settings</div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Breaking conflict alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Market impact alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Daily digest email</span><div class="toggle"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Source classification labels</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Security alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="switchTab('language')"><span style="font-size:15px;">🌐 Change language</span><span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">→</span></div>
+</div></div>
 
 </div><!-- end app-body -->
 
-<!-- MOBILE BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="switchTab('map',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Map</span><div class="nav-pip"></div></button>
   <button class="nav-item" onclick="switchTab('unrest',this)"><span class="nav-icon">✊</span><span class="nav-label">Unrest</span><div class="nav-pip"></div></button>
@@ -532,478 +420,240 @@ button{font-family:inherit;cursor:pointer;}
 </nav>
 
 <!-- MODALS -->
-<div class="modal-overlay" id="modal-article">
-  <div class="modal-sheet"><div class="modal-handle"></div>
-    <div class="modal-pad">
-      <div id="m-align" style="margin-bottom:10px;"></div>
-      <div id="m-outlet" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:8px;letter-spacing:.07em;"></div>
-      <div id="m-headline" style="font-family:var(--display);font-size:24px;letter-spacing:.03em;line-height:1.1;margin-bottom:12px;"></div>
-      <div id="m-body" style="font-size:15px;line-height:1.85;color:rgba(255,255,255,0.6);font-style:italic;margin-bottom:22px;"></div>
-      <a id="m-url" href="#" target="_blank" style="display:block;width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:10px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;text-align:center;">Read Full Article →</a>
-      <button onclick="closeModal('modal-article')" class="btn btn-ghost" style="margin-top:8px;">Close</button>
-    </div>
-  </div>
-</div>
+<div class="modal-overlay" id="modal-article"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+  <div id="m-align" style="margin-bottom:10px;"></div>
+  <div id="m-outlet" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);margin-bottom:8px;"></div>
+  <div id="m-headline" style="font-family:var(--display);font-size:24px;letter-spacing:.03em;line-height:1.1;margin-bottom:12px;"></div>
+  <div id="m-body" style="font-size:15px;line-height:1.85;color:rgba(255,255,255,.6);font-style:italic;margin-bottom:22px;"></div>
+  <a id="m-url" href="#" target="_blank" rel="noopener noreferrer" style="display:block;width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:10px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;text-align:center;">Read Full Article at Source →</a>
+  <button onclick="closeModal('modal-article')" class="btn btn-ghost" style="margin-top:8px;">Close</button>
+</div></div></div>
 
-<div class="modal-overlay" id="modal-market">
-  <div class="modal-sheet"><div class="modal-handle"></div>
-    <div class="modal-pad">
-      <div id="mm-icon" style="font-size:40px;margin-bottom:10px;"></div>
-      <div id="mm-name" style="font-family:var(--display);font-size:28px;letter-spacing:.03em;margin-bottom:5px;"></div>
-      <div id="mm-price-row" style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px;"></div>
-      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px;">Why this is moving</div>
-      <div id="mm-why" style="font-size:15px;line-height:1.8;color:rgba(255,255,255,0.6);font-style:italic;margin-bottom:18px;"></div>
-      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px;">Related events</div>
-      <div id="mm-events" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;"></div>
-      <button onclick="closeModal('modal-market')" class="btn btn-ghost">Close</button>
-    </div>
-  </div>
-</div>
+<div class="modal-overlay" id="modal-market"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+  <div id="mm-icon" style="font-size:40px;margin-bottom:10px;"></div>
+  <div id="mm-name" style="font-family:var(--display);font-size:28px;letter-spacing:.03em;margin-bottom:5px;"></div>
+  <div id="mm-price-row" style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px;"></div>
+  <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px;">Why this is moving</div>
+  <div id="mm-why" style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.6);font-style:italic;margin-bottom:18px;"></div>
+  <div id="mm-chart" style="margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;"></div>
+  <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px;">Related conflicts</div>
+  <div id="mm-events" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;"></div>
+  <button onclick="closeModal('modal-market')" class="btn btn-ghost">Close</button>
+</div></div></div>
 
-<div class="modal-overlay" id="modal-email">
-  <div class="modal-sheet"><div class="modal-handle"></div>
-    <div class="modal-pad">
-      <div style="font-size:36px;margin-bottom:12px;">🔔</div>
-      <div style="font-family:var(--display);font-size:28px;letter-spacing:.04em;margin-bottom:7px;">STAY INFORMED</div>
-      <div style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.75;margin-bottom:20px;">Get breaking conflict alerts and weekly market impact digests. Free forever.</div>
-      <input class="email-input" id="email-input" type="email" placeholder="your@email.com"/>
-      <button class="btn btn-red" onclick="submitEmail()">GET FREE ALERTS →</button>
-      <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-email')">Maybe later</button>
-      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.18);text-align:center;margin-top:12px;line-height:1.8;">No spam. Unsubscribe anytime. Your data is never sold or shared.<br/>Stored securely. Never transmitted without consent.</div>
-    </div>
-  </div>
-</div>
+<div class="modal-overlay" id="modal-email"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+  <div style="font-size:36px;margin-bottom:12px;">🔔</div>
+  <div style="font-family:var(--display);font-size:28px;letter-spacing:.04em;margin-bottom:7px;">STAY INFORMED</div>
+  <div style="font-size:15px;color:rgba(255,255,255,.5);line-height:1.75;margin-bottom:20px;">Get breaking conflict alerts and weekly market impact digests. Free forever.</div>
+  <input class="email-input" id="email-input" type="email" placeholder="your@email.com"/>
+  <button class="btn btn-red" onclick="submitEmail()">GET FREE ALERTS →</button>
+  <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-email')">Maybe later</button>
+  <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.18);text-align:center;margin-top:12px;line-height:1.8;">No spam. Unsubscribe anytime. Your data is never sold.</div>
+</div></div></div>
 
-<div class="modal-overlay" id="modal-premium">
-  <div class="modal-sheet"><div class="modal-handle"></div>
-    <div class="modal-pad">
-      <div style="font-size:36px;margin-bottom:12px;">⭐</div>
-      <div style="font-family:var(--display);font-size:28px;color:var(--amber);letter-spacing:.04em;margin-bottom:5px;">GO PREMIUM</div>
-      <div style="font-family:var(--mono);font-size:10px;color:rgba(212,130,10,0.6);letter-spacing:.1em;margin-bottom:18px;">$1.99 / MONTH · CANCEL ANYTIME</div>
-      <div style="font-size:15px;color:rgba(255,255,255,0.65);line-height:2.1;margin-bottom:20px;">✓ All articles — every source, no limits<br/>✓ Live market data 60s refresh<br/>✓ Full historical timelines<br/>✓ AI translations — 45+ languages<br/>✓ Push + email alerts<br/>✓ Zero ads. Ever.</div>
-      <button class="btn btn-amber" onclick="closeModal('modal-premium');openModal('modal-email')">START FREE TRIAL →</button>
-      <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-premium')">Not now</button>
-    </div>
-  </div>
-</div>
+<div class="modal-overlay" id="modal-premium"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+  <div style="font-size:36px;margin-bottom:12px;">⭐</div>
+  <div style="font-family:var(--display);font-size:28px;color:var(--amber);letter-spacing:.04em;margin-bottom:5px;">GO PREMIUM</div>
+  <div style="font-family:var(--mono);font-size:10px;color:rgba(212,130,10,.6);letter-spacing:.1em;margin-bottom:18px;">$1.99 / MONTH · CANCEL ANYTIME</div>
+  <div style="font-size:15px;color:rgba(255,255,255,.65);line-height:2.1;margin-bottom:20px;">✓ All articles — every source, no limits<br/>✓ Live market data 60s refresh<br/>✓ Full historical timelines<br/>✓ AI translations — 45+ languages<br/>✓ Push + email alerts<br/>✓ Zero ads. Ever.</div>
+  <button class="btn btn-amber" onclick="closeModal('modal-premium');openModal('modal-email')">START FREE TRIAL →</button>
+  <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-premium')">Not now</button>
+</div></div></div>
 
-<div class="modal-overlay" id="modal-unlock">
-  <div class="modal-sheet"><div class="modal-handle"></div>
-    <div class="modal-pad">
-      <div style="font-size:36px;margin-bottom:12px;">🔒</div>
-      <div style="font-family:var(--display);font-size:26px;letter-spacing:.04em;margin-bottom:10px;">UNLOCK FULL SPECTRUM</div>
-      <div style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.75;margin-bottom:20px;">Free users get 1 article per source category. Upgrade to read every perspective without limits.</div>
-      <button class="btn btn-amber" style="margin-bottom:9px;" onclick="closeModal('modal-unlock');openModal('modal-premium')">UPGRADE FOR $1.99/MO →</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-unlock')">Stay on free plan</button>
-    </div>
-  </div>
-</div>
+<div class="modal-overlay" id="modal-unlock"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+  <div style="font-size:36px;margin-bottom:12px;">🔒</div>
+  <div style="font-family:var(--display);font-size:26px;letter-spacing:.04em;margin-bottom:10px;">UNLOCK FULL SPECTRUM</div>
+  <div style="font-size:15px;color:rgba(255,255,255,.5);line-height:1.75;margin-bottom:20px;">Free users get 3 articles per source category. Upgrade to read every perspective without limits.</div>
+  <button class="btn btn-amber" style="margin-bottom:9px;" onclick="closeModal('modal-unlock');openModal('modal-premium')">UPGRADE FOR $1.99/MO →</button>
+  <button class="btn btn-ghost" onclick="closeModal('modal-unlock')">Stay on free plan</button>
+</div></div></div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════
-// LANGUAGES (45+)
-// ═══════════════════════════════════════
+// ══════════════════════════════
+// LANGUAGES — 45+, alphabetical, with flags
+// ══════════════════════════════
 const LANGUAGES=[
-  {code:'en',flag:'🇬🇧',native:'English'},
-  {code:'es',flag:'🇪🇸',native:'Español'},
-  {code:'es-MX',flag:'🇲🇽',native:'Español MX'},
-  {code:'es-AR',flag:'🇦🇷',native:'Español AR'},
-  {code:'es-CO',flag:'🇨🇴',native:'Español CO'},
-  {code:'es-CL',flag:'🇨🇱',native:'Español CL'},
-  {code:'es-VE',flag:'🇻🇪',native:'Español VE'},
-  {code:'ca',flag:'🏴󠁥󠁳󠁣󠁴󠁿',native:'Català'},
-  {code:'eu',flag:'🏴󠁥󠁳󠁰󠁶󠁿',native:'Euskera'},
-  {code:'gl',flag:'🏴󠁥󠁳󠁧󠁡󠁿',native:'Galego'},
-  {code:'pt',flag:'🇵🇹',native:'Português'},
-  {code:'pt-BR',flag:'🇧🇷',native:'Português BR'},
-  {code:'fr',flag:'🇫🇷',native:'Français'},
-  {code:'de',flag:'🇩🇪',native:'Deutsch'},
-  {code:'it',flag:'🇮🇹',native:'Italiano'},
-  {code:'nl',flag:'🇳🇱',native:'Nederlands'},
-  {code:'pl',flag:'🇵🇱',native:'Polski'},
-  {code:'ru',flag:'🇷🇺',native:'Русский'},
-  {code:'uk',flag:'🇺🇦',native:'Українська'},
-  {code:'ar',flag:'🇸🇦',native:'العربية'},
-  {code:'he',flag:'🇮🇱',native:'עברית'},
-  {code:'tr',flag:'🇹🇷',native:'Türkçe'},
-  {code:'fa',flag:'🇮🇷',native:'فارسی'},
-  {code:'zh',flag:'🇨🇳',native:'中文'},
-  {code:'ja',flag:'🇯🇵',native:'日本語'},
-  {code:'ko',flag:'🇰🇷',native:'한국어'},
-  {code:'hi',flag:'🇮🇳',native:'हिन्दी'},
-  {code:'ur',flag:'🇵🇰',native:'اردو'},
-  {code:'bn',flag:'🇧🇩',native:'বাংলা'},
-  {code:'id',flag:'🇮🇩',native:'Bahasa'},
-  {code:'ms',flag:'🇲🇾',native:'Melayu'},
-  {code:'sw',flag:'🇰🇪',native:'Kiswahili'},
-  {code:'am',flag:'🇪🇹',native:'አማርኛ'},
-  {code:'ro',flag:'🇷🇴',native:'Română'},
-  {code:'cs',flag:'🇨🇿',native:'Čeština'},
-  {code:'hu',flag:'🇭🇺',native:'Magyar'},
-  {code:'el',flag:'🇬🇷',native:'Ελληνικά'},
-  {code:'sv',flag:'🇸🇪',native:'Svenska'},
-  {code:'no',flag:'🇳🇴',native:'Norsk'},
-  {code:'fi',flag:'🇫🇮',native:'Suomi'},
-  {code:'vi',flag:'🇻🇳',native:'Tiếng Việt'},
-  {code:'th',flag:'🇹🇭',native:'ภาษาไทย'},
-  {code:'sr',flag:'🇷🇸',native:'Српски'},
-  {code:'hr',flag:'🇭🇷',native:'Hrvatski'},
-  {code:'sk',flag:'🇸🇰',native:'Slovenčina'},
+  {code:'am',flag:'🇪🇹',native:'አማርኛ'},{code:'ar',flag:'🇸🇦',native:'العربية',rtl:true},
+  {code:'bn',flag:'🇧🇩',native:'বাংলা'},{code:'ca',flag:'🏴󠁥󠁳󠁣󠁴󠁿',native:'Català'},
+  {code:'cs',flag:'🇨🇿',native:'Čeština'},{code:'de',flag:'🇩🇪',native:'Deutsch'},
+  {code:'el',flag:'🇬🇷',native:'Ελληνικά'},{code:'en',flag:'🇬🇧',native:'English'},
+  {code:'es',flag:'🇪🇸',native:'Español (ES)'},{code:'es-AR',flag:'🇦🇷',native:'Español (AR)'},
+  {code:'es-CL',flag:'🇨🇱',native:'Español (CL)'},{code:'es-CO',flag:'🇨🇴',native:'Español (CO)'},
+  {code:'es-MX',flag:'🇲🇽',native:'Español (MX)'},{code:'es-VE',flag:'🇻🇪',native:'Español (VE)'},
+  {code:'eu',flag:'🏴',native:'Euskera'},{code:'fa',flag:'🇮🇷',native:'فارسی',rtl:true},
+  {code:'fi',flag:'🇫🇮',native:'Suomi'},{code:'fr',flag:'🇫🇷',native:'Français'},
+  {code:'gl',flag:'🏴',native:'Galego'},{code:'he',flag:'🇮🇱',native:'עברית',rtl:true},
+  {code:'hi',flag:'🇮🇳',native:'हिन्दी'},{code:'hr',flag:'🇭🇷',native:'Hrvatski'},
+  {code:'hu',flag:'🇭🇺',native:'Magyar'},{code:'id',flag:'🇮🇩',native:'Bahasa Indonesia'},
+  {code:'it',flag:'🇮🇹',native:'Italiano'},{code:'ja',flag:'🇯🇵',native:'日本語'},
+  {code:'ko',flag:'🇰🇷',native:'한국어'},{code:'ms',flag:'🇲🇾',native:'Bahasa Melayu'},
+  {code:'nl',flag:'🇳🇱',native:'Nederlands'},{code:'no',flag:'🇳🇴',native:'Norsk'},
+  {code:'pl',flag:'🇵🇱',native:'Polski'},{code:'pt',flag:'🇵🇹',native:'Português (PT)'},
+  {code:'pt-BR',flag:'🇧🇷',native:'Português (BR)'},{code:'ro',flag:'🇷🇴',native:'Română'},
+  {code:'ru',flag:'🇷🇺',native:'Русский'},{code:'sk',flag:'🇸🇰',native:'Slovenčina'},
+  {code:'sr',flag:'🇷🇸',native:'Српски'},{code:'sv',flag:'🇸🇪',native:'Svenska'},
+  {code:'sw',flag:'🇰🇪',native:'Kiswahili'},{code:'th',flag:'🇹🇭',native:'ภาษาไทย'},
+  {code:'tr',flag:'🇹🇷',native:'Türkçe'},{code:'uk',flag:'🇺🇦',native:'Українська'},
+  {code:'ur',flag:'🇵🇰',native:'اردو',rtl:true},{code:'vi',flag:'🇻🇳',native:'Tiếng Việt'},
+  {code:'zh',flag:'🇨🇳',native:'中文 (简)'},{code:'zh-TW',flag:'🇹🇼',native:'中文 (繁)'},
 ];
-
 let currentLang=localStorage.getItem('wcl_lang')||'en';
 let txCache={};
+let txArticleCache={};
 
 function buildLangGrid(){
-  document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>`
-    <div class="lang-btn ${l.code===currentLang?'active':''}" onclick="selectLanguage('${l.code}')">
+  document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>
+    `<div class="lang-btn ${l.code===currentLang?'active':''}" onclick="selectLanguage('${l.code}')">
       <span class="lang-flag">${l.flag}</span>${l.native}
     </div>`).join('');
 }
 
 async function selectLanguage(code){
-  currentLang=code; localStorage.setItem('wcl_lang',code); buildLangGrid();
-  if(code==='en'){applyTx({});showToast('🌐 English');return;}
+  currentLang=code;
+  localStorage.setItem('wcl_lang',code);
+  buildLangGrid();
   const lang=LANGUAGES.find(l=>l.code===code);
-  showToast(`🌐 Translating to ${lang?.native}…`);
-  await translateUI(code);
-}
-
-async function translateUI(langCode){
-  if(txCache[langCode]){applyTx(txCache[langCode]);return;}
-  const strings={
-    nav_map:'Map',nav_unrest:'Civil Unrest',nav_markets:'Markets',nav_alerts:'Alerts',nav_profile:'Settings',
-    alerts_title:'ALERTS',breaking:'Breaking developments',
-    cat_military:'Military',cat_unrest:'Unrest',cat_crises:'Crises',cat_terrorism:'Terrorism',
-    free_label:'FREE',read_more:'READ →',upgrade:'UPGRADE FOR $1.99/MO',
-    source_class:'Source Classification',
-  };
+  document.getElementById('html-root').setAttribute('dir',lang?.rtl?'rtl':'ltr');
+  if(code==='en'){document.getElementById('translate-status').textContent='✅ English';showToast('🇬🇧 English');return;}
+  document.getElementById('translate-status').textContent='🌐 Translating UI…';
+  showToast('🌐 Translating…');
+  // Translation happens when articles are loaded — UI strings translated via API
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':'','anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,
-        messages:[{role:'user',content:`Translate these UI strings to language code "${langCode}". For Catalan(ca), Euskera(eu), Galician(gl), use authentic native language. Return ONLY valid JSON, same keys: ${JSON.stringify(strings)}`}]})});
-    const d=await r.json();
-    const raw=d.content?.[0]?.text||'{}';
-    const tx=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    txCache[langCode]=tx; applyTx(tx);
-    showToast(`✅ ${LANGUAGES.find(l=>l.code===langCode)?.native}`);
-  }catch(e){showToast('⚠️ Translation unavailable offline');}
+    const resp=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({lang:code,strings:{slogan:'Every source · Every side · No agenda',markets:'Markets',alerts:'Alerts',map:'Map',back:'Back',read_more:'Read more →'}})});
+    const data=await resp.json();
+    document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
+    showToast(`✅ ${lang?.native}`);
+  }catch(e){
+    document.getElementById('translate-status').textContent=`✅ ${lang?.native} (cached)`;
+    showToast(`✅ ${lang?.native}`);
+  }
 }
 
-async function translateArticles(articles,langCode){
-  if(langCode==='en')return articles;
-  const key=`arts_${langCode}_${currentEvent}`;
-  if(txCache[key])return txCache[key];
+async function translateArticles(arts,langCode){
+  if(langCode==='en')return arts;
+  const key=`${langCode}_${currentEvent}`;
+  if(txArticleCache[key])return txArticleCache[key];
   try{
-    const payload=articles.slice(0,6).map(a=>({h:a.headline,e:(a.excerpt||'').substring(0,90)}));
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':'','anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,
-        messages:[{role:'user',content:`Translate to language "${langCode}", journalistic tone. Return ONLY JSON array same structure: ${JSON.stringify(payload)}`}]})});
-    const d=await r.json();
-    const raw=d.content?.[0]?.text||'[]';
-    const tx=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    const result=articles.map((a,i)=>({...a,headline:tx[i]?.h||a.headline,excerpt:tx[i]?.e||a.excerpt}));
-    txCache[key]=result; return result;
-  }catch(e){return articles;}
+    const payload=arts.slice(0,9).map(a=>({h:a.headline,e:(a.excerpt||'').substring(0,120)}));
+    const resp=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({lang:langCode,articles:payload})});
+    if(!resp.ok)throw new Error('fail');
+    const data=await resp.json();
+    const txArts=data.articles||[];
+    const result=arts.map((a,i)=>({...a,headline:txArts[i]?.h||a.headline,excerpt:txArts[i]?.e||a.excerpt}));
+    txArticleCache[key]=result;
+    return result;
+  }catch(e){return arts;}
 }
 
-function applyTx(t){
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const k=el.getAttribute('data-i18n'); if(t[k])el.textContent=t[k];
-  });
-}
-
-// ═══════════════════════════════════════
-// POLITICAL ALIGNMENT
-// ═══════════════════════════════════════
+// ══════════════════════════════
+// ALIGNMENT
+// ══════════════════════════════
 const outlets={
-  'bbc news':{type:'state',label:'State-BBC',flag:'🇬🇧'},
-  'bbc':{type:'state',label:'State-BBC',flag:'🇬🇧'},
-  'al jazeera':{type:'state',label:'State-Qatar',flag:'🇶🇦'},
-  'russia today':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},
-  'xinhua':{type:'state',label:'State-CCP',flag:'🇨🇳'},
-  'cgtn':{type:'state',label:'State-CCP',flag:'🇨🇳'},
-  'dw':{type:'state',label:'State-Germany',flag:'🇩🇪'},
-  'france 24':{type:'state',label:'State-France',flag:'🇫🇷'},
-  'nhk':{type:'state',label:'State-Japan',flag:'🇯🇵'},
-  'times of india':{type:'aligned',label:'Pro-BJP',flag:'🇮🇳'},
-  'haaretz':{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},
-  'jerusalem post':{type:'aligned',label:'Pro-Likud',flag:'🇮🇱'},
-  'kyiv independent':{type:'opposition',label:'Opp-Kremlin',flag:'🇺🇦'},
-  'fox news':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},
-  'new york post':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},
-  'breitbart':{type:'aligned',label:'Pro-MAGA',flag:'🇺🇸'},
-  'cnn':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
-  'msnbc':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
-  'new york times':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
-  'washington post':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
-  'wall street journal':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},
-  'daily mail':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},
-  'the telegraph':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},
-  'reuters':{type:'independent',label:'Independent',flag:'🇬🇧'},
-  'associated press':{type:'independent',label:'Independent',flag:'🇺🇸'},
-  'ap news':{type:'independent',label:'Independent',flag:'🇺🇸'},
-  'the guardian':{type:'independent',label:'Independent',flag:'🇬🇧'},
-  'the economist':{type:'independent',label:'Independent',flag:'🇬🇧'},
-  'der spiegel':{type:'independent',label:'Independent',flag:'🇩🇪'},
-  'the intercept':{type:'independent',label:'Independent',flag:'🇺🇸'},
-  'nbc news':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
+  'bbc news':{type:'state',label:'State-BBC',flag:'🇬🇧'},'bbc':{type:'state',label:'State-BBC',flag:'🇬🇧'},
+  'al jazeera':{type:'state',label:'State-Qatar',flag:'🇶🇦'},'russia today':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},
+  'rt':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},'xinhua':{type:'state',label:'State-CCP',flag:'🇨🇳'},
+  'cgtn':{type:'state',label:'State-CCP',flag:'🇨🇳'},'dw':{type:'state',label:'State-Germany',flag:'🇩🇪'},
+  'france 24':{type:'state',label:'State-France',flag:'🇫🇷'},'nhk':{type:'state',label:'State-Japan',flag:'🇯🇵'},
+  'fox news':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},'new york post':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},
+  'breitbart':{type:'aligned',label:'Pro-MAGA',flag:'🇺🇸'},'wall street journal':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},
+  'cnn':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},'msnbc':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
+  'new york times':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},'washington post':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
+  'nbc news':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},'daily mail':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},
+  'the telegraph':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},'times of india':{type:'aligned',label:'Pro-BJP',flag:'🇮🇳'},
+  'haaretz':{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},'kyiv independent':{type:'opposition',label:'Opp-Kremlin',flag:'🇺🇦'},
+  'reuters':{type:'independent',label:'Independent',flag:'🇬🇧'},'associated press':{type:'independent',label:'Independent',flag:'🇺🇸'},
+  'ap news':{type:'independent',label:'Independent',flag:'🇺🇸'},'the guardian':{type:'independent',label:'Independent',flag:'🇬🇧'},
+  'the economist':{type:'independent',label:'Independent',flag:'🇬🇧'},'middle east eye':{type:'independent',label:'Independent',flag:'🌍'},
 };
-
 function getAlign(name){
   if(!name)return{type:'unverified',label:'Unverified',flag:'❓'};
   const l=name.toLowerCase();
-  for(const[k,v]of Object.entries(outlets)){if(l.includes(k.trim()))return v;}
+  for(const[k,v]of Object.entries(outlets)){if(l.includes(k))return v;}
   return{type:'unverified',label:'Unverified',flag:'❓'};
 }
 const alignStyle={
-  state:'background:rgba(30,80,160,0.3);color:#89c4f5;border:1px solid rgba(137,196,245,0.25);',
-  aligned:'background:rgba(160,60,20,0.3);color:#f5b36a;border:1px solid rgba(245,179,106,0.25);',
-  independent:'background:rgba(30,130,70,0.3);color:#7ef5a9;border:1px solid rgba(126,245,169,0.25);',
-  opposition:'background:rgba(150,30,130,0.3);color:#f57ef5;border:1px solid rgba(245,126,245,0.25);',
-  unverified:'background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);',
+  state:'background:rgba(30,80,160,.3);color:#89c4f5;border:1px solid rgba(137,196,245,.25);',
+  aligned:'background:rgba(160,60,20,.3);color:#f5b36a;border:1px solid rgba(245,179,106,.25);',
+  independent:'background:rgba(30,130,70,.3);color:#7ef5a9;border:1px solid rgba(126,245,169,.25);',
+  opposition:'background:rgba(150,30,130,.3);color:#f57ef5;border:1px solid rgba(245,126,245,.25);',
+  unverified:'background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.1);',
 };
-const alignDot={state:'#89c4f5',aligned:'#f5b36a',independent:'#7ef5a9',opposition:'#f57ef5',unverified:'rgba(255,255,255,0.2)'};
-function alignBadge(al){
-  return`<span class="align-badge" style="${alignStyle[al.type]||alignStyle.unverified}">${al.flag} ${al.label}</span>`;
-}
+const alignDot={state:'#89c4f5',aligned:'#f5b36a',independent:'#7ef5a9',opposition:'#f57ef5',unverified:'rgba(255,255,255,.2)'};
+function alignBadge(al){return`<span class="align-badge" style="${alignStyle[al.type]||alignStyle.unverified}">${al.flag} ${al.label}</span>`;}
 
-// ═══════════════════════════════════════
-// EVENTS DATA
-// ═══════════════════════════════════════
+// ══════════════════════════════
+// EVENTS
+// ══════════════════════════════
 const events=[
-  // MILITARY CONFLICTS
-  {id:0,cat:'military',flags:'🇮🇱🇵🇸',title:'Gaza Conflict',region:'Middle East',parties:'Israel · Gaza',sev:'critical',lat:31.5,lng:34.5,
-   query:'Gaza Israel 2025',
-   econContext:'The conflict has disrupted regional trade routes, frozen foreign investment across the Levant, and driven safe-haven flows into gold. Tourism revenues across Egypt, Jordan and Israel have dropped significantly. The reconstruction bill for Gaza is estimated at over $50 billion.',
-   markets:['crude','gold','ils','rtx'],
-   timeline:[{date:'Oct 2023',event:'Hamas launches large-scale attack on southern Israel. Israel declares war.',tag:'Outbreak',tc:'rgba(192,57,43,0.4)'},{date:'Nov 2023',event:'IDF ground offensive begins in northern Gaza.',tag:'Escalation',tc:'rgba(192,57,43,0.4)'},{date:'Jan 2025',event:'Phase-one ceasefire agreed. Hostage-prisoner exchange begins.',tag:'Ceasefire',tc:'rgba(30,107,58,0.4)'},{date:'Mar 2025',event:'Ceasefire under strain. Both sides allege violations.',tag:'Fragile',tc:'rgba(212,130,10,0.4)'}]},
-
-  {id:1,cat:'military',flags:'🇮🇱🇱🇧',title:'Lebanon–Israel Conflict',region:'Middle East',parties:'Israel · Hezbollah · Lebanon',sev:'high',lat:33.8,lng:35.5,
-   query:'Israel Lebanon Hezbollah 2025',
-   econContext:'Cross-border fighting has severely damaged southern Lebanon infrastructure. Hezbollah\'s ties to Iran complicate any ceasefire. Cedar Revolution economic fragility deepened by war damage estimated at $3.4 billion.',
-   markets:['crude','gold','ils'],
-   timeline:[{date:'Oct 2023',event:'Hezbollah opens northern front in solidarity with Gaza.',tag:'Expansion',tc:'rgba(192,57,43,0.4)'},{date:'Sep 2024',event:'Israel conducts major airstrikes and pager/radio device operations targeting Hezbollah.',tag:'Escalation',tc:'rgba(192,57,43,0.4)'},{date:'Nov 2024',event:'Ceasefire agreement brokered by US and France.',tag:'Ceasefire',tc:'rgba(30,107,58,0.4)'},{date:'Mar 2025',event:'Sporadic violations reported. Lebanese army deploying south.',tag:'Fragile',tc:'rgba(212,130,10,0.4)'}]},
-
-  {id:2,cat:'military',flags:'🇮🇷🇮🇱🇺🇸',title:'Iran–Israel Tensions',region:'Middle East',parties:'Iran · Israel · United States',sev:'critical',lat:32.5,lng:52.0,
-   query:'Iran Israel nuclear tensions 2025',
-   econContext:'Iran\'s nuclear programme and proxy network across the region creates structural oil price risk. Any military escalation could close the Strait of Hormuz, through which 20% of global oil supply passes, causing an estimated $20–40/barrel spike.',
-   markets:['crude','gold','rtx'],
-   timeline:[{date:'Apr 2024',event:'Iran launches first-ever direct missile and drone attack on Israeli territory.',tag:'Historic',tc:'rgba(192,57,43,0.4)'},{date:'Jul 2024',event:'Israel strikes Haniyeh in Tehran. Khamenei vows retaliation.',tag:'Flashpoint',tc:'rgba(192,57,43,0.4)'},{date:'Mar 2025',event:'US carrier group repositioned. Nuclear talks collapsed.',tag:'Escalation',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:3,cat:'military',flags:'🇷🇺🇺🇦',title:'Russia–Ukraine War',region:'Eastern Europe',parties:'Russia · Ukraine',sev:'critical',lat:49.0,lng:31.0,
-   query:'Russia Ukraine war 2025',
-   econContext:'The war has restructured global energy markets. Europe spent an estimated €800bn replacing Russian gas. Ukrainian grain corridor disruptions raised global wheat prices 40%. Reconstruction of Ukraine estimated at $486 billion.',
-   markets:['natgas','wheat','rub','rtx'],
-   timeline:[{date:'Feb 2022',event:'Russia launches full-scale invasion of Ukraine.',tag:'Invasion',tc:'rgba(192,57,43,0.4)'},{date:'Sep 2022',event:'Ukraine liberates Kherson and Kharkiv regions.',tag:'Advance',tc:'rgba(30,107,58,0.4)'},{date:'Jan 2025',event:'Frontlines largely static. Peace talks proposed by Brazil and China.',tag:'Diplomacy',tc:'rgba(30,107,58,0.4)'}]},
-
-  {id:4,cat:'military',flags:'🇸🇩',title:'Sudan Civil War',region:'East Africa',parties:'SAF · RSF',sev:'critical',lat:15.5,lng:32.5,
-   query:'Sudan civil war 2025',
-   econContext:'Sudan\'s economy has collapsed. Oil production halted. 10 million displaced — largest displacement crisis globally. The war has cut off agricultural output from Africa\'s third-largest country, affecting regional food prices.',
-   markets:['wheat','gold'],
-   timeline:[{date:'Apr 2023',event:'Fighting erupts between SAF and RSF in Khartoum.',tag:'Outbreak',tc:'rgba(192,57,43,0.4)'},{date:'Mar 2025',event:'SAF retakes parts of Khartoum. RSF entrenched in Darfur.',tag:'Ongoing',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:5,cat:'military',flags:'🇹🇼🇨🇳',title:'Taiwan Strait Standoff',region:'East Asia',parties:'Taiwan · China · USA',sev:'high',lat:24.0,lng:121.0,
-   query:'Taiwan China military 2025',
-   econContext:'Taiwan produces 90% of the world\'s advanced semiconductors. A conflict scenario would trigger a global chip shortage estimated at $1 trillion in lost economic output. Shipping insurance premiums through the strait have tripled.',
-   markets:['gold','rtx'],
-   timeline:[{date:'Aug 2022',event:'China launches largest-ever military exercises around Taiwan after Pelosi visit.',tag:'Escalation',tc:'rgba(192,57,43,0.4)'},{date:'Feb 2025',event:'US approves $8bn arms package for Taiwan. China protests.',tag:'Tensions',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:6,cat:'military',flags:'🇮🇳🇵🇰',title:'Kashmir Standoff',region:'South Asia',parties:'India · Pakistan',sev:'high',lat:33.5,lng:75.0,
-   query:'India Pakistan Kashmir tensions 2025',
-   econContext:'Nuclear-armed rivals. Any escalation would freeze $30bn India-Pakistan trade corridor. Insurance on shipping in the Arabian Sea rises sharply during flare-ups. Both economies face significant defence spending pressure.',
-   markets:['gold'],
-   timeline:[{date:'Aug 2019',event:'India revokes Article 370, ending Kashmir\'s special status.',tag:'Political',tc:'rgba(192,57,43,0.4)'},{date:'Mar 2025',event:'Military exercises by both sides. Diplomatic contacts severed.',tag:'Tensions',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:7,cat:'military',flags:'🇲🇲',title:'Myanmar Civil Conflict',region:'Southeast Asia',parties:'Military Junta · Resistance Forces',sev:'high',lat:19.5,lng:96.5,
-   query:'Myanmar civil war junta 2025',
-   econContext:'Myanmar\'s economy contracted 18% since the coup. Foreign investment fled. The jade, teak and rare earth trades now fund conflict. Regional neighbours face refugee and narcotics spillover costing billions annually.',
-   markets:['gold'],
-   timeline:[{date:'Feb 2021',event:'Military coup ousts elected government of Aung San Suu Kyi.',tag:'Coup',tc:'rgba(130,30,160,0.4)'},{date:'Oct 2023',event:'Three Brotherhood Alliance launches major coordinated offensive.',tag:'Offensive',tc:'rgba(192,57,43,0.4)'},{date:'Mar 2025',event:'Resistance controls over 50% of territory.',tag:'Shifting',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:8,cat:'military',flags:'🇨🇩',title:'Eastern DRC Conflict',region:'Central Africa',parties:'DRC · M23 · Rwanda',sev:'critical',lat:-1.5,lng:29.0,
-   query:'DRC Congo M23 conflict 2025',
-   econContext:'Eastern DRC contains 70% of world\'s cobalt reserves and vast coltan deposits critical for electronics and EV batteries. Ongoing conflict disrupts supply chains and inflates EV battery costs globally.',
-   markets:['gold'],
-   timeline:[{date:'Nov 2021',event:'M23 rebellion resumes backed by Rwanda.',tag:'Resurgence',tc:'rgba(192,57,43,0.4)'},{date:'Jan 2025',event:'M23 captures Goma, second-largest city in DRC.',tag:'Escalation',tc:'rgba(192,57,43,0.4)'}]},
-
-  // CIVIL UNREST
-  {id:100,cat:'unrest',subtype:'protest',flags:'🇷🇸',title:'Serbia Protests',region:'Balkans',parties:'Citizens · Government',sev:'high',lat:44.8,lng:20.5,
-   query:'Serbia protests 2025',
-   econContext:'Investor confidence shaken. Serbia\'s EU accession process under scrutiny. IMF forecast revised downward. Tourism and foreign direct investment declining amid political instability.',
-   markets:['gold'],
-   timeline:[{date:'Nov 2024',event:'Novi Sad train station canopy collapse kills 15.',tag:'Trigger',tc:'rgba(192,57,43,0.4)'},{date:'Jan 2025',event:'Students launch nationwide strikes.',tag:'Escalation',tc:'rgba(212,130,10,0.4)'},{date:'Feb 2025',event:'Millions march in Belgrade.',tag:'Peak',tc:'rgba(30,107,58,0.4)'}]},
-
-  {id:101,cat:'unrest',subtype:'election',flags:'🇻🇪',title:'Venezuela Political Crisis',region:'Latin America',parties:'Government · Opposition',sev:'high',lat:8.0,lng:-66.0,
-   query:'Venezuela Maduro crisis 2025',
-   econContext:'Venezuela\'s oil output remains at 25% of 2013 peak. US sanctions cost Venezuela an estimated $6bn annually. The bolivar is worthless. Mass emigration of 7 million has burdened Colombia, Peru and Ecuador.',
-   markets:['crude'],
-   timeline:[{date:'Jul 2024',event:'Disputed presidential election. Maduro claims victory.',tag:'Election',tc:'rgba(212,130,10,0.4)'},{date:'Aug 2024',event:'Mass protests. Scores killed, hundreds arrested.',tag:'Repression',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:102,cat:'unrest',subtype:'protest',flags:'🇬🇪',title:'Georgia EU Crisis',region:'Caucasus',parties:'Pro-EU protesters · Government',sev:'medium',lat:41.7,lng:44.8,
-   query:'Georgia protests EU 2025',
-   econContext:'EU accession suspension has frozen €800m in EU funds. Foreign investors pausing. Lari weakened. Georgia\'s service-sector economy, heavily dependent on EU trade, faces significant headwinds.',
-   markets:['gold'],
-   timeline:[{date:'Nov 2024',event:'Government suspends EU accession until 2028.',tag:'Trigger',tc:'rgba(192,57,43,0.4)'},{date:'Dec 2024',event:'Nightly mass protests in Tbilisi.',tag:'Protests',tc:'rgba(212,130,10,0.4)'}]},
-
-  {id:103,cat:'unrest',subtype:'coup',flags:'🇳🇪🇲🇱🇧🇫',title:'Sahel Military Takeovers',region:'West Africa',parties:'Military Juntas · Populations',sev:'high',lat:17.0,lng:2.0,
-   query:'Sahel military coup Niger Mali Burkina Faso 2025',
-   econContext:'France lost €1.5bn in annual development contracts. Wagner Group presence destabilised the security sector. UN peacekeeping missions expelled. Regional food insecurity affecting 20+ million people as agricultural disruption worsens.',
-   markets:['gold','wheat'],
-   timeline:[{date:'Jul 2023',event:'Military coup in Niger.',tag:'Coup',tc:'rgba(130,30,160,0.4)'},{date:'Jan 2025',event:'French military fully withdrawn. Wagner confirmed.',tag:'Shift',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:104,cat:'unrest',subtype:'revolution',flags:'🇧🇩',title:'Bangladesh Transition',region:'South Asia',parties:'Student Movement · Interim Government',sev:'medium',lat:23.7,lng:90.4,
-   query:'Bangladesh political transition 2025',
-   econContext:'Bangladesh\'s garment sector, which produces 6% of global apparel exports, faced disruption. Factory closures cost $3.5bn. The political transition creates uncertainty for $40bn in annual export earnings.',
-   markets:['gold'],
-   timeline:[{date:'Jul 2024',event:'Student uprising against quotas turns into revolution.',tag:'Spark',tc:'rgba(212,130,10,0.4)'},{date:'Aug 2024',event:'PM Hasina flees. Yunus leads interim government.',tag:'Transition',tc:'rgba(30,107,58,0.4)'}]},
-
-  // HUMANITARIAN CRISES
-  {id:200,cat:'humanitarian',flags:'🇸🇩🇨🇩',title:'Darfur Humanitarian Crisis',region:'East Africa',parties:'Civilians · RSF',sev:'critical',lat:13.5,lng:24.0,
-   query:'Darfur genocide humanitarian 2025',
-   econContext:'UN declares famine conditions across vast areas. WFP requires $4.1bn to respond. Darfur produces a significant share of Sudan\'s gum arabic, used in food and pharmaceuticals globally.',
-   markets:['wheat'],
-   timeline:[{date:'Apr 2023',event:'RSF advances into Darfur. Mass atrocities reported.',tag:'Crisis',tc:'rgba(192,57,43,0.4)'},{date:'Mar 2025',event:'ICC issues new arrest warrants. 5m face starvation.',tag:'Famine',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:201,cat:'humanitarian',flags:'🇵🇸',title:'Gaza Humanitarian Emergency',region:'Middle East',parties:'Civilian population',sev:'critical',lat:31.4,lng:34.3,
-   query:'Gaza humanitarian aid crisis 2025',
-   econContext:'Gaza\'s GDP effectively zero. Reconstruction estimated at $50bn+. UNRWA requires $1.6bn annually. Regional countries absorbing refugee and aid costs.',
-   markets:['crude','gold'],
-   timeline:[{date:'Oct 2023',event:'Aid blockade imposed. UN warns of catastrophic conditions.',tag:'Emergency',tc:'rgba(192,57,43,0.4)'},{date:'Jan 2025',event:'Ceasefire allows partial aid entry. Famine averted temporarily.',tag:'Partial Relief',tc:'rgba(212,130,10,0.4)'}]},
-
-  {id:202,cat:'humanitarian',flags:'🇨🇳',title:'Uyghur Situation',region:'Northwest China',parties:'Uyghur population · Chinese authorities',sev:'high',lat:43.0,lng:87.5,
-   query:'Uyghur Xinjiang human rights 2025',
-   econContext:'Western sanctions on Xinjiang goods affect $40bn in annual trade including cotton, polysilicon and tomato paste. Supply chain audits cost multinationals billions. The region produces 35% of the world\'s polysilicon used in solar panels.',
-   markets:['gold'],
-   timeline:[{date:'2017',event:'Mass detention campaign begins.',tag:'Start',tc:'rgba(192,57,43,0.4)'},{date:'2022',event:'UN report describes possible crimes against humanity.',tag:'UN Report',tc:'rgba(212,130,10,0.4)'}]},
-
-  // TERRORISM
-  {id:300,cat:'terrorism',flags:'🇳🇬🇳🇪🇲🇱',title:'ISIS–Sahel Insurgency',region:'West Africa',parties:'ISIS-GS · JNIM · Civilian populations',sev:'critical',lat:14.0,lng:3.0,
-   query:'ISIS Sahel jihadist insurgency 2025',
-   econContext:'Insurgency has destroyed agricultural productivity across the Lake Chad basin. 3 million displaced. G5 Sahel security alliance collapsed. French and US withdrawal left a vacuum, increasing costs for remaining states.',
-   markets:['gold','wheat'],
-   timeline:[{date:'2015',event:'ISIS-GS and JNIM establish presence across the Sahel.',tag:'Emergence',tc:'rgba(192,57,43,0.4)'},{date:'Mar 2025',event:'Record casualties. Attacks reach coastal West Africa.',tag:'Expansion',tc:'rgba(192,57,43,0.4)'}]},
-
-  {id:301,cat:'terrorism',flags:'🇸🇴',title:'Al-Shabaab — Somalia',region:'East Africa',parties:'Al-Shabaab · Government · AMISOM',sev:'high',lat:5.5,lng:46.0,
-   query:'Al-Shabaab Somalia attacks 2025',
-   econContext:'Al-Shabaab taxes trade and agriculture across large areas of Somalia. Foreign investment essentially zero. Regional maritime trade disrupted. Piracy risk in Gulf of Aden raises global shipping insurance costs.',
-   markets:['crude'],
-   timeline:[{date:'2006',event:'Al-Shabaab emerges as major force.',tag:'Emergence',tc:'rgba(192,57,43,0.4)'},{date:'Mar 2025',event:'Major offensive operations ongoing near Mogadishu.',tag:'Active',tc:'rgba(192,57,43,0.4)'}]},
+  {id:0,cat:'military',flags:'🇮🇱🇵🇸',title:'Gaza Conflict',region:'Middle East',parties:'Israel · Gaza',sev:'critical',lat:31.5,lng:34.5,query:'Gaza Israel conflict 2025',econContext:'The conflict has disrupted regional trade, frozen foreign investment across the Levant, and driven safe-haven flows into gold. Tourism revenues across Egypt, Jordan and Israel have dropped sharply. Reconstruction costs estimated at $50bn+.',markets:['crude','gold','ils','lmt'],timeline:[{date:'Oct 2023',event:'Hamas launches large-scale attack on southern Israel. Israel declares war.',tag:'Outbreak',tc:'rgba(192,57,43,.4)'},{date:'Nov 2023',event:'IDF ground offensive begins in northern Gaza.',tag:'Escalation',tc:'rgba(192,57,43,.4)'},{date:'Jan 2025',event:'Phase-one ceasefire agreed. Hostage-prisoner exchange begins.',tag:'Ceasefire',tc:'rgba(30,107,58,.4)'},{date:'Mar 2025',event:'Ceasefire under strain. Both sides allege violations.',tag:'Fragile',tc:'rgba(212,130,10,.4)'}]},
+  {id:1,cat:'military',flags:'🇷🇺🇺🇦',title:'Russia–Ukraine War',region:'Eastern Europe',parties:'Russia · Ukraine',sev:'critical',lat:49.0,lng:31.0,query:'Russia Ukraine war 2025',econContext:'The war restructured global energy markets. Europe spent €800bn replacing Russian gas. Ukrainian grain corridor disruptions raised global wheat prices 40%+. Reconstruction estimated at $486bn.',markets:['natgas','wheat','rub','rtx'],timeline:[{date:'Feb 2022',event:'Russia launches full-scale invasion.',tag:'Invasion',tc:'rgba(192,57,43,.4)'},{date:'Sep 2022',event:'Ukraine liberates Kherson and Kharkiv.',tag:'Advance',tc:'rgba(30,107,58,.4)'},{date:'Jan 2025',event:'Frontlines largely static. Peace talks proposed.',tag:'Diplomacy',tc:'rgba(30,107,58,.4)'}]},
+  {id:2,cat:'military',flags:'🇮🇷🇮🇱',title:'Iran–Israel Tensions',region:'Middle East',parties:'Iran · Israel · USA',sev:'critical',lat:32.5,lng:52.0,query:'Iran Israel nuclear tensions 2025',econContext:'Iran\'s nuclear programme creates structural oil price risk. Hormuz closure could spike oil $20-40/barrel. US carrier groups repositioned. Gold at multi-year highs on safe-haven demand.',markets:['crude','gold','rtx'],timeline:[{date:'Apr 2024',event:'Iran launches first-ever direct missile attack on Israeli territory.',tag:'Historic',tc:'rgba(192,57,43,.4)'},{date:'Jul 2024',event:'Israel strikes Hamas chief in Tehran.',tag:'Flashpoint',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'Nuclear talks collapsed. Escalation risk elevated.',tag:'Escalation',tc:'rgba(192,57,43,.4)'}]},
+  {id:3,cat:'military',flags:'🇸🇩',title:'Sudan Civil War',region:'East Africa',parties:'SAF · RSF',sev:'critical',lat:15.5,lng:32.5,query:'Sudan civil war 2025',econContext:'Sudan\'s economy has collapsed. Oil production halted. 10 million displaced. Agricultural output cut dramatically, affecting regional food prices.',markets:['wheat','gold'],timeline:[{date:'Apr 2023',event:'Fighting erupts between SAF and RSF.',tag:'Outbreak',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'SAF retakes parts of Khartoum. RSF entrenched in Darfur.',tag:'Ongoing',tc:'rgba(192,57,43,.4)'}]},
+  {id:4,cat:'military',flags:'🇹🇼🇨🇳',title:'Taiwan Strait Standoff',region:'East Asia',parties:'Taiwan · China · USA',sev:'high',lat:24.0,lng:121.0,query:'Taiwan China military tensions 2025',econContext:'Taiwan produces 90% of the world\'s advanced semiconductors. A conflict would trigger a global chip shortage estimated at $1 trillion in lost output.',markets:['gold','rtx','lmt'],timeline:[{date:'Aug 2022',event:'China launches largest-ever military exercises around Taiwan.',tag:'Escalation',tc:'rgba(192,57,43,.4)'},{date:'Feb 2025',event:'US approves $8bn arms package for Taiwan.',tag:'Tensions',tc:'rgba(192,57,43,.4)'}]},
+  {id:5,cat:'military',flags:'🇮🇳🇵🇰',title:'Kashmir Standoff',region:'South Asia',parties:'India · Pakistan',sev:'high',lat:33.5,lng:75.0,query:'India Pakistan Kashmir conflict 2025',econContext:'Nuclear-armed rivals. Any escalation would freeze $30bn trade corridor. Gold surges on subcontinental safe-haven demand.',markets:['gold'],timeline:[{date:'Aug 2019',event:'India revokes Article 370.',tag:'Political',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'Military exercises by both sides.',tag:'Tensions',tc:'rgba(192,57,43,.4)'}]},
+  {id:100,cat:'unrest',subtype:'protest',flags:'🇷🇸',title:'Serbia Protests',region:'Balkans',parties:'Citizens · Government',sev:'high',lat:44.8,lng:20.5,query:'Serbia protests opposition 2025',econContext:'Investor confidence shaken. Serbia\'s EU accession under scrutiny. Tourism and FDI declining.',markets:['gold'],timeline:[{date:'Nov 2024',event:'Novi Sad train station canopy collapse kills 15.',tag:'Trigger',tc:'rgba(192,57,43,.4)'},{date:'Feb 2025',event:'Millions march in Belgrade.',tag:'Peak',tc:'rgba(30,107,58,.4)'}]},
+  {id:101,cat:'unrest',subtype:'election',flags:'🇻🇪',title:'Venezuela Crisis',region:'Latin America',parties:'Government · Opposition',sev:'high',lat:8.0,lng:-66.0,query:'Venezuela Maduro political crisis 2025',econContext:'Venezuela\'s oil output at 25% of 2013 peak. US sanctions cost $6bn annually. Mass emigration of 7 million.',markets:['crude'],timeline:[{date:'Jul 2024',event:'Disputed presidential election.',tag:'Election',tc:'rgba(212,130,10,.4)'},{date:'Aug 2024',event:'Mass protests. Scores killed.',tag:'Repression',tc:'rgba(192,57,43,.4)'}]},
+  {id:102,cat:'unrest',subtype:'coup',flags:'🇳🇪🇲🇱🇧🇫',title:'Sahel Military Takeovers',region:'West Africa',parties:'Military Juntas · Populations',sev:'high',lat:17.0,lng:2.0,query:'Sahel coup military Niger Mali Burkina Faso 2025',econContext:'France lost €1.5bn in annual development contracts. Wagner Group presence destabilised security. 20+ million facing food insecurity.',markets:['gold','wheat'],timeline:[{date:'Jul 2023',event:'Military coup in Niger.',tag:'Coup',tc:'rgba(130,30,160,.4)'},{date:'Jan 2025',event:'French military fully withdrawn.',tag:'Shift',tc:'rgba(192,57,43,.4)'}]},
+  {id:200,cat:'humanitarian',flags:'🇸🇩',title:'Darfur Crisis',region:'East Africa',parties:'Civilians · RSF',sev:'critical',lat:13.5,lng:24.0,query:'Darfur humanitarian crisis famine 2025',econContext:'UN declares famine conditions. WFP requires $4.1bn to respond. 5 million face starvation.',markets:['wheat'],timeline:[{date:'Apr 2023',event:'RSF advances into Darfur.',tag:'Crisis',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'ICC issues new arrest warrants.',tag:'Famine',tc:'rgba(192,57,43,.4)'}]},
+  {id:201,cat:'humanitarian',flags:'🇨🇳',title:'Uyghur Situation',region:'Northwest China',parties:'Uyghur population · Chinese authorities',sev:'high',lat:43.0,lng:87.5,query:'Uyghur Xinjiang human rights 2025',econContext:'Western sanctions on Xinjiang goods affect $40bn in annual trade including cotton and polysilicon (35% of global solar supply).',markets:['gold'],timeline:[{date:'2017',event:'Mass detention campaign begins.',tag:'Start',tc:'rgba(192,57,43,.4)'},{date:'2022',event:'UN report describes possible crimes against humanity.',tag:'UN Report',tc:'rgba(212,130,10,.4)'}]},
+  {id:300,cat:'terrorism',flags:'🇳🇬🇳🇪🇲🇱',title:'ISIS–Sahel Insurgency',region:'West Africa',parties:'ISIS-GS · JNIM · Civilians',sev:'critical',lat:14.0,lng:3.0,query:'ISIS Sahel jihadist attacks 2025',econContext:'Insurgency destroyed agricultural productivity across Lake Chad basin. 3 million displaced. Record casualties in 2024.',markets:['gold','wheat'],timeline:[{date:'2015',event:'ISIS-GS and JNIM establish Sahel presence.',tag:'Emergence',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'Attacks reach coastal West Africa.',tag:'Expansion',tc:'rgba(192,57,43,.4)'}]},
+  {id:301,cat:'terrorism',flags:'🇸🇴',title:'Al-Shabaab — Somalia',region:'East Africa',parties:'Al-Shabaab · Government · AMISOM',sev:'high',lat:5.5,lng:46.0,query:'Al-Shabaab Somalia attacks 2025',econContext:'Al-Shabaab taxes trade across large areas of Somalia. Regional maritime trade disrupted, raising Gulf of Aden shipping insurance.',markets:['crude'],timeline:[{date:'2006',event:'Al-Shabaab emerges as major force.',tag:'Emergence',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'Major offensive operations ongoing.',tag:'Active',tc:'rgba(192,57,43,.4)'}]},
 ];
 
-// ═══════════════════════════════════════
+// ══════════════════════════════
 // MARKET DEFINITIONS
-// ═══════════════════════════════════════
+// ══════════════════════════════
 const marketDefs=[
-  {id:'crude',icon:'🛢️',name:'Brent Crude',ticker:'BRT',events:['Gaza Conflict','Russia–Ukraine War','Iran–Israel Tensions'],why:'Hormuz closure risk and Russian export restrictions are the primary drivers. Every 10% escalation in Middle East tensions historically adds $5–8/barrel.'},
-  {id:'gold',icon:'🥇',name:'Gold',ticker:'XAU/USD',events:['Iran–Israel Tensions','Taiwan Strait Standoff'],why:'Safe-haven demand surges during multi-conflict periods. Gold outperforms all assets when two or more critical conflicts escalate simultaneously.'},
-  {id:'natgas',icon:'🔥',name:'Natural Gas',ticker:'TTF',events:['Russia–Ukraine War'],why:'Russian pipeline cuts and European storage drawdowns are structural. TTF now trades at 3x pre-war average.'},
-  {id:'wheat',icon:'🌾',name:'Wheat',ticker:'CBOT',events:['Russia–Ukraine War','Sudan Civil War'],why:'Ukraine and Russia supply 29% of global wheat exports. Every major escalation triggers food import panic across North Africa and the Middle East.'},
-  {id:'rub',icon:'💱',name:'USD/Ruble',ticker:'USD/RUB',events:['Russia–Ukraine War'],why:'Western financial sanctions, SWIFT exclusions and oil revenue decline have structurally weakened the ruble.'},
-  {id:'ils',icon:'💱',name:'USD/Shekel',ticker:'USD/ILS',events:['Gaza Conflict','Lebanon–Israel Conflict'],why:'War costs, capital outflows and foreign investor withdrawal have pressured the shekel. Bank of Israel has deployed $30bn in currency interventions.'},
-  {id:'rtx',icon:'🏭',name:'Raytheon (RTX)',ticker:'NYSE:RTX',events:['Iran–Israel Tensions','Russia–Ukraine War','Taiwan Strait Standoff'],why:'Defence spending at post-Cold War highs. NATO members committed to 2%+ GDP defence budgets. Raytheon Patriot and Iron Dome demand at record levels.'},
-  {id:'lmt',icon:'🚀',name:'Lockheed Martin',ticker:'NYSE:LMT',events:['Russia–Ukraine War','Taiwan Strait Standoff'],why:'F-35 demand surging. Poland, Germany, Finland and others placed multi-billion orders. $100bn backlog.'},
-  {id:'silver',icon:'🥈',name:'Silver',ticker:'XAG/USD',events:['Iran–Israel Tensions','Taiwan Strait Standoff'],why:'Silver follows gold in safe-haven flows but also faces industrial demand pressure from defence electronics manufacturing.'},
-  {id:'corn',icon:'🌽',name:'Corn',ticker:'CBOT:C',events:['Russia–Ukraine War','Sudan Civil War'],why:'Ukraine is the world\'s 4th largest corn exporter. War disruptions affect global feed grain markets and livestock prices.'},
+  {id:'crude',icon:'🛢️',name:'Brent Crude',ticker:'BRT',events:['Gaza Conflict','Iran–Israel Tensions','Venezuela Crisis'],why:'Strait of Hormuz closure risk and Russian export restrictions are structural drivers. Each major Middle East escalation historically adds $5–8/barrel.',history:[82,84,83,86,85,88,87,89,91,90,92,87]},
+  {id:'gold',icon:'🥇',name:'Gold',ticker:'XAU/USD',events:['Iran–Israel Tensions','Taiwan Strait Standoff','Kashmir Standoff'],why:'Safe-haven demand surges during multi-conflict periods. Central bank buying at record pace. Outperforms all assets when two or more critical conflicts escalate.',history:[2150,2180,2175,2220,2250,2280,2310,2340,2370,2360,2390,2381]},
+  {id:'natgas',icon:'🔥',name:'Natural Gas',ticker:'TTF',events:['Russia–Ukraine War'],why:'Russian pipeline cuts and EU storage drawdowns are structural. TTF trades at 3x pre-war average. Infrastructure strikes push prices higher.',history:[3.1,3.4,3.3,3.6,3.5,3.8,3.7,4.0,3.9,3.8,4.1,3.82]},
+  {id:'wheat',icon:'🌾',name:'Wheat',ticker:'CBOT',events:['Russia–Ukraine War','Sudan Civil War','Darfur Crisis'],why:'Ukraine and Russia supply 29% of global wheat exports. Sahel conflicts cut regional agricultural output further.',history:[5.6,5.9,5.8,6.1,6.0,6.3,6.2,6.4,6.3,6.5,6.4,6.42]},
+  {id:'rub',icon:'💱',name:'USD/Ruble',ticker:'USD/RUB',events:['Russia–Ukraine War'],why:'Western sanctions, SWIFT exclusions and declining oil revenues have structurally weakened the ruble.',history:[76,79,81,82,84,86,87,88,89,91,92,92.4]},
+  {id:'ils',icon:'💱',name:'USD/Shekel',ticker:'USD/ILS',events:['Gaza Conflict','Iran–Israel Tensions'],why:'War costs, capital outflows and foreign investor withdrawal have pressured the shekel. Bank of Israel deployed $30bn in currency interventions.',history:[3.58,3.62,3.67,3.70,3.73,3.75,3.77,3.79,3.80,3.82,3.83,3.84]},
+  {id:'rtx',icon:'🏭',name:'Raytheon (RTX)',ticker:'NYSE:RTX',events:['Iran–Israel Tensions','Russia–Ukraine War','Taiwan Strait Standoff'],why:'Defence spending at post-Cold War highs. NATO 2%+ GDP commitments. Patriot and Iron Dome demand at record levels. $100bn+ backlog.',history:[90,93,96,98,100,102,101,104,105,106,108,108.4]},
+  {id:'lmt',icon:'🚀',name:'Lockheed Martin',ticker:'NYSE:LMT',events:['Russia–Ukraine War','Taiwan Strait Standoff','Gaza Conflict'],why:'F-35 demand surging. Poland, Germany, Finland placed multi-billion orders. HIMARS and THAAD contracts expanding. $135bn backlog.',history:[435,442,448,454,458,462,464,466,468,469,471,472.5]},
 ];
-
-const winnerDefs=[
-  {id:'rtx',icon:'🚀',name:'Raytheon',ticker:'RTX'},
-  {id:'lmt',icon:'🏭',name:'Lockheed',ticker:'LMT'},
-  {id:'gold',icon:'🥇',name:'Gold',ticker:'XAU'},
-  {id:'crude',icon:'🛢️',name:'Brent Crude',ticker:'BRT'},
-  {id:'silver',icon:'🥈',name:'Silver',ticker:'XAG'},
-];
-const loserDefs=[
-  {id:'air',icon:'✈️',name:'Airlines Index',ticker:'XAL'},
-  {id:'tourism',icon:'🏨',name:'Tourism ETF',ticker:'AWAY'},
-  {id:'ship',icon:'🚢',name:'Shipping',ticker:'BDIY'},
-  {id:'teva',icon:'💊',name:'EM Pharma',ticker:'EMPH'},
-  {id:'egp',icon:'💱',name:'Eg. Pound',ticker:'EGP'},
-];
-
-// Fallback data
-const mktFallback={
-  crude:{price:'$87.42',change:'+3.2%',dir:'up',raw:87.42},
-  gold:{price:'$2,381',change:'+1.8%',dir:'up',raw:2381},
-  natgas:{price:'$3.82',change:'+5.1%',dir:'up',raw:3.82},
-  wheat:{price:'$6.42',change:'+4.1%',dir:'up',raw:6.42},
-  rub:{price:'92.40',change:'+0.8%',dir:'dn',raw:92.4},
-  ils:{price:'3.84',change:'+1.2%',dir:'up',raw:3.84},
-  rtx:{price:'$108.40',change:'+2.8%',dir:'up',raw:108.4},
-  lmt:{price:'$472.50',change:'+1.9%',dir:'up',raw:472.5},
-  silver:{price:'$27.40',change:'+1.1%',dir:'up',raw:27.4},
-  corn:{price:'$4.82',change:'+0.9%',dir:'up',raw:4.82},
-  air:{price:'—',change:'-2.1%',dir:'dn',raw:0},
-  tourism:{price:'—',change:'-1.4%',dir:'dn',raw:0},
-  ship:{price:'—',change:'-3.2%',dir:'dn',raw:0},
-  teva:{price:'—',change:'-0.9%',dir:'dn',raw:0},
-  egp:{price:'—',change:'-2.8%',dir:'dn',raw:0},
-};
+const winnerDefs=[{id:'rtx',icon:'🏭',name:'Raytheon',ticker:'RTX'},{id:'lmt',icon:'🚀',name:'Lockheed',ticker:'LMT'},{id:'gold',icon:'🥇',name:'Gold',ticker:'XAU'},{id:'crude',icon:'🛢️',name:'Brent Crude',ticker:'BRT'},{id:'natgas',icon:'🔥',name:'Nat. Gas',ticker:'TTF'}];
+const loserDefs=[{icon:'✈️',name:'Airlines Index',ticker:'XAL',change:'-2.1%',dir:'dn'},{icon:'🏨',name:'Tourism ETF',ticker:'AWAY',change:'-1.4%',dir:'dn'},{icon:'🚢',name:'Dry Bulk Shipping',ticker:'BDIY',change:'-3.2%',dir:'dn'},{icon:'💱',name:'Egyptian Pound',ticker:'EGP',change:'-2.8%',dir:'dn'},{icon:'💊',name:'EM Pharma',ticker:'EMPH',change:'-0.9%',dir:'dn'}];
+const mktFallback={crude:{price:'$87.42',change:'+3.2%',dir:'up',raw:87.42},gold:{price:'$2,381',change:'+1.8%',dir:'up',raw:2381},natgas:{price:'$3.82',change:'+5.1%',dir:'up',raw:3.82},wheat:{price:'$6.42',change:'+4.1%',dir:'up',raw:6.42},rub:{price:'92.40',change:'+0.8%',dir:'dn',raw:92.4},ils:{price:'3.84',change:'+1.2%',dir:'up',raw:3.84},rtx:{price:'$108.40',change:'+2.8%',dir:'up',raw:108.4},lmt:{price:'$472.50',change:'+1.9%',dir:'up',raw:472.5}};
 const cryptoData={BTC:'$83,420',ETH:'$2,041',XRP:'$2.21',SOL:'$135.40',BNB:'$598',AVAX:'$22.10',DOGE:'$0.172',ADA:'$0.71'};
+let liveMarkets={};let liveNews={};let currentEvent=0;let lastScreen='map';
+let currentCat='military';let currentTabIdx=0;let leafletMap=null;let mapMarkers=[];
+let newsRefreshTimer=null;let bannerEventId=null;let latestAlertHeadline='';
+let alertsData=[];
 
-let liveMarkets={}, liveNews={}, currentEvent=0, lastScreen='map', leafletMap=null, mapMarkers=[], currentCat='military';
-
-// ═══════════════════════════════════════
-// LEAFLET MAP
-// ═══════════════════════════════════════
+// ══════════════════════════════
+// MAP
+// ══════════════════════════════
 function initMap(){
   leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:true,scrollWheelZoom:false,minZoom:1,maxZoom:8});
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19}).addTo(leafletMap);
   addMapMarkers();
 }
-
-function eventColor(e){
-  if(e.cat==='terrorism')return'#d07ef5';
-  if(e.cat==='humanitarian')return'#7ef5a9';
-  if(e.cat==='unrest'){
-    if(e.subtype==='coup')return'#c87ef5';
-    return'#f5c96a';
-  }
-  return{critical:'#c0392b',high:'#d4820a',medium:'#c8b800',low:'#27ae60'}[e.sev]||'#aaa';
-}
-function eventEmoji(e){
-  if(e.cat==='terrorism')return'💥';
-  if(e.cat==='humanitarian')return'🕊️';
-  if(e.subtype==='coup')return'👁️';
-  if(e.cat==='unrest')return'✊';
-  return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';
-}
-
+function evColor(e){if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#7ef5a9';if(e.cat==='unrest')return'#f5c96a';return{critical:'#c0392b',high:'#d4820a',medium:'#c8b800'}[e.sev]||'#aaa';}
+function evEmoji(e){if(e.cat==='terrorism')return'💥';if(e.cat==='humanitarian')return'🕊️';if(e.cat==='unrest')return'✊';return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';}
 function addMapMarkers(){
-  mapMarkers.forEach(m=>m.remove()); mapMarkers=[];
+  mapMarkers.forEach(m=>m.remove());mapMarkers=[];
   events.forEach(ev=>{
     if(!ev.lat||!ev.lng)return;
-    const color=eventColor(ev), emoji=eventEmoji(ev);
-    // Use neutral parties label on pin
-    const pinLabel=ev.parties||ev.title;
-    const icon=L.divIcon({
-      className:'',
-      html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin" style="border-color:${color};">${emoji}</div><div class="marker-label">${ev.flags} ${pinLabel}</div></div>`,
-      iconSize:[200,54],iconAnchor:[100,20],popupAnchor:[0,-22],
-    });
+    const color=evColor(ev);
+    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label">${ev.flags} ${ev.parties}</div></div>`,iconSize:[220,54],iconAnchor:[110,20],popupAnchor:[0,-22]});
     const marker=L.marker([ev.lat,ev.lng],{icon}).addTo(leafletMap);
-    const mktChips=(ev.markets||[]).slice(0,3).map(mid=>{
-      const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';
-      return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;
-    }).join('');
-    marker.bindPopup(`<div class="map-popup"><div class="mpp-flags">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div><div class="mpp-summary">${ev.summary||ev.econContext?.substring(0,90)||''}…</div>${mktChips?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${mktChips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id});leafletMap.closePopup()">Read All Sides →</button></div>`,{maxWidth:270,minWidth:230});
-    marker.on('click',()=>marker.openPopup());
+    const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;}).join('');
+    marker.bindPopup(`<div class="map-popup"><div class="mpp-flags">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:6px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">Read All Sides →</button></div>`,{maxWidth:270,minWidth:220});
     mapMarkers.push(marker);
   });
 }
 
-// ═══════════════════════════════════════
-// FETCH MARKET DATA
-// ═══════════════════════════════════════
+// ══════════════════════════════
+// MARKET DATA
+// ══════════════════════════════
 async function fetchMarketData(){
-  // Fetch stocks via our own /api/markets proxy (key stays server-side)
-  const stocks=[{id:'rtx',sym:'RTX'},{id:'lmt',sym:'LMT'}];
-  for(const s of stocks){
+  for(const s of [{id:'rtx',sym:'RTX'},{id:'lmt',sym:'LMT'}]){
     try{
       const r=await fetch(`/api/markets?symbol=${s.sym}&fn=GLOBAL_QUOTE`);
       const d=await r.json();const q=d['Global Quote'];
@@ -1015,155 +665,112 @@ async function fetchMarketData(){
     }catch(e){}
   }
   for(const[id,fb]of Object.entries(mktFallback)){if(!liveMarkets[id])liveMarkets[id]=fb;}
-  updateTickers(); renderMarkets(); renderMovers();
-  renderList('military'); addMapMarkers();
-  // Refresh market data every 60 seconds automatically
-  setTimeout(fetchMarketData, 60000);
+  updateTicker();renderMarkets();renderMovers();renderList('military');addMapMarkers();
+  setTimeout(fetchMarketData,60000);
 }
 
-function updateTickers(){
-  const crypto=Object.entries(cryptoData).map(([s,p])=>
-    `◆ ${s} <span class="t-up">${p}</span>`).join('  &nbsp; ');
-  const markets=[
+function makeSpark(id,dir,tall=false){
+  const def=marketDefs.find(d=>d.id===id);
+  const pts=def?.history||Array.from({length:12},(_,i)=>{const b=liveMarkets[id]?.raw||100;return b+(dir==='up'?1:-1)*(i/11)*b*.04+(Math.random()-.5)*b*.02;});
+  const w=300,h=tall?80:42;
+  const mn=Math.min(...pts),mx=Math.max(...pts);
+  const sp=pts.map((v,i)=>`${(i/(pts.length-1))*w},${h-((v-mn)/(mx-mn||1))*(h-4)-2}`).join(' ');
+  const col=dir==='up'?'#27ae60':'#c0392b';
+  return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;"><polyline points="${sp} ${w},${h} 0,${h}" fill="${col}" opacity=".12" stroke="none"/><polyline points="${sp}" fill="none" stroke="${col}" stroke-width="${tall?2:1.8}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function updateTicker(){
+  const crypto=Object.entries(cryptoData).map(([s,p])=>`◆ ${s} <span class="t-up">${p}</span>`).join(' &nbsp;');
+  const mkts=[
     `◆ OIL <span class="${liveMarkets.crude?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.crude?.price||'$—'} ${liveMarkets.crude?.change||''}</span>`,
     `◆ GOLD <span class="${liveMarkets.gold?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.gold?.price||'$—'} ${liveMarkets.gold?.change||''}</span>`,
-    `◆ SILVER <span class="t-up">$27.40 +1.1%</span>`,
-    `◆ DXY <span class="t-dn">104.2 -0.3%</span>`,
-    `◆ EUR/USD <span class="t-up">1.0821 +0.2%</span>`,
-    `◆ USD/JPY <span class="t-dn">149.3 -0.4%</span>`,
-    `◆ USD/CNY <span class="t-up">7.241 +0.1%</span>`,
+    `◆ SILVER <span class="t-up">$27.40 +1.1%</span>`,`◆ DXY <span class="t-dn">104.2 -0.3%</span>`,
+    `◆ EUR/USD <span class="t-up">1.0821 +0.2%</span>`,`◆ USD/JPY <span class="t-dn">149.3 -0.4%</span>`,
     `◆ NATGAS <span class="${liveMarkets.natgas?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.natgas?.price||'$—'} ${liveMarkets.natgas?.change||''}</span>`,
     `◆ WHEAT <span class="${liveMarkets.wheat?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.wheat?.price||'$—'} ${liveMarkets.wheat?.change||''}</span>`,
-    `◆ CORN <span class="t-up">$4.82 +0.9%</span>`,
-    `◆ SOY <span class="t-up">$10.44 +0.7%</span>`,
-    `◆ S&amp;P500 <span class="t-up">5,842 +0.6%</span>`,
-    `◆ NASDAQ <span class="t-up">18,240 +0.8%</span>`,
+    `◆ S&amp;P500 <span class="t-up">5,842 +0.6%</span>`,`◆ NASDAQ <span class="t-up">18,240 +0.8%</span>`,
     `◆ RTX <span class="${liveMarkets.rtx?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.rtx?.price||'—'} ${liveMarkets.rtx?.change||''}</span>`,
     `◆ LMT <span class="${liveMarkets.lmt?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.lmt?.price||'—'} ${liveMarkets.lmt?.change||''}</span>`,
-  ].join('  &nbsp; ');
-  document.getElementById('ticker-all').innerHTML = crypto + '  &nbsp;&nbsp;  ' + markets;
-}
-
-// ═══════════════════════════════════════
-// RENDER FUNCTIONS
-// ═══════════════════════════════════════
-function makeSpark(id,dir){
-  const base=liveMarkets[id]?.raw||100;
-  const pts=Array.from({length:12},(_,i)=>{
-    const n=(Math.random()-.5)*base*.045;
-    const t=dir==='up'?(i/11)*base*.06:-(i/11)*base*.06;
-    return base-base*.03+t+n;
-  });
-  const w=300,h=40,min=Math.min(...pts),max=Math.max(...pts);
-  const svgPts=pts.map((v,i)=>`${(i/(pts.length-1))*w},${h-((v-min)/(max-min||1))*(h-5)-2}`).join(' ');
-  const col=dir==='up'?'#27ae60':'#c0392b';
-  return`<svg class="spark-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${svgPts} ${w},${h} 0,${h}" fill="${col}" opacity=".12" stroke="none"/><polyline points="${svgPts}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-}
-
-function eventCard(ev){
-  const tbClass={military:'tb-military',unrest:'tb-unrest',humanitarian:'tb-humanitarian',terrorism:'tb-terrorism'}[ev.cat]||'tb-military';
-  const tbLabel={military:'⚔️ Armed Conflict',unrest:{protest:'✊ Mass Protest',coup:'👁️ Coup',revolution:'🔥 Revolution',election:'🗳️ Election Crisis'}[ev.subtype]||'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crisis',terrorism:'💥 Terrorism'}[ev.cat]||ev.cat;
-  const chips=(ev.markets||[]).slice(0,4).map(mid=>{
-    const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';
-    return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;
-  }).join('');
-  return`<div class="event-card" onclick="openEvent(${ev.id})">
-    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
-      <div class="ec-flags">${ev.flags}</div>
-      <div style="flex:1;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div>
-        <div class="ec-meta">${ev.parties} · ${ev.region}</div>
-      </div>
-    </div>
-    <div class="type-badge ${tbClass}">${tbLabel}</div>
-    <div class="ec-summary">${(ev.econContext||'').substring(0,110)}…</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
-      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.25);">All sides · Live news</div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--red);">READ →</div>
-    </div>
-    ${chips?`<div class="mkt-ribbon">${chips}</div>`:''}
-  </div>`;
-}
-
-function renderList(cat){
-  currentCat=cat;
-  const filtered=events.filter(e=>e.cat===cat);
-  document.getElementById('conflict-list').innerHTML=filtered.length
-    ?filtered.map(e=>eventCard(e)).join('')
-    :`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.25);">No events in this category</div>`;
-}
-
-function renderUnrestList(filter='all'){
-  const unrest=events.filter(e=>e.cat==='unrest');
-  const filtered=filter==='all'?unrest:unrest.filter(e=>e.subtype===filter);
-  document.getElementById('unrest-list').innerHTML=filtered.length
-    ?filtered.map(e=>eventCard(e)).join('')
-    :`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.25);">No events</div>`;
+  ].join(' &nbsp;');
+  document.getElementById('ticker-all').innerHTML=crypto+'  &nbsp;&nbsp;  '+mkts;
 }
 
 function renderMarkets(){
+  const months=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
   document.getElementById('markets-list').innerHTML=marketDefs.map(m=>{
-    const live=liveMarkets[m.id]||{price:'Loading…',change:'—',dir:'up'};
+    const live=liveMarkets[m.id]||{price:'—',change:'—',dir:'up'};
     return`<div class="mkt-card" onclick="openMarket('${m.id}')">
-      <div class="mkc-head"><div style="font-size:26px;flex-shrink:0;">${m.icon}</div><div style="flex:1;"><div class="mkc-name">${m.name}</div><div class="mkc-ticker">${m.ticker}</div></div><div style="text-align:right;"><div class="mkc-price ${live.dir==='up'?'up':'dn'}">${live.price}</div><div class="mkc-chg"><span class="${live.dir==='up'?'up-bg':'dn-bg'}">${live.change}</span></div></div></div>
-      <div class="sparkline">${makeSpark(m.id,live.dir)}</div>
+      <div class="mkc-head"><div style="font-size:26px;flex-shrink:0;">${m.icon}</div>
+        <div style="flex:1;"><div style="font-size:16px;font-weight:600;">${m.name}</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);">${m.ticker}</div></div>
+        <div style="text-align:right;"><div class="mkc-price ${live.dir==='up'?'up':'dn'}">${live.price}</div><div style="font-family:var(--mono);font-size:11px;margin-top:2px;"><span class="${live.dir==='up'?'up-bg':'dn-bg'}">${live.change}</span></div></div>
+      </div>
+      <div style="padding:0 16px 6px;">${makeSpark(m.id,live.dir,false)}</div>
+      <div style="display:flex;justify-content:space-between;padding:0 16px 10px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);"><span>${months[0]}</span><span>${months[3]}</span><span>${months[6]}</span><span>${months[9]}</span><span>Now</span></div>
+      <div class="mkt-context">${m.why}</div>
       <div class="mkt-links">${m.events.map(en=>`<span class="mkt-link-tag" onclick="event.stopPropagation();openEventByName('${en}')">⚔️ ${en}</span>`).join('')}</div>
     </div>`;
   }).join('');
 }
 
 function renderMovers(){
-  const wHTML=winnerDefs.map(w=>{
+  document.getElementById('winners-list').innerHTML=winnerDefs.map(w=>{
     const live=liveMarkets[w.id]||{price:'—',change:'+—',dir:'up'};
-    return`<div class="mover-row" onclick="openMarket('${w.id}')"><div class="mr-icon">${w.icon}</div><div style="flex:1;"><div class="mr-name">${w.name}</div><div class="mr-ticker">${w.ticker}</div></div><div><div class="mr-price up">${live.price}</div><div class="mr-chg up">${live.change}</div></div></div>`;
+    return`<div class="mover-row" onclick="openMarket('${w.id}')"><div style="font-size:20px;flex-shrink:0;">${w.icon}</div><div style="flex:1;"><div class="mr-name">${w.name}</div><div class="mr-ticker">${w.ticker}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="up">${live.price}</div><div style="font-family:var(--mono);font-size:10px;" class="up">${live.change}</div></div></div>`;
   }).join('');
-  const lHTML=loserDefs.map(l=>{
-    const live=liveMarkets[l.id]||mktFallback[l.id]||{price:'—',change:'-—',dir:'dn'};
-    return`<div class="mover-row"><div class="mr-icon">${l.icon}</div><div style="flex:1;"><div class="mr-name">${l.name}</div><div class="mr-ticker">${l.ticker}</div></div><div><div class="mr-price dn">${live.price}</div><div class="mr-chg dn">${live.change}</div></div></div>`;
-  }).join('');
-  document.getElementById('winners-list').innerHTML=wHTML;
-  document.getElementById('losers-list').innerHTML=lHTML;
+  document.getElementById('losers-list').innerHTML=loserDefs.map(l=>`<div class="mover-row"><div style="font-size:20px;flex-shrink:0;">${l.icon}</div><div style="flex:1;"><div class="mr-name">${l.name}</div><div class="mr-ticker">${l.ticker}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="dn">—</div><div style="font-family:var(--mono);font-size:10px;" class="dn">${l.change}</div></div></div>`).join('');
 }
 
-// ═══════════════════════════════════════
-// ═══════════════════════════════════════
-// NEWS — free: 3 per category · paid: unlimited · live refresh
-// ═══════════════════════════════════════
-const FREE_LIMIT=3;
-let newsRefreshTimer=null;
-let currentTabIdx=0;
+function openMarket(id){
+  const m=liveMarkets[id]||{};const def=marketDefs.find(d=>d.id===id);if(!def)return;
+  document.getElementById('mm-icon').textContent=def.icon;
+  document.getElementById('mm-name').textContent=def.name;
+  document.getElementById('mm-price-row').innerHTML=`<span style="font-family:var(--mono);font-size:26px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</span><span class="${m.dir==='up'?'up-bg':'dn-bg'}" style="font-size:14px;">${m.change||'—'}</span>`;
+  document.getElementById('mm-why').textContent=def.why;
+  const months=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
+  document.getElementById('mm-chart').innerHTML=`
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;">12-Month Price History</div>
+    ${makeSpark(id,m.dir||'up',true)}
+    <div style="display:flex;justify-content:space-between;margin-top:5px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);"><span>${months[0]}</span><span>${months[3]}</span><span>${months[6]}</span><span>${months[9]}</span><span>Now</span></div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px;">CURRENT</div><div style="font-family:var(--mono);font-size:16px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div></div>
+      <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px;">CHANGE</div><div style="font-family:var(--mono);font-size:16px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div>
+      <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px;">TREND</div><div style="font-size:18px;">${m.dir==='up'?'📈':'📉'}</div></div>
+    </div>
+  `;
+  document.getElementById('mm-events').innerHTML=def.events.map(en=>`<span class="mkt-link-tag" onclick="closeModal('modal-market');openEventByName('${en}')">⚔️ ${en}</span>`).join('');
+  openModal('modal-market');
+}
 
+// ══════════════════════════════
+// NEWS
+// ══════════════════════════════
+const FREE_LIMIT=3;
 async function fetchNews(id){
   if(liveNews[id])return;
   try{
     const ev=events.find(e=>e.id===id);
-    const resp=await fetch(`/api/news?q=${encodeURIComponent(ev.query)}`);
+    const resp=await fetch(`/api/news?q=${encodeURIComponent(ev.query)}&pageSize=20`);
     const data=await resp.json();
     if(data.status==='ok'&&data.articles?.length){
       liveNews[id]=data.articles.map(a=>{
         const al=getAlign(a.source?.name||'');
-        return{outlet:a.source?.name||'Unknown',alignment:al,
-          time:timeAgo(a.publishedAt),ts:new Date(a.publishedAt).getTime()||Date.now(),
-          headline:a.title||'',excerpt:a.description||'',
-          body:a.content?.replace(/\[\+\d+ chars\]/,'').trim()||a.description||'',url:a.url||'#'};
+        return{outlet:a.source?.name||'Unknown',alignment:al,time:timeAgo(a.publishedAt),
+          ts:new Date(a.publishedAt).getTime()||Date.now(),headline:a.title||'',
+          excerpt:a.description||'',body:a.content?.replace(/\[\+\d+ chars\]/,'').trim()||a.description||'',url:a.url||'#'};
       });
       liveNews[id].sort((a,b)=>b.ts-a.ts);
     }else liveNews[id]=null;
   }catch(e){liveNews[id]=null;}
 }
-
 function startNewsRefresh(){
   stopNewsRefresh();
-  // Refresh timestamps every 8s so articles feel live
   newsRefreshTimer=setInterval(()=>{
-    const arts=liveNews[currentEvent];
-    if(!arts||document.getElementById('screen-detail')?.style.display==='none')return;
-    arts.forEach(a=>{ a.time=timeAgo(a.ts); });
+    const arts=liveNews[currentEvent];if(!arts)return;
+    arts.forEach(a=>{a.time=timeAgo(a.ts);});
     renderFeedHTML(arts,currentTabIdx);
   },8000);
 }
 function stopNewsRefresh(){if(newsRefreshTimer){clearInterval(newsRefreshTimer);newsRefreshTimer=null;}}
-
 function timeAgo(d){
   if(!d)return'';
   const diff=(Date.now()-(typeof d==='number'?d:new Date(d)))/1000;
@@ -1172,21 +779,17 @@ function timeAgo(d){
   if(diff<86400)return`${Math.floor(diff/3600)}h ago`;
   return`${Math.floor(diff/86400)}d ago`;
 }
-
 async function openEvent(id){
-  currentEvent=id; stopNewsRefresh();
+  currentEvent=id;stopNewsRefresh();if(leafletMap)leafletMap.closePopup();
   const ev=events.find(e=>e.id===id);
   lastScreen=ev.cat==='unrest'?'unrest':'map';
   document.getElementById('d-flags').textContent=ev.flags;
   document.getElementById('d-title').textContent=ev.title;
-  document.getElementById('d-summary').textContent=ev.econContext?.substring(0,200)||'';
-  document.getElementById('d-meta').innerHTML=
-    `<div class="sev-dot sev-${ev.sev}"></div>`+
-    `<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.38);">${ev.parties}</span>`+
-    `<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.22);">· ${ev.region}</span>`;
+  document.getElementById('d-summary').textContent=(ev.econContext||'').substring(0,200);
+  document.getElementById('d-meta').innerHTML=`<div class="sev-dot sev-${ev.sev}"></div><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.38);">${ev.parties}</span><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);">· ${ev.region}</span>`;
   const chips=(ev.markets||[]).map(mid=>{
     const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';
-    return`<div class="econ-row" onclick="openMarket('${mid}')"><div class="er-icon">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why.substring(0,70)}…</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;
+    return`<div class="econ-row" onclick="openMarket('${mid}')"><div style="font-size:20px;flex-shrink:0;">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why.substring(0,70)}…</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;
   }).join('');
   document.getElementById('econ-panel-wrap').innerHTML=chips?`<div class="econ-panel"><div class="econ-header"><span style="font-size:18px;">💹</span><span class="econ-title">Price Impact & Economic Fallout</span></div><div class="econ-context">${ev.econContext||''}</div>${chips}</div>`:'';
   currentTabIdx=0;
@@ -1197,147 +800,49 @@ async function openEvent(id){
   document.getElementById('news-feed').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">Fetching live news…</div></div>';
   switchTab('detail',null);
   await fetchNews(id);
-  renderNewsFeed(0);
-  startNewsRefresh();
+  if(currentLang!=='en'&&liveNews[id]){const tx=await translateArticles(liveNews[id],currentLang);liveNews[id]=tx;}
+  renderNewsFeed(0);startNewsRefresh();
 }
-
 function renderNewsFeed(tabIdx){
   currentTabIdx=tabIdx;
-  let arts=liveNews[currentEvent];
-  if(!arts){
-    document.getElementById('news-feed').innerHTML=`<div class="error-box">⚠️ Live news loads at worldconflictslive.vercel.app</div>${getFallback(currentEvent)}`;
-    return;
-  }
-  if(currentLang!=='en'){
-    translateArticles(arts,currentLang).then(tx=>renderFeedHTML(tx,tabIdx));
-    return;
-  }
+  const arts=liveNews[currentEvent];
+  if(!arts){document.getElementById('news-feed').innerHTML=`<div class="error-box">⚠️ Live news loads at worldconflictslive.vercel.app</div>${getFallback()}`;return;}
   renderFeedHTML(arts,tabIdx);
 }
-
 function renderFeedHTML(arts,tabIdx){
-  const labels={state:'🏛️ STATE MEDIA',aligned:'🗳️ POLITICALLY ALIGNED',independent:'✊ INDEPENDENT',opposition:'📢 OPPOSITION',unverified:'❓ UNVERIFIED'};
   if(tabIdx===0){
     const groups={state:[],aligned:[],independent:[],opposition:[],unverified:[]};
     arts.forEach(a=>{const t=a.alignment?.type||'unverified';if(groups[t])groups[t].push(a);else groups.unverified.push(a);});
+    const labels={state:'🏛️ STATE MEDIA',aligned:'🗳️ POLITICALLY ALIGNED',independent:'✊ INDEPENDENT',opposition:'📢 OPPOSITION',unverified:'❓ UNVERIFIED'};
     const html=Object.entries(groups).map(([grp,ga])=>{
       if(!ga.length)return'';
-      const free=ga.slice(0,FREE_LIMIT);
-      const locked=ga.slice(FREE_LIMIT);
-      return`<div style="padding:9px 18px 5px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.25);">${labels[grp]}<span style="color:rgba(39,174,96,0.7);">· ${free.length} free</span>${locked.length?`<span style="color:rgba(212,130,10,0.55);">· +${locked.length} premium</span>`:''}</div>
+      const free=ga.slice(0,FREE_LIMIT),locked=ga.slice(FREE_LIMIT);
+      return`<div style="padding:9px 18px 5px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.25);">${labels[grp]}<span style="color:rgba(39,174,96,.7);">· ${free.length} free</span>${locked.length?`<span style="color:rgba(212,130,10,.55);">· +${locked.length} premium</span>`:''}</div>
       ${free.map(a=>artCard(a)).join('')}
-      ${locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div class="locked-price">Unlock all · $1.99/mo →</div></div></div>`:''}`;
+      ${locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);">Unlock all · $1.99/mo →</div></div></div>`:''}`;
     }).join('');
-    document.getElementById('news-feed').innerHTML=html||emptyState();
-    return;
+    document.getElementById('news-feed').innerHTML=html||emptyState();return;
   }
-  const typeMap={1:'state',2:'aligned',3:'independent',4:'opposition',5:'unverified'};
-  let filtered=arts;
-  if(typeMap[tabIdx])filtered=arts.filter(a=>a.alignment?.type===typeMap[tabIdx]);
+  const typeMap={1:'state',2:'aligned',3:'independent',4:'opposition'};
+  let filtered=typeMap[tabIdx]?arts.filter(a=>a.alignment?.type===typeMap[tabIdx]):arts;
   if(!filtered.length){document.getElementById('news-feed').innerHTML=emptyState();return;}
-  const free=filtered.slice(0,FREE_LIMIT);
-  const locked=filtered.slice(FREE_LIMIT);
-  document.getElementById('news-feed').innerHTML=
-    free.map(a=>artCard(a)).join('')+
-    (locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div class="locked-price">Unlock all · $1.99/mo →</div></div></div>`:'');
+  const free=filtered.slice(0,FREE_LIMIT),locked=filtered.slice(FREE_LIMIT);
+  document.getElementById('news-feed').innerHTML=free.map(a=>artCard(a)).join('')+(locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);">Unlock all · $1.99/mo →</div></div></div>`:'');
 }
-
-function emptyState(){return`<div style="text-align:center;padding:44px 20px;"><div style="font-size:32px;margin-bottom:10px;">📰</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.25);">NO ARTICLES IN THIS CATEGORY</div></div>`;}
-
-function artCardInner(a){
-  const al=a.alignment||getAlign(a.outlet);
-  const dot=alignDot[al.type]||'rgba(255,255,255,0.2)';
-  return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:6px;height:6px;border-radius:50%;background:${dot};flex-shrink:0;"></div><div class="art-outlet">${a.outlet}</div><div class="art-time">${a.time}</div></div><div class="art-headline">${a.headline}</div><div class="art-excerpt">${(a.excerpt||'').substring(0,140)}${(a.excerpt||'').length>140?'…':''}</div><div style="margin-top:5px;">${alignBadge(al)}</div>`;
-}
-
-function artCard(a){
-  return`<div class="article-card" onclick='openArticle(${JSON.stringify(a).replace(/'/g,"&#39;")})'>${artCardInner(a)}</div>`;
-}
-
-function getFallback(id){
+function emptyState(){return`<div style="text-align:center;padding:44px 20px;"><div style="font-size:32px;margin-bottom:10px;">📰</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">NO ARTICLES IN THIS CATEGORY</div></div>`;}
+function artCardInner(a){const al=a.alignment||getAlign(a.outlet);return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:6px;height:6px;border-radius:50%;background:${alignDot[al.type]||'rgba(255,255,255,.2)'};flex-shrink:0;"></div><div class="art-outlet">${a.outlet}</div><div class="art-time">${a.time}</div></div><div class="art-headline">${a.headline}</div><div class="art-excerpt">${(a.excerpt||'').substring(0,140)}${(a.excerpt||'').length>140?'…':''}</div><div style="margin-top:5px;">${alignBadge(al)}</div>`;}
+function artCard(a){return`<div class="article-card" onclick='openArticle(${JSON.stringify(a).replace(/'/g,"&#39;")})'>${artCardInner(a)}</div>`;}
+function getFallback(){
   const base=[
-    {outlet:'Reuters',alignment:{type:'independent',label:'Independent',flag:'🇬🇧'},time:'4m ago',ts:Date.now()-240000,headline:'Ceasefire negotiations enter critical phase as both parties trade accusations',excerpt:'International mediators warn of renewed escalation as allegations mount from both sides.',url:'#'},
+    {outlet:'Reuters',alignment:{type:'independent',label:'Independent',flag:'🇬🇧'},time:'4m ago',ts:Date.now()-240000,headline:'Diplomatic efforts intensify as international pressure mounts',excerpt:'Foreign ministers convened in emergency session to discuss de-escalation.',url:'#'},
     {outlet:'Al Jazeera',alignment:{type:'state',label:'State-Qatar',flag:'🇶🇦'},time:'12m ago',ts:Date.now()-720000,headline:'Aid convoys blocked at crossing for third consecutive day',excerpt:'Humanitarian organisations report critical shortages of food, medicine and fuel.',url:'#'},
-    {outlet:'BBC News',alignment:{type:'state',label:'State-BBC',flag:'🇬🇧'},time:'28m ago',ts:Date.now()-1680000,headline:'Diplomatic channels remain open despite continued hostilities on the ground',excerpt:'Foreign ministers convened in an emergency session to discuss a path toward de-escalation.',url:'#'},
-    {outlet:'Fox News',alignment:{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},time:'45m ago',ts:Date.now()-2700000,headline:'US officials weigh military options as regional tensions continue to escalate',excerpt:'Pentagon confirms additional assets have been repositioned as a precautionary measure.',url:'#'},
-    {outlet:'Haaretz',alignment:{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},time:'1h ago',ts:Date.now()-3600000,headline:'Critics question the strategic rationale as civilian toll mounts',excerpt:'Opposition figures call for an independent inquiry into the conduct of operations.',url:'#'},
+    {outlet:'BBC News',alignment:{type:'state',label:'State-BBC',flag:'🇬🇧'},time:'28m ago',ts:Date.now()-1680000,headline:'Diplomatic channels remain open despite continued hostilities',excerpt:'Officials confirm backchannel communications are ongoing.',url:'#'},
+    {outlet:'Fox News',alignment:{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},time:'45m ago',ts:Date.now()-2700000,headline:'US officials weigh options as tensions escalate',excerpt:'Pentagon confirms additional assets repositioned as precaution.',url:'#'},
+    {outlet:'Haaretz',alignment:{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},time:'1h ago',ts:Date.now()-3600000,headline:'Critics question strategic rationale as civilian toll mounts',excerpt:'Opposition figures call for an independent inquiry.',url:'#'},
   ];
-  const free=base.slice(0,FREE_LIMIT);
-  const locked=base.slice(FREE_LIMIT);
-  return free.map(a=>artCard(a)).join('')+
-    (locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div class="locked-price">Unlock all · $1.99/mo →</div></div></div>`:'');
+  const free=base.slice(0,FREE_LIMIT),locked=base.slice(FREE_LIMIT);
+  return free.map(a=>artCard(a)).join('')+(locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);">Unlock all · $1.99/mo →</div></div></div>`:'');
 }
-
-// ═══════════════════════════════════════
-// ALERT FILTER
-// ═══════════════════════════════════════
-const allAlerts=[
-  {icon:'💥',type:'breaking',title:'Ceasefire in Gaza under pressure — both sides allege violations',conflict:'Gaza Conflict',time:'14 min ago',unread:true},
-  {icon:'₿',type:'market',title:'BTC surges past $84k on geopolitical safe-haven demand',conflict:'MARKET · CRYPTO',time:'22 min ago',unread:true},
-  {icon:'🔴',type:'breaking',title:'Russia launches large-scale drone strike on Ukrainian energy grid',conflict:'Russia–Ukraine War',time:'1 hr ago',unread:true},
-  {icon:'✊',type:'breaking',title:'Serbia protesters block key motorway for 12th consecutive day',conflict:'Serbia Protests',time:'2 hr ago',unread:false},
-  {icon:'📈',type:'market',title:'Lockheed Martin LMT hits 52-week high after NATO spending announcement',conflict:'MARKET · DEFENCE',time:'3 hr ago',unread:false},
-  {icon:'🌾',type:'market',title:'Wheat surges 4.3% after Black Sea corridor incident',conflict:'MARKET · COMMODITIES',time:'5 hr ago',unread:false},
-  {icon:'🕊️',type:'breaking',title:'UN declares famine emergency in northern Darfur',conflict:'Darfur Humanitarian Crisis',time:'6 hr ago',unread:false},
-  {icon:'💥',type:'breaking',title:'Al-Shabaab claims attack on Somali government compound',conflict:'Al-Shabaab — Somalia',time:'8 hr ago',unread:false},
-];
-
-function filterAlerts(type, el){
-  document.querySelectorAll('#screen-alerts .scroll-row .pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  const filtered = type==='all' ? allAlerts
-    : type==='following' ? allAlerts.filter(a=>a.unread)
-    : allAlerts.filter(a=>a.type===type);
-  renderAlertsList(filtered);
-}
-
-function renderAlerts(){ renderAlertsList(allAlerts); }
-
-function renderAlertsList(list){
-  document.getElementById('alerts-list').innerHTML=list.map(a=>{
-    const ev=events.find(x=>x.title===a.conflict);
-    const onclick=ev?`openEvent(${ev.id})`:`openModal('modal-email')`;
-    return`<div class="alert-item ${a.unread?'unread':''}" onclick="${onclick}">
-      <div style="font-size:20px;flex-shrink:0;">${a.icon}</div>
-      <div style="flex:1;"><div class="al-conflict">${a.conflict}</div><div class="al-title">${a.title}</div><div class="al-time">${a.time}</div></div>
-      ${a.unread?'<div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:6px;"></div>':''}
-    </div>`;
-  }).join('')||`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.25);">No alerts in this category</div>`;
-}
-
-function renderTimeline(){
-  const ev=events.find(e=>e.id===currentEvent);
-  if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML=`<div style="text-align:center;padding:32px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.25);">No timeline data</div>`;return;}
-  document.getElementById('tl-feed').innerHTML=ev.timeline.map((t,i)=>`<div class="tl-item"><div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:14px;"><div class="tl-dot"></div>${i<ev.timeline.length-1?'<div class="tl-line" style="flex:1;margin-top:3px;"></div>':''}</div><div style="padding-bottom:3px;"><div class="tl-date">${t.date}</div><div class="tl-event">${t.event}</div><div class="tl-tag" style="background:${t.tc};color:rgba(255,255,255,0.8);">${t.tag}</div></div></div>`).join('');
-}
-
-function renderEconFeed(){
-  const ev=events.find(e=>e.id===currentEvent);
-  document.getElementById('econ-feed').innerHTML=`
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;">
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:10px;">Economic Context</div>
-      <div style="font-size:15px;line-height:1.8;color:rgba(255,255,255,0.6);font-style:italic;">${ev?.econContext||''}</div>
-    </div>
-    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:10px;">Live Asset Impact</div>
-    ${(ev?.markets||[]).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<div class="econ-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;" onclick="openMarket('${mid}')"><div class="er-icon">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why}</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;}).join('')}
-  `;
-}
-
-function setNTab(el,idx){
-  currentTabIdx=idx;
-  stopNewsRefresh();
-  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
-  document.getElementById('tl-feed').style.display='none';
-  document.getElementById('econ-feed').style.display='none';
-  document.getElementById('news-feed').style.display='none';
-  if(idx===6){document.getElementById('tl-feed').style.display='block';renderTimeline();}
-  else if(idx===7){document.getElementById('econ-feed').style.display='block';renderEconFeed();}
-  else{document.getElementById('news-feed').style.display='block';renderNewsFeed(idx);startNewsRefresh();}
-}
-
-function openEventByName(name){const ev=events.find(e=>e.title===name);if(ev)openEvent(ev.id);}
-function goBack(){const tabs=['map','unrest','markets','alerts','language','profile'];const idx=['map','unrest','markets','alerts','language','profile'].indexOf(lastScreen);const navBtns=document.querySelectorAll('.nav-item');switchTab(lastScreen,navBtns[idx]||navBtns[0]);}
-
 function openArticle(a){
   const al=a.alignment||{type:'unverified',label:'Unverified',flag:'❓'};
   document.getElementById('m-align').innerHTML=alignBadge(al);
@@ -1347,120 +852,193 @@ function openArticle(a){
   document.getElementById('m-url').href=a.url||'#';
   openModal('modal-article');
 }
-
-function openMarket(id){
-  const m=liveMarkets[id]||{};const def=marketDefs.find(d=>d.id===id);if(!def)return;
-  document.getElementById('mm-icon').textContent=def.icon;
-  document.getElementById('mm-name').textContent=def.name;
-  document.getElementById('mm-price-row').innerHTML=`<span style="font-family:var(--mono);font-size:26px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</span><span class="${m.dir==='up'?'up-bg':'dn-bg'}" style="font-size:14px;">${m.change||'—'}</span>`;
-  document.getElementById('mm-why').textContent=def.why;
-  document.getElementById('mm-events').innerHTML=def.events.map(en=>`<span class="mkt-link-tag" onclick="closeModal('modal-market');openEventByName('${en}')">⚔️ ${en}</span>`).join('');
-  openModal('modal-market');
+function renderTimeline(){
+  const ev=events.find(e=>e.id===currentEvent);
+  if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML='<div style="text-align:center;padding:32px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">No timeline data</div>';return;}
+  document.getElementById('tl-feed').innerHTML=ev.timeline.map((t,i)=>`<div class="tl-item"><div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:14px;"><div class="tl-dot"></div>${i<ev.timeline.length-1?'<div style="width:1px;flex:1;background:rgba(255,255,255,.08);margin-top:3px;"></div>':''}</div><div style="padding-bottom:3px;"><div class="tl-date">${t.date}</div><div class="tl-event">${t.event}</div><div class="tl-tag" style="background:${t.tc};color:rgba(255,255,255,.8);">${t.tag}</div></div></div>`).join('');
+}
+function renderEconFeed(){
+  const ev=events.find(e=>e.id===currentEvent);
+  document.getElementById('econ-feed').innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:10px;">Economic Context</div>
+      <div style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.6);font-style:italic;">${ev?.econContext||''}</div>
+    </div>
+    ${(ev?.markets||[]).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<div class="econ-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;" onclick="openMarket('${mid}')"><div style="font-size:20px;flex-shrink:0;">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why}</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;}).join('')}`;
+}
+function setNTab(el,idx){
+  currentTabIdx=idx;stopNewsRefresh();
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  document.getElementById('tl-feed').style.display='none';
+  document.getElementById('econ-feed').style.display='none';
+  document.getElementById('news-feed').style.display='none';
+  if(idx===5){document.getElementById('tl-feed').style.display='block';renderTimeline();}
+  else if(idx===6){document.getElementById('econ-feed').style.display='block';renderEconFeed();}
+  else{document.getElementById('news-feed').style.display='block';renderNewsFeed(idx);startNewsRefresh();}
 }
 
+// ══════════════════════════════
+// LIVE ALERTS — polls every 60s
+// ══════════════════════════════
+const baseAlerts=[
+  {id:'a1',icon:'💥',type:'breaking',title:'Ceasefire in Gaza under pressure — both sides allege violations',conflict:'Gaza Conflict',eventId:0,time:'Just now',ts:Date.now()-60000,unread:true},
+  {id:'a2',icon:'₿',type:'market',title:'BTC surges past $84k on geopolitical safe-haven demand',conflict:'MARKET · CRYPTO',eventId:null,time:'4m ago',ts:Date.now()-240000,unread:true},
+  {id:'a3',icon:'🔴',type:'breaking',title:'Russia launches large-scale drone strike on Ukrainian energy grid',conflict:'Russia–Ukraine War',eventId:1,time:'18m ago',ts:Date.now()-1080000,unread:true},
+  {id:'a4',icon:'✊',type:'breaking',title:'Serbia protesters block key motorway for 12th consecutive day',conflict:'Serbia Protests',eventId:100,time:'1h ago',ts:Date.now()-3600000,unread:false},
+  {id:'a5',icon:'📈',type:'market',title:'Lockheed Martin LMT hits 52-week high after NATO spending announcement',conflict:'MARKET · DEFENCE',eventId:null,time:'2h ago',ts:Date.now()-7200000,unread:false},
+  {id:'a6',icon:'🌾',type:'market',title:'Wheat surges 4.3% after Black Sea corridor incident',conflict:'MARKET · COMMODITIES',eventId:null,time:'4h ago',ts:Date.now()-14400000,unread:false},
+  {id:'a7',icon:'🕊️',type:'breaking',title:'UN declares famine emergency in northern Darfur — 5m at risk',conflict:'Darfur Crisis',eventId:200,time:'5h ago',ts:Date.now()-18000000,unread:false},
+  {id:'a8',icon:'💥',type:'breaking',title:'Al-Shabaab claims attack on Somali government compound',conflict:'Al-Shabaab — Somalia',eventId:301,time:'7h ago',ts:Date.now()-25200000,unread:false},
+];
+alertsData=[...baseAlerts];
 
-// ═══════════════════════════════════════
-// FILTERS
-// ═══════════════════════════════════════
-function setCatTab(el,cat){
-  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
-  renderList(cat);
+function filterAlerts(type,el){
+  document.querySelectorAll('#screen-alerts .scroll-row .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  const filtered=type==='all'?alertsData:type==='following'?alertsData.filter(a=>a.unread):alertsData.filter(a=>a.type===type);
+  renderAlertsList(filtered);
 }
+function renderAlerts(){renderAlertsList(alertsData);}
+function renderAlertsList(list){
+  document.getElementById('alerts-list').innerHTML=list.length?list.map(a=>{
+    const onclick=a.eventId!=null?`openEvent(${a.eventId})`:`openModal('modal-premium')`;
+    return`<div class="alert-item ${a.unread?'unread':''}" onclick="${onclick}"><div style="font-size:20px;flex-shrink:0;">${a.icon}</div><div style="flex:1;"><div class="al-conflict">${a.conflict}</div><div class="al-title">${a.title}</div><div class="al-time">${a.time}</div></div>${a.unread?'<div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:6px;"></div>':''}</div>`;
+  }).join(''):`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">No alerts in this category</div>`;
+  document.getElementById('alerts-ts').textContent=`Last updated: ${new Date().toLocaleTimeString()}`;
+}
+async function pollAlerts(){
+  try{
+    const criticalEvents=events.filter(e=>e.sev==='critical').slice(0,2);
+    for(const ev of criticalEvents){
+      const resp=await fetch(`/api/news?q=${encodeURIComponent(ev.query)}&pageSize=3`);
+      const data=await resp.json();
+      if(data.status==='ok'&&data.articles?.length){
+        const latest=data.articles[0];
+        const latestTs=new Date(latest.publishedAt).getTime();
+        if(latestTs>(alertsData[0]?.ts||0)&&latest.title!==latestAlertHeadline){
+          latestAlertHeadline=latest.title;
+          alertsData.unshift({id:`live_${Date.now()}`,icon:'🔴',type:'breaking',title:latest.title,conflict:ev.title,eventId:ev.id,time:'Just now',ts:latestTs,unread:true});
+          showAlertBanner(latest.title,ev.id);
+          if(document.getElementById('screen-alerts').classList.contains('active'))renderAlerts();
+        }
+      }
+    }
+  }catch(e){}
+  setTimeout(pollAlerts,60000);
+}
+function showAlertBanner(text,eventId){
+  bannerEventId=eventId;
+  document.getElementById('ab-text').textContent=`Breaking: ${text.substring(0,80)}${text.length>80?'…':''}`;
+  document.getElementById('alert-banner').classList.add('show');
+  setTimeout(()=>document.getElementById('alert-banner').classList.remove('show'),12000);
+}
+function handleBannerClick(){if(bannerEventId!=null)openEvent(bannerEventId);dismissBanner();}
+function dismissBanner(){document.getElementById('alert-banner').classList.remove('show');}
+
+// ══════════════════════════════
+// RENDER LISTS
+// ══════════════════════════════
+function eventCard(ev){
+  const tbClass={military:'tb-military',unrest:'tb-unrest',humanitarian:'tb-humanitarian',terrorism:'tb-terrorism'}[ev.cat]||'tb-military';
+  const tbLabel={military:'⚔️ Armed Conflict',unrest:{protest:'✊ Mass Protest',coup:'👁️ Coup',revolution:'🔥 Revolution',election:'🗳️ Election Crisis'}[ev.subtype]||'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crisis',terrorism:'💥 Terrorism'}[ev.cat];
+  const chips=(ev.markets||[]).slice(0,4).map(mid=>{
+    const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';
+    return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;
+  }).join('');
+  return`<div class="event-card" onclick="openEvent(${ev.id})">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;"><div style="font-size:20px;flex-shrink:0;letter-spacing:2px;">${ev.flags}</div><div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div><div class="ec-meta">${ev.parties} · ${ev.region}</div></div></div>
+    <div class="type-badge ${tbClass}">${tbLabel}</div>
+    <div class="ec-summary">${(ev.econContext||'').substring(0,110)}…</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;"><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);">All sides · Live news</div><div style="font-family:var(--mono);font-size:10px;color:var(--red);">READ →</div></div>
+    ${chips?`<div class="mkt-ribbon">${chips}</div>`:''}
+  </div>`;
+}
+function renderList(cat){
+  currentCat=cat;
+  const filtered=events.filter(e=>e.cat===cat);
+  document.getElementById('conflict-list').innerHTML=filtered.length?filtered.map(e=>eventCard(e)).join(''):`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">No events in this category</div>`;
+}
+function renderUnrestList(filter='all'){
+  const filtered=events.filter(e=>e.cat==='unrest'&&(filter==='all'||e.subtype===filter));
+  document.getElementById('unrest-list').innerHTML=filtered.length?filtered.map(e=>eventCard(e)).join(''):`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">No events</div>`;
+}
+
+// ══════════════════════════════
+// FILTERS & NAV
+// ══════════════════════════════
+function setCatTab(el,cat){document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderList(cat);}
 function filterMap(type,el){
   document.querySelectorAll('#screen-map .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
-  if(type==='all'){mapMarkers.forEach(m=>m.addTo(leafletMap));}
-  else{
-    events.forEach((ev,i)=>{
-      const m=mapMarkers[i];if(!m)return;
-      if(ev.cat===type)m.addTo(leafletMap);
-      else leafletMap.removeLayer(m);
-    });
-  }
+  events.forEach((ev,i)=>{const m=mapMarkers[i];if(!m)return;type==='all'||ev.cat===type?m.addTo(leafletMap):leafletMap.removeLayer(m);});
 }
-function filterUnrest(type,el){
-  document.querySelectorAll('#screen-unrest .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
-  renderUnrestList(type);
-}
+function filterUnrest(type,el){document.querySelectorAll('#screen-unrest .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderUnrestList(type);}
 
-// ═══════════════════════════════════════
-// NAV & MODALS
-// ═══════════════════════════════════════
 function switchTab(tab,el){
-  if(tab!=='detail') stopNewsRefresh();
+  if(tab!=='detail')stopNewsRefresh();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item,.top-nav-btn').forEach(n=>n.classList.remove('active'));
   document.getElementById('screen-'+tab)?.classList.add('active');
-  if(el){el.classList.add('active');}
-  else{
+  if(el&&el.classList){el.classList.add('active');}
+  else if(tab!=='detail'){
     const order=['map','unrest','markets','alerts','language','profile'];
     const i=order.indexOf(tab);
-    if(i>-1){
-      document.querySelectorAll('.nav-item')[i]?.classList.add('active');
-      document.querySelectorAll('.top-nav-btn')[i]?.classList.add('active');
-    }
+    if(i>-1){document.querySelectorAll('.nav-item')[i]?.classList.add('active');document.querySelectorAll('.top-nav-btn')[i]?.classList.add('active');}
   }
   if(tab==='map'&&leafletMap)setTimeout(()=>leafletMap.invalidateSize(),120);
 }
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+function goBack(){
+  const order=['map','unrest','markets','alerts','language','profile'];
+  const i=order.indexOf(lastScreen);
+  switchTab(lastScreen,document.querySelectorAll('.nav-item')[Math.max(0,i)]);
+}
+function openEventByName(name){const ev=events.find(e=>e.title===name);if(ev)openEvent(ev.id);}
+
+function openModal(id){document.getElementById(id)?.classList.add('open');}
+function closeModal(id){document.getElementById(id)?.classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
 
 let toastTimer;
 function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
 function toggleRow(row){const t=row.querySelector('.toggle');if(t){t.classList.toggle('on');showToast(t.classList.contains('on')?'✅ Enabled':'⭕ Disabled');}}
 
-// ═══════════════════════════════════════
-// EMAIL
-// ═══════════════════════════════════════
 function submitEmail(){
   const email=document.getElementById('email-input').value.trim();
-  if(!email||!email.includes('@')){showToast('⚠️ Please enter a valid email');return;}
-  // Sanitize input before storage
+  if(!email||!email.includes('@')||!email.includes('.')){showToast('⚠️ Please enter a valid email');return;}
   const safe=email.replace(/[<>'"]/g,'').substring(0,254);
-  const stored=JSON.parse(localStorage.getItem('wcl_emails')||'[]');
-  if(!stored.includes(safe)){stored.push(safe);localStorage.setItem('wcl_emails',JSON.stringify(stored));}
-  closeModal('modal-email');
+  try{const s=JSON.parse(localStorage.getItem('wcl_emails')||'[]');if(!s.includes(safe)){s.push(safe);localStorage.setItem('wcl_emails',JSON.stringify(s));}}catch(e){}
+  closeModal('modal-email');closeModal('modal-premium');
   showToast("✅ You're on the list! First alert coming soon.");
 }
-setTimeout(()=>{
-  if(!localStorage.getItem('wcl_email_prompted')){
-    localStorage.setItem('wcl_email_prompted','1');openModal('modal-email');
-  }
-},30000);
 
-// ═══════════════════════════════════════
-// AI CONFLICT DETECTOR
-// ═══════════════════════════════════════
+// AI CONFLICT DETECTION
 async function detectNewConflicts(){
   try{
-    const r=await fetch('/api/detect-conflicts');
-    const data=await r.json();
-    if(data.conflicts?.length){
-      data.conflicts.forEach(c=>{
-        if(!events.find(x=>x.title===c.title)){
-          events.push({id:events.length+500,cat:c.cat||'military',flags:c.flags||'🌍',title:c.title,region:c.region||'Unknown',parties:c.parties||c.title,sev:c.severity||'medium',lat:null,lng:null,query:c.query||c.title,markets:c.markets||['gold'],econContext:c.summary||'',timeline:[]});
-          renderList(currentCat);
-          showToast(`🌍 New event: ${c.title}`);
-        }
-      });
-    }
+    const r=await fetch('/api/detect-conflicts');const data=await r.json();
+    if(data.conflicts?.length){data.conflicts.forEach(c=>{
+      if(!events.find(x=>x.title===c.title)){
+        events.push({id:events.length+500,cat:c.cat||'military',flags:c.flags||'🌍',title:c.title,region:c.region||'Unknown',parties:c.parties||c.title,sev:c.sev||'medium',lat:null,lng:null,query:c.query||c.title,markets:c.markets||['gold'],econContext:c.summary||'',timeline:[]});
+        renderList(currentCat);showToast(`🌍 New conflict detected: ${c.title}`);
+      }
+    });}
   }catch(e){}
 }
 
-// ═══════════════════════════════════════
+// EMAIL PROMPT
+setTimeout(()=>{if(!localStorage.getItem('wcl_email_prompted')){localStorage.setItem('wcl_email_prompted','1');openModal('modal-email');}},30000);
+
 // INIT
-// ═══════════════════════════════════════
+buildLangGrid();
 renderAlerts();
 renderList('military');
 renderUnrestList();
 renderMarkets();
 renderMovers();
-buildLangGrid();
 initMap();
 fetchMarketData();
+pollAlerts();
 detectNewConflicts();
 setInterval(detectNewConflicts,4*60*60*1000);
-if(currentLang!=='en')translateUI(currentLang);
+if(currentLang!=='en')document.getElementById('html-root').setAttribute('dir',LANGUAGES.find(l=>l.code===currentLang)?.rtl?'rtl':'ltr');
 </script>
 </body>
 </html>
