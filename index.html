@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>World Conflicts Live — Every Source · Every Side · No Agenda</title>
 <meta name="description" content="Real-time conflict tracking. Every source, every side, no agenda."/>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Color+Emoji&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -14,7 +14,10 @@
   --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
   --paper:#eeeae0;--red:#c8321e;--red2:#e03d27;--amber:#d98c0a;--green:#1fa355;
   --blue:#2c7be5;--purple:#9b4dca;
-  --mono:'DM Mono',monospace;--display:'Barlow Condensed',sans-serif;--serif:'Playfair Display',serif;
+  --mono:'DM Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',monospace;
+  --display:'Barlow Condensed','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;
+  --serif:'Playfair Display','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',serif;
+  --emoji:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Twemoji Mozilla',sans-serif;
   --nav-h:54px;--ticker-h:24px;
   --glow-red:0 0 20px rgba(200,50,30,0.25);
 }
@@ -26,6 +29,14 @@ body{background:var(--ink);color:var(--paper);font-family:var(--display);overflo
 body::before{content:'';position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:9999;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   background-size:200px 200px;}
+
+/* ══ EMOJI / FLAG FIX — force system emoji font everywhere flags appear ══ */
+.emoji,.lang-flag,.nav-icon,.mpp-flags,#d-flags,.event-flags,.ticker-flag{
+  font-family:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Twemoji Mozilla',sans-serif !important;
+  font-style:normal;
+}
+.lang-flag{font-size:26px;display:block;margin-bottom:6px;line-height:1.2;text-align:center;}
+.mpp-flags{font-size:24px;margin-bottom:5px;letter-spacing:2px;}
 
 a{color:inherit;text-decoration:none;}
 button{font-family:inherit;cursor:pointer;}
@@ -287,7 +298,6 @@ button{font-family:inherit;cursor:pointer;}
 .lang-btn{padding:12px 8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .18s;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.04em;font-weight:400;}
 .lang-btn:hover,.lang-btn.active{border-color:var(--red2);color:var(--paper);background:rgba(200,50,30,.12);}
 .lang-btn.active{box-shadow:0 0 0 1px rgba(200,50,30,.25);}
-.lang-flag{font-size:22px;display:block;margin-bottom:5px;line-height:1;}
 .lang-name{font-size:11px;line-height:1.3;}
 
 /* ══ ECON ══ */
@@ -898,7 +908,7 @@ const UI_STRINGS={
 function buildLangGrid(){
   document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>
     `<div class="lang-btn ${l.code===currentLang?'active':''}" onclick="selectLanguage('${l.code}')">
-      <span class="lang-flag">${l.flag}</span>
+      <span class="lang-flag emoji">${l.flag}</span>
       <span class="lang-name">${l.native}</span>
     </div>`).join('');
 }
@@ -1028,7 +1038,7 @@ const alignStyle={
   unverified:'background:rgba(255,255,255,.05);color:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.1);',
 };
 const alignDot={state:'#89c4f5',aligned:'#ffd47a',independent:'#6fffa0',opposition:'#d07ef5',unverified:'rgba(255,255,255,.2)'};
-function alignBadge(al){return`<span class="align-badge" style="${alignStyle[al.type]||alignStyle.unverified}">${al.flag} ${al.label}</span>`;}
+function alignBadge(al){return`<span class="align-badge" style="${alignStyle[al.type]||alignStyle.unverified}"><span class="emoji">${al.flag}</span> ${al.label}</span>`;}
 
 // ══════════════════════════════════════════════════════════
 // EVENTS DATA
@@ -1169,10 +1179,10 @@ function addMapMarkers(){
   events.forEach(ev=>{
     if(!ev.lat||!ev.lng)return;
     const color=evColor(ev);
-    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label">${ev.flags} ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
+    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label"><span class="emoji">${ev.flags}</span> ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
     const marker=L.marker([ev.lat,ev.lng],{icon}).addTo(leafletMap);
     const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;}).join('');
-    marker.bindPopup(`<div class="map-popup"><div class="mpp-flags">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">Read All Sides →</button></div>`,{maxWidth:280,minWidth:230});
+    marker.bindPopup(`<div class="map-popup"><div class="mpp-flags emoji">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">Read All Sides →</button></div>`,{maxWidth:280,minWidth:230});
     mapMarkers.push(marker);
   });
 }
@@ -1223,7 +1233,7 @@ function openAllConflictsModal(){
     if(!evs.length)continue;
     html+=`<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;padding:10px 0 6px;">${catLabel[cat]}</div>`;
     html+=evs.map(ev=>`<div onclick="closeModal('modal-all-conflicts');openEvent(${ev.id});" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .18s;" onmouseover="this.style.borderColor='rgba(255,255,255,.14)'" onmouseout="this.style.borderColor='var(--border)'">
-      <div style="font-size:18px;letter-spacing:2px;flex-shrink:0;">${ev.flags}</div>
+      <div style="font-size:18px;letter-spacing:2px;flex-shrink:0;" class="emoji">${ev.flags}</div>
       <div style="flex:1;"><div style="font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.02em;">${ev.title}</div><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);">${ev.region} · ${ev.parties}</div></div>
       <div style="display:flex;align-items:center;gap:6px;"><div class="sev-dot sev-${ev.sev}"></div><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);text-transform:uppercase;">${ev.sev}</span></div>
     </div>`).join('');
@@ -1416,7 +1426,7 @@ function timeAgo(d){
 async function openEvent(id){
   currentEvent=id;stopNewsRefresh();if(leafletMap)leafletMap.closePopup();
   const ev=events.find(e=>e.id===id);lastScreen=ev.cat==='unrest'?'unrest':'map';
-  document.getElementById('d-flags').textContent=ev.flags;
+  document.getElementById('d-flags').innerHTML=`<span class="emoji">${ev.flags}</span>`;
   document.getElementById('d-title').textContent=ev.title;
   document.getElementById('d-summary').textContent=(ev.econContext||'').substring(0,200);
   document.getElementById('d-meta').innerHTML=`<div class="sev-dot sev-${ev.sev}"></div><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.38);">${ev.parties}</span><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);">· ${ev.region}</span>`;
@@ -1599,7 +1609,7 @@ function eventCard(ev){
   const chips=(ev.markets||[]).slice(0,4).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;}).join('');
   return`<div class="event-card" onclick="openEvent(${ev.id})">
     <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;">
-      <div style="font-size:22px;flex-shrink:0;letter-spacing:2px;line-height:1;">${ev.flags}</div>
+      <div style="font-size:22px;flex-shrink:0;letter-spacing:2px;line-height:1;" class="emoji">${ev.flags}</div>
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div>
         <div class="ec-meta">${ev.parties} · ${ev.region}</div>
