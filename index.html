@@ -6,30 +6,36 @@
 <title>World Conflicts Live — Every Source · Every Side · No Agenda</title>
 <meta name="description" content="Real-time conflict tracking. Every source, every side, no agenda."/>
 <meta name="theme-color" content="#07090a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="dns-prefetch" href="https://unpkg.com"/>
+<link rel="dns-prefetch" href="https://api.rss2json.com"/>
+<link rel="dns-prefetch" href="https://news.google.com"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="preconnect" href="https://unpkg.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@400;500&family=Noto+Color+Emoji&display=swap" rel="stylesheet"/>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" async></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" async></script>
 <style>
 :root{
   --ink:#07090a;--surface:#0e1012;--surface2:#141618;--surface3:#1a1d20;
   --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
   --paper:#eeeae0;--red:#c8321e;--red2:#e03d27;--amber:#d98c0a;--green:#1fa355;
   --blue:#2c7be5;--purple:#9b4dca;
-  --mono:'DM Mono','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',monospace;
-  --display:'Barlow Condensed','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;
-  --serif:'Playfair Display','Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',serif;
-  --emoji:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji','Twemoji Mozilla',sans-serif;
+  --mono:'SF Mono','Fira Code','Fira Mono','Roboto Mono',ui-monospace,monospace;
+  --display:'Impact','Arial Narrow',ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --serif:Georgia,'Times New Roman',serif;
+  --emoji:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
   --nav-h:54px;--ticker-h:24px;
   --glow-red:0 0 20px rgba(200,50,30,0.25);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html{font-size:16px;scroll-behavior:smooth;}
+html{font-size:16px;}
 body{background:var(--ink);color:var(--paper);font-family:var(--display);overflow-x:hidden;font-weight:400;letter-spacing:.01em;}
 
 /* GRAIN OVERLAY */
@@ -62,7 +68,7 @@ button{font-family:inherit;cursor:pointer;}
   background:linear-gradient(90deg,rgba(180,30,10,.98),rgba(200,50,30,.95));
   padding:10px 18px;font-family:var(--mono);font-size:11px;color:#fff;cursor:pointer;
   animation:slideDown .35s cubic-bezier(.16,1,.3,1);border-bottom:1px solid rgba(255,255,255,.1);
-  backdrop-filter:blur(12px);}
+  }
 .alert-banner.show{display:flex;align-items:center;gap:10px;}
 @keyframes slideDown{from{transform:translateY(-100%)}to{transform:none}}
 .ab-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1s infinite;flex-shrink:0;}
@@ -71,7 +77,7 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ══ TOP NAV ══ */
 .top-nav{display:none;position:fixed;left:0;right:0;z-index:600;
-  background:rgba(7,9,10,0.96);backdrop-filter:blur(20px);
+  background:rgba(7,9,10,0.96);
   border-bottom:1px solid var(--border);height:var(--nav-h);}
 .top-nav-inner{max-width:1600px;margin:0 auto;display:flex;align-items:center;padding:0 28px;height:100%;gap:8px;}
 .top-wordmark{font-family:var(--display);font-size:24px;font-weight:900;letter-spacing:.06em;flex-shrink:0;margin-right:24px;cursor:pointer;text-transform:uppercase;}
@@ -84,7 +90,7 @@ button{font-family:inherit;cursor:pointer;}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--red2);animation:blink 1.4s ease-in-out infinite;flex-shrink:0;}
 
 /* ══ MOBILE NAV ══ */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(7,9,10,.97);border-top:1px solid var(--border);display:flex;z-index:600;padding:5px 0 env(safe-area-inset-bottom,5px);backdrop-filter:blur(20px);}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(7,9,10,.97);border-top:1px solid var(--border);display:flex;z-index:600;padding:5px 0 env(safe-area-inset-bottom,5px);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;cursor:pointer;border:none;background:none;color:rgba(255,255,255,.25);transition:color .2s;}
 .nav-item.active{color:var(--paper);}
 .nav-icon{font-size:17px;line-height:1;}
@@ -141,7 +147,7 @@ button{font-family:inherit;cursor:pointer;}
 .btn-ghost:hover{border-color:var(--border2);color:rgba(255,255,255,.5);}
 
 /* ══ MODALS ══ */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.84);z-index:700;align-items:flex-end;justify-content:center;backdrop-filter:blur(12px);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.84);z-index:700;align-items:flex-end;justify-content:center;}
 .modal-overlay.open{display:flex;}
 .modal-sheet{background:#111416;border-radius:18px 18px 0 0;width:100%;max-width:580px;border-top:1px solid rgba(255,255,255,.09);animation:slideUp .3s cubic-bezier(.16,1,.3,1);max-height:92vh;overflow-y:auto;}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
@@ -173,7 +179,7 @@ button{font-family:inherit;cursor:pointer;}
 .leaflet-popup-tip{background:#111416 !important;}
 .leaflet-popup-close-button{color:rgba(255,255,255,.35) !important;top:10px !important;right:12px !important;font-size:18px !important;}
 .conflict-marker{display:flex;flex-direction:column;align-items:center;cursor:pointer;}
-.marker-pin{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid currentColor;background:rgba(7,9,10,.92);backdrop-filter:blur(6px);}
+.marker-pin{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid currentColor;background:rgba(7,9,10,.92);}
 .marker-pin.pulse{animation:mpulse 3s ease-out infinite;will-change:box-shadow;}
 @keyframes mpulse{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .marker-label{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.6);white-space:nowrap;margin-top:2px;letter-spacing:.04em;text-shadow:0 1px 5px #000,0 0 10px #000;}
@@ -371,6 +377,31 @@ button{font-family:inherit;cursor:pointer;}
   #conflict-map{height:500px;}
   .lang-grid{grid-template-columns:repeat(6,1fr);}
 /* ══ PERFORMANCE ══ */
+
+/* ══ EVENT CARD CLASSES (replaces inline styles) ══ */
+.ec-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;}
+.ec-flags{font-size:22px;flex-shrink:0;letter-spacing:2px;line-height:1;}
+.ec-info{flex:1;min-width:0;}
+.ec-title-row{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.ec-footer{display:flex;justify-content:space-between;align-items:center;margin-top:5px;}
+.ec-footer-label{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);}
+.ec-cta{font-family:var(--mono);font-size:10px;color:var(--red2);font-weight:500;}
+
+/* ══ MOBILE PERF ══ */
+@media(max-width:768px){
+  *{transition-duration:0.1s !important;}
+  .modal-sheet{transition:transform 0.2s ease !important;}
+  .bottom-sheet{transition:transform 0.2s ease !important;}
+  .event-card:active{transform:scale(0.98);transition:transform 0.1s;}
+}
+@media(max-width:768px){
+  .screen.active{transform:translateZ(0);}
+  .event-card{transform:translateZ(0);}
+  .bottom-nav{backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .top-nav{backdrop-filter:none;-webkit-backdrop-filter:none;}
+}
+.leaflet-container{will-change:transform;}
+
 .screen:not(.active){content-visibility:auto;contain-intrinsic-size:0 600px;}
 .screen{contain:layout style;}
 .skel{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 75%);background-size:400% 100%;animation:skel-shine 1.4s ease infinite;border-radius:6px;}
@@ -397,7 +428,7 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ══ MAP CONTROLS ══ */
 .map-ctrl-row{position:absolute;top:10px;right:10px;z-index:500;display:flex;flex-direction:column;gap:6px;}
-.map-ctrl-btn{width:34px;height:34px;border-radius:8px;background:rgba(7,9,10,.92);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.map-ctrl-btn{width:34px;height:34px;border-radius:8px;background:rgba(7,9,10,.92);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.4);}
 .map-ctrl-btn:hover,.map-ctrl-btn.mctrl-active{background:rgba(200,50,30,.3);border-color:var(--red2);}
 
 /* ══ CLUSTER OVERRIDE ══ */
@@ -447,7 +478,7 @@ button{font-family:inherit;cursor:pointer;}
 
 <nav class="top-nav" id="top-nav">
   <div class="top-nav-inner">
-    <div class="top-wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div>
+    <div class="top-wordmark" onclick="goHome()">WORLD<span>CONFLICTS</span>LIVE</div>
     <div class="top-nav-links">
       <button class="top-nav-btn active" onclick="switchTab('map',this)">🗺️ Map</button>
       <button class="top-nav-btn" onclick="switchTab('unrest',this)">✊ Unrest</button>
@@ -457,7 +488,7 @@ button{font-family:inherit;cursor:pointer;}
       <button class="top-nav-btn" onclick="switchTab('alerts',this)">🔔 Alerts</button>
       <button class="top-nav-btn" onclick="switchTab('ai',this)">🤖 AI</button>
       <button class="top-nav-btn" onclick="switchTab('language',this)">🌐 Lang</button>
-      <button class="top-nav-btn" onclick="switchTab('profile',this)">⚙️ Settings</button>
+      <button class="top-nav-btn" onclick="switchTab('profile',this)" data-i18n="nav_profile">⚙️ Settings</button>
     </div>
     <div class="top-nav-right">
       <button onclick="openModal('modal-account')" id="nav-acct-btn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .18s;letter-spacing:.06em;">👤 Account</button>
@@ -473,18 +504,18 @@ button{font-family:inherit;cursor:pointer;}
   <div class="map-col">
     <div class="map-header">
       <div>
-        <div class="wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div>
-        <div class="slogan-text">Every source · Every side · No agenda</div>
+        <div class="wordmark" onclick="goHome()">WORLD<span>CONFLICTS</span>LIVE</div>
+        <div class="slogan-text" data-i18n="map_wordmark_sub">Every source · Every side · No agenda</div>
       </div>
       <div class="live-row"><div class="live-dot"></div><span>LIVE</span></div>
     </div>
     <div id="conflict-map"></div>
     <div class="map-legend">
-      <div class="ml-item"><div class="ml-dot" style="background:#c8321e;box-shadow:0 0 6px rgba(200,50,30,.6);"></div><span>Critical</span></div>
-      <div class="ml-item"><div class="ml-dot" style="background:#d98c0a;box-shadow:0 0 5px rgba(217,140,10,.5);"></div><span>High</span></div>
-      <div class="ml-item"><div class="ml-dot" style="background:#d07ef5;"></div><span>Terrorism</span></div>
-      <div class="ml-item"><div class="ml-dot" style="background:#ffd47a;"></div><span>Unrest</span></div>
-      <div class="ml-item"><div class="ml-dot" style="background:#6fffa0;"></div><span>Humanitarian</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#c8321e;box-shadow:0 0 6px rgba(200,50,30,.6);"></div><span data-i18n="map_legend_critical">Critical</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#d98c0a;box-shadow:0 0 5px rgba(217,140,10,.5);"></div><span data-i18n="map_legend_high">High</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#d07ef5;"></div><span data-i18n="map_legend_terrorism">Terrorism</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#ffd47a;"></div><span data-i18n="map_legend_unrest">Unrest</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#6fffa0;"></div><span data-i18n="map_legend_humanitarian">Humanitarian</span></div>
     </div>
 
     <!-- MAP FILTER PILLS -->
@@ -621,7 +652,7 @@ button{font-family:inherit;cursor:pointer;}
     </div>
   </div>
   <div style="padding:14px 18px 12px;">
-    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px;" data-i18n="source_class">Source Classification</div>
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px;" data-i18n="source_class">${T('source_class')}</div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;">
       <span class="align-badge" style="background:rgba(44,123,229,.2);color:#89c4f5;border:1px solid rgba(137,196,245,.2);">🏛️ State-funded</span>
       <span class="align-badge" style="background:rgba(217,140,10,.18);color:#ffd47a;border:1px solid rgba(255,212,122,.2);">🗳️ Politically aligned</span>
@@ -632,7 +663,7 @@ button{font-family:inherit;cursor:pointer;}
   </div>
   <div id="econ-panel-wrap"></div>
   <div class="news-tabs">
-    <button class="ntab active" onclick="setNTab(this,0)" data-i18n="tab_all">All</button>
+    <button class="ntab active" onclick="setNTab(this,0)" data-i18n="tab_all">${T('cyber_filter_all')}</button>
     <button class="ntab" onclick="setNTab(this,1)" data-i18n="tab_state">🏛️ State</button>
     <button class="ntab" onclick="setNTab(this,2)" data-i18n="tab_aligned">🗳️ Aligned</button>
     <button class="ntab" onclick="setNTab(this,3)" data-i18n="tab_indep">✊ Indep.</button>
@@ -694,11 +725,11 @@ button{font-family:inherit;cursor:pointer;}
   <div style="padding:0 18px;margin-bottom:8px;">
     <div style="font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:16px 0 8px;" data-i18n="settings">Settings</div>
   </div>
-  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_breaking">Breaking conflict alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_market">Market impact alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_digest">Daily digest email</span><div class="toggle"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_labels">Source classification labels</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_security">Security alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_breaking" data-i18n="s_breaking">Breaking conflict alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_market" data-i18n="s_market">Market impact alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_digest" data-i18n="s_digest">Daily digest email</span><div class="toggle"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_labels" data-i18n="s_labels">Source classification labels</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_security" data-i18n="s_security">Security alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
   <div class="settings-row" onclick="switchTab('language')"><span class="settings-row-label" data-i18n="s_language">🌐 Change language</span><span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">→</span></div>
 </div></div>
 
@@ -711,15 +742,15 @@ button{font-family:inherit;cursor:pointer;}
 
   <!-- GLOBAL STATS -->
   <div class="stat-grid" id="viz-stat-grid">
-    <div class="stat-card"><div class="stat-num" id="vz-conflicts" style="color:var(--red2);">—</div><div class="stat-lbl">Active Conflicts</div><div class="stat-delta dn">+3 vs 2024</div></div>
-    <div class="stat-card"><div class="stat-num" id="vz-displaced" style="color:var(--amber);">—</div><div class="stat-lbl">Displaced Persons</div><div class="stat-delta dn">↑ 12% YoY</div></div>
-    <div class="stat-card"><div class="stat-num" id="vz-casualties" style="color:var(--red);">—</div><div class="stat-lbl">Est. Casualties 2024</div><div class="stat-delta dn">Conflict deaths only</div></div>
-    <div class="stat-card"><div class="stat-num" id="vz-cost" style="color:var(--green);">—</div><div class="stat-lbl">Economic Cost</div><div class="stat-delta dn">USD, direct damage</div></div>
+    <div class="stat-card"><div class="stat-num" id="vz-conflicts" style="color:var(--red2);">—</div><div class="stat-lbl" data-i18n="viz_conflicts">Active Conflicts</div><div class="stat-delta dn">+3 vs 2024</div></div>
+    <div class="stat-card"><div class="stat-num" id="vz-displaced" style="color:var(--amber);">—</div><div class="stat-lbl" data-i18n="viz_displaced">Displaced Persons</div><div class="stat-delta dn">↑ 12% YoY</div></div>
+    <div class="stat-card"><div class="stat-num" id="vz-casualties" style="color:var(--red);">—</div><div class="stat-lbl" data-i18n="viz_casualties">Est. Casualties 2024</div><div class="stat-delta dn" data-i18n="viz_deaths_note">Conflict deaths only</div></div>
+    <div class="stat-card"><div class="stat-num" id="vz-cost" style="color:var(--green);">—</div><div class="stat-lbl" data-i18n="viz_cost">Economic Cost</div><div class="stat-delta dn">USD, direct damage</div></div>
   </div>
 
   <!-- CASUALTY BARS BY CONFLICT -->
   <div class="viz-section">
-    <div class="viz-head"><span style="font-size:18px;">💀</span><span class="viz-title">Estimated Casualties by Conflict</span></div>
+    <div class="viz-head"><span style="font-size:18px;">💀</span><span class="viz-title" data-i18n="viz_cas_title">Estimated Casualties by Conflict</span></div>
     <div class="viz-body">
       <div class="casualty-bar-wrap" id="casualty-bars" style="margin:0;"></div>
     </div>
@@ -727,7 +758,7 @@ button{font-family:inherit;cursor:pointer;}
 
   <!-- DISPLACED PERSONS -->
   <div class="viz-section">
-    <div class="viz-head"><span style="font-size:18px;">🏕️</span><span class="viz-title">Displaced Persons (Millions)</span></div>
+    <div class="viz-head"><span style="font-size:18px;">🏕️</span><span class="viz-title" data-i18n="viz_dis_title">Displaced Persons (Millions)</span></div>
     <div class="viz-body">
       <div id="displaced-bars"></div>
       <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.2);margin-top:12px;letter-spacing:.06em;">Source: UNHCR / IOM estimates. Figures include both IDPs and refugees.</div>
@@ -736,7 +767,7 @@ button{font-family:inherit;cursor:pointer;}
 
   <!-- REFUGEE FLOW CHART (SVG) -->
   <div class="viz-section">
-    <div class="viz-head"><span style="font-size:18px;">🌊</span><span class="viz-title">Major Refugee Flows</span></div>
+    <div class="viz-head"><span style="font-size:18px;">🌊</span><span class="viz-title" data-i18n="viz_flow_title">Major Refugee Flows</span></div>
     <div class="viz-body" style="padding:10px 16px 16px;">
       <svg id="flow-svg" width="100%" height="200" viewBox="0 0 400 200" style="font-family:var(--mono);"></svg>
     </div>
@@ -744,7 +775,7 @@ button{font-family:inherit;cursor:pointer;}
 
   <!-- ECONOMIC DAMAGE -->
   <div class="viz-section">
-    <div class="viz-head"><span style="font-size:18px;">💸</span><span class="viz-title">Economic Damage Estimates</span></div>
+    <div class="viz-head"><span style="font-size:18px;">💸</span><span class="viz-title" data-i18n="viz_econ_title">Economic Damage Estimates</span></div>
     <div class="viz-body">
       <div id="econ-damage-bars"></div>
     </div>
@@ -752,7 +783,7 @@ button{font-family:inherit;cursor:pointer;}
 
   <!-- CONFLICT TIMELINE CHART -->
   <div class="viz-section" style="margin-bottom:28px;">
-    <div class="viz-head"><span style="font-size:18px;">📅</span><span class="viz-title">Conflict Duration Timeline</span></div>
+    <div class="viz-head"><span style="font-size:18px;">📅</span><span class="viz-title" data-i18n="viz_timeline_title">Conflict Duration Timeline</span></div>
     <div class="viz-body" style="padding:10px 16px 16px;overflow-x:auto;">
       <svg id="timeline-svg" width="100%" height="240" viewBox="0 0 600 240" style="min-width:520px;font-family:var(--mono);"></svg>
     </div>
@@ -763,12 +794,12 @@ button{font-family:inherit;cursor:pointer;}
 <div class="screen" id="screen-ai"><div class="dw">
   <div class="page-head">
     <div class="page-title">🤖 AI ANALYST</div>
-    <div class="page-sub">Ask anything about any conflict · Premium feature</div>
+    <div class="page-sub" data-i18n="ai_sub">Ask anything about any conflict · Premium feature</div>
   </div>
   <div class="ai-lock">
     <div class="ai-lock-icon">🔒</div>
-    <div class="ai-lock-title">Premium Feature</div>
-    <div class="ai-lock-desc">AI Analyst gives you instant, sourced answers to any question about active conflicts — from casualty trends to diplomatic context to market impact analysis.</div>
+    <div class="ai-lock-title" data-i18n="ai_lock_icon_label">Premium Feature</div>
+    <div class="ai-lock-desc" data-i18n="ai_lock_desc">AI Analyst gives you instant, sourced answers to any question about active conflicts — from casualty trends to diplomatic context to market impact analysis.</div>
     <div class="ai-feature-list">
       <div class="ai-feature-item"><span class="fi-icon">⚡</span>"Why did gold spike 3% today?" — gets a conflict-linked analysis</div>
       <div class="ai-feature-item"><span class="fi-icon">🗺️</span>"What's the latest in Sudan?" — pulls live articles + summary</div>
@@ -800,7 +831,7 @@ button{font-family:inherit;cursor:pointer;}
   <!-- THREAT LEVEL BAR -->
   <div style="margin:0 18px 16px;background:var(--surface);border:1px solid rgba(200,50,30,.2);border-radius:12px;padding:14px 16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.14em;text-transform:uppercase;">Global Cyber Threat Level</div>
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.14em;text-transform:uppercase;" data-i18n="cyber_threat_title">Global Cyber Threat Level</div>
       <div style="font-family:var(--mono);font-size:11px;color:#ff6b4a;font-weight:500;letter-spacing:.08em;">HIGH — SEVERE</div>
     </div>
     <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
@@ -813,7 +844,7 @@ button{font-family:inherit;cursor:pointer;}
 
   <!-- LIVE THREAT FEED -->
   <div style="padding:0 18px;margin-bottom:14px;">
-    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:10px;">Live Threat Indicators</div>
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:10px;" data-i18n="cyber_threats_title">Live Threat Indicators</div>
     <div id="cyber-threat-feed" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
 
@@ -831,14 +862,14 @@ button{font-family:inherit;cursor:pointer;}
 </div><!-- end app-body -->
 
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="switchTab('map',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Map</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('unrest',this)"><span class="nav-icon">✊</span><span class="nav-label">Unrest</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('cyber',this)"><span class="nav-icon">🛡️</span><span class="nav-label">Cyber</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('viz',this)"><span class="nav-icon">📊</span><span class="nav-label">Data</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('markets',this)"><span class="nav-icon">📈</span><span class="nav-label">Markets</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('alerts',this)"><span class="nav-icon">🔔</span><span class="nav-label">Alerts</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('ai',this)"><span class="nav-icon">🤖</span><span class="nav-label">AI</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('language',this)"><span class="nav-icon">🌐</span><span class="nav-label">Lang</span><div class="nav-pip"></div></button>
+  <button class="nav-item active" onclick="switchTab('map',this)"><span class="nav-icon">🗺️</span><span class="nav-label" data-i18n="nav_map">Map</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('unrest',this)"><span class="nav-icon">✊</span><span class="nav-label" data-i18n="nav_unrest">Unrest</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('cyber',this)"><span class="nav-icon">🛡️</span><span class="nav-label" data-i18n="nav_cyber">Cyber</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('viz',this)"><span class="nav-icon">📊</span><span class="nav-label" data-i18n="nav_viz">Data</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('markets',this)"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav_markets">Markets</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('alerts',this)"><span class="nav-icon">🔔</span><span class="nav-label" data-i18n="nav_alerts">Alerts</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('ai',this)"><span class="nav-icon">🤖</span><span class="nav-label" data-i18n="nav_ai">AI</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('language',this)"><span class="nav-icon">🌐</span><span class="nav-label" data-i18n="nav_language">Lang</span><div class="nav-pip"></div></button>
   <button class="nav-item" onclick="switchTab('profile',this)"><span class="nav-icon">⚙️</span><span class="nav-label">Profile</span><div class="nav-pip"></div></button>
 </nav>
 
@@ -848,7 +879,7 @@ button{font-family:inherit;cursor:pointer;}
   <div class="modal-sheet" style="max-height:85vh;">
     <div class="modal-handle"></div>
     <div class="modal-pad" style="padding-bottom:20px;">
-      <div style="font-family:var(--display);font-size:24px;font-weight:900;letter-spacing:.04em;margin-bottom:4px;text-transform:uppercase;" data-i18n="all_conflicts_title">All Conflicts</div>
+      <div style="font-family:var(--display);font-size:24px;font-weight:900;letter-spacing:.04em;margin-bottom:4px;text-transform:uppercase;" data-i18n="all_conflicts_title" data-i18n="all_conflicts_title">All Conflicts</div>
       <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.08em;margin-bottom:16px;" id="all-conflicts-count">13 active conflicts tracked</div>
       <div id="all-conflicts-list" style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto;"></div>
       <button onclick="closeModal('modal-all-conflicts')" class="btn btn-ghost" style="margin-top:16px;" data-i18n="close">Close</button>
@@ -874,10 +905,10 @@ button{font-family:inherit;cursor:pointer;}
     <div id="mm-icon" style="font-size:44px;margin-bottom:10px;"></div>
     <div id="mm-name" style="font-family:var(--display);font-size:30px;font-weight:900;letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase;"></div>
     <div id="mm-price-row" style="display:flex;align-items:baseline;gap:12px;margin-bottom:18px;"></div>
-    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;" data-i18n="why_moving">Why this is moving</div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;" data-i18n="why_moving">${T('market_why')}</div>
     <div id="mm-why" style="font-family:var(--display);font-size:15px;line-height:1.8;color:rgba(255,255,255,.55);margin-bottom:20px;"></div>
     <div id="mm-chart" style="margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;"></div>
-    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;" data-i18n="related">Related conflicts</div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;" data-i18n="related">${T('related')}</div>
     <div id="mm-events" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;"></div>
     <button onclick="closeModal('modal-market')" class="btn btn-ghost" data-i18n="close">Close</button>
   </div></div>
@@ -930,7 +961,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="modal-overlay" id="modal-share">
   <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
     <div style="font-size:38px;margin-bottom:12px;">🔗</div>
-    <div style="font-family:var(--display);font-size:26px;font-weight:900;letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase;">Share Conflict</div>
+    <div style="font-family:var(--display);font-size:26px;font-weight:900;letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase;" data-i18n="modal_share_title">Share Conflict</div>
     <div id="share-conflict-name" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.35);margin-bottom:18px;letter-spacing:.06em;"></div>
     <div id="share-url-box" style="background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.6);word-break:break-all;margin-bottom:12px;cursor:pointer;" onclick="copyShareUrl()"></div>
     <button class="btn btn-red" onclick="copyShareUrl()" style="margin-bottom:8px;">📋 Copy Link</button>
@@ -965,7 +996,7 @@ button{font-family:inherit;cursor:pointer;}
     </div>
     <div id="account-logged-out">
       <div style="font-size:36px;margin-bottom:14px;">👤</div>
-      <div style="font-family:var(--display);font-size:26px;font-weight:900;letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase;">Create Account</div>
+      <div style="font-family:var(--display);font-size:26px;font-weight:900;letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase;" data-i18n="profile_create">Create Account</div>
       <div style="font-family:var(--display);font-size:14px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:20px;">Save followed conflicts, sync alerts across devices, unlock your history.</div>
       <input class="email-input" id="acct-email-input" type="email" placeholder="Email address"/>
       <input class="email-input" id="acct-name-input" type="text" placeholder="Display name" style="margin-top:0;"/>
@@ -1037,11 +1068,11 @@ let txCache={};let txArticleCache={};
 // UI STRING KEYS (slogan always stays in English)
 // ══════════════════════════════════════════════════════════
 const UI_STRINGS={
-  nav_map:'Map',nav_unrest:'Unrest',nav_cyber:'Cyber',nav_markets:'Markets',nav_alerts:'Alerts',nav_language:'Language',nav_profile:'Profile',
+  nav_map:'Map',nav_unrest:'Unrest',nav_cyber:'Cyber',nav_markets:'Markets',nav_alerts:'Alerts',nav_language:'Language',nav_profile:'Profile',nav_viz:'Data',nav_ai:'AI',
   cat_military:'⚔️ Military',cat_unrest:'✊ Unrest',cat_humanitarian:'🕊️ Crises',cat_terrorism:'💥 Terror',
   tab_all:'All',tab_state:'🏛️ State',tab_aligned:'🗳️ Aligned',tab_indep:'✊ Indep.',tab_opp:'📢 Opp.',tab_timeline:'📅 Timeline',tab_economic:'💰 Economic',
   back:'← Back',read_full:'Read Full Article at Source →',close:'Close',
-  source_class:'Source Classification',why_moving:'Why this is moving',related:'Related conflicts',
+  source_class:T('source_class'),why_moving:'Why this is moving',related:'Related conflicts',
   breaking_news:'Breaking developments · Updated every 60 seconds',
   markets_sub:'Conflict-driven price movements · Tap any asset for chart + context',
   unrest_title:'CIVIL UNREST',unrest_sub:'Protests · Coups · Revolutions · Election Crises',
@@ -1053,7 +1084,7 @@ const UI_STRINGS={
   all_conflicts_title:'All Conflicts',
   filter_all:'All',filter_military:'⚔️ Military',filter_unrest:'✊ Unrest',
   filter_humanitarian:'🕊️ Humanitarian',filter_terrorism:'💥 Terrorism',filter_critical:'🔴 Critical',
-  filter_breaking:'🔴 Breaking',filter_market:'📈 Market',filter_following:'★ Following',
+  filter_breaking:'🔴 Breaking',filter_market:'📈 Market',filter_following:T('detail_following'),
   filter_protest:'✊ Protest',filter_coup:'👁️ Coup',filter_revolution:'🔥 Revolution',filter_election:'🗳️ Election Crisis',
   go_premium:'GO PREMIUM',upgrade:'UPGRADE NOW',prem_price:'$1.99 / MONTH · CANCEL ANYTIME',
   prem_1:'✓ All articles — every source, no limits',prem_2:'✓ Live market data 60s refresh',
@@ -1069,6 +1100,64 @@ const UI_STRINGS={
   s_labels:'Source classification labels',s_security:'Security alerts',s_language:'🌐 Change language',
   loading:'Loading…',loading_markets:'Fetching live data…',
   map_hint:'🤏 Pinch to zoom · Tap pins for details',
+  // Data viz screen
+  viz_title:'DATA & VIZ',viz_sub:'Live casualties · Displaced persons · Refugee flows · Economic damage',
+  viz_conflicts:'Active Conflicts',viz_displaced:'Displaced Persons',viz_casualties:'Est. Casualties 2024',
+  viz_cost:'Economic Cost',viz_deaths_note:'Conflict deaths only',viz_yoy:'↑ 12% YoY',
+  viz_cas_title:'Estimated Casualties by Conflict',viz_dis_title:'Displaced Persons (Millions)',
+  viz_flow_title:'Major Refugee Flows',viz_econ_title:'Economic Damage Estimates',viz_timeline_title:'Conflict Duration Timeline',
+  viz_source_note:'Source: UNHCR / IOM estimates. Figures include both IDPs and refugees.',
+  // Cyber screen
+  cyber_threat_title:'Global Cyber Threat Level',cyber_threats_title:'Live Threat Indicators',
+  cyber_filter_all:'All',cyber_filter_state:'State',cyber_filter_ransomware:'Ransomware',
+  cyber_filter_espionage:'Espionage',cyber_filter_infra:'Infrastructure',
+  // AI analyst
+  ai_title:'AI ANALYST',ai_sub:'Ask anything about any conflict · Premium feature',
+  ai_lock_icon_label:'Premium Feature',
+  ai_lock_desc:'AI Analyst gives you instant, sourced answers to any question about active conflicts — from casualty trends to diplomatic context to market impact analysis.',
+  ai_feat_1:'"Why did gold spike 3% today?" — gets a conflict-linked analysis',
+  ai_feat_2:'"What's the latest in Sudan?" — pulls live articles + summary',
+  ai_feat_3:'"Compare Ukraine and Gaza economic impact" — side-by-side',
+  ai_feat_4:'"Explain the Sahel coups in simple terms" — in any language',
+  ai_feat_5:'"How is Fox News vs Al Jazeera covering this differently?" — media analysis',
+  ai_unlock_cta:'UNLOCK AI ANALYST — $1.99/MO →',ai_trial_note:'Cancel anytime · Free 7-day trial',
+  // Detail screen
+  detail_all_sides:'All sides · Live news',detail_read:'READ →',
+  detail_loading:T('detail_loading'),detail_follow:T('detail_follow'),detail_following:T('detail_following'),
+  detail_share:'Share',detail_back:'← Back',
+  detail_no_timeline:T('detail_no_timeline'),
+  detail_econ_context:T('detail_econ_context'),
+  // Map screen
+  map_wordmark_sub:'Every source · Every side · No agenda',
+  map_timeline_label:'Showing timeline',map_all_time:'All time',
+  map_see_all:'See all conflicts',map_count_label:'conflicts',
+  map_legend_critical:'Critical',map_legend_high:'High',map_legend_terrorism:'Terrorism',
+  map_legend_unrest:'Unrest',map_legend_humanitarian:'Humanitarian',
+  // Alerts screen  
+  alert_breaking:'Breaking',alert_market:'Market',alert_following:'Following',
+  alert_mark_read:'Mark all read',alert_empty:T('alert_empty'),
+  // Markets screen
+  market_12m:'12-Month Price History',market_why:'Why this is moving',
+  market_related_conflicts:'Related conflicts',
+  // Profile/settings
+  profile_title:'WORLD ANALYST',profile_plan:'Free Plan',profile_member:'Member since',
+  profile_settings:'Settings',profile_logout:'Log out',profile_create:'Create Account',
+  profile_create_btn:'CREATE FREE ACCOUNT →',
+  // Modals
+  modal_share_title:'Share Conflict',modal_share_copy:'Copy Link',modal_share_x:'Post to X',modal_share_wa:'WhatsApp',
+  modal_account_following:'Following',
+  modal_premium_price:'$1.99 / MONTH · CANCEL ANYTIME',
+  modal_email_privacy:'No spam. Unsubscribe anytime. Your data is never sold.',
+  modal_unlock_desc:'Free users get 3 articles per source category. Upgrade to read every perspective without limits.',
+  modal_unlock_cta:'UPGRADE FOR $1.99/MO →',modal_unlock_stay:'Stay on free plan',
+  // Generic
+  no_events:T('no_events'),no_events_filter:'No events match this filter',
+  live:'LIVE',conflicts_label:'CONFLICTS',
+  type_military:'⚔️ Armed Conflict',type_unrest_all:'✊ Civil Unrest',
+  type_unrest_protest:'✊ Mass Protest',type_unrest_coup:'👁️ Coup',
+  type_unrest_revolution:'🔥 Revolution',type_unrest_election:'🗳️ Election Crisis',
+  type_humanitarian:'🕊️ Humanitarian Crisis',type_terrorism:'💥 Terrorism',type_cyber:'💻 Cyber Operation',
+  source_class_label:T('source_class'),
 };
 
 function buildLangGrid(){
@@ -1079,21 +1168,38 @@ function buildLangGrid(){
     </div>`).join('');
 }
 
+function T(key){return(txCache[currentLang]||UI_STRINGS)[key]||UI_STRINGS[key]||key;}
+
 function applyTranslations(tx){
-  // Slogan ALWAYS stays in English
-  document.querySelectorAll('.slogan-text').forEach(el=>{el.textContent='Every source · Every side · No agenda';});
-  // Translate all [data-i18n] elements
+  // 1. All data-i18n elements — covers static HTML
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const key=el.getAttribute('data-i18n');
-    if(tx[key])el.textContent=tx[key];
+    if(tx[key]) el.textContent=tx[key];
   });
-  // Nav labels specifically
-  const navOrder=['nav_map','nav_unrest','nav_markets','nav_alerts','nav_language','nav_profile'];
-  document.querySelectorAll('.nav-label[data-i18n]').forEach((el,i)=>{const k=el.getAttribute('data-i18n');if(tx[k])el.textContent=tx[k];});
-  document.querySelectorAll('.top-nav-btn[data-i18n-nav]').forEach(el=>{
-    const i=parseInt(el.getAttribute('data-i18n-nav'));const key=navOrder[i];if(tx[key]){const emoji=el.textContent.match(/^\S+\s/)?.[0]||'';el.textContent=emoji+tx[key];}
+  // 2. Mobile bottom nav labels
+  const navKeys=['nav_map','nav_unrest','nav_cyber','nav_viz','nav_markets','nav_alerts','nav_ai','nav_language','nav_profile'];
+  document.querySelectorAll('.nav-label').forEach((el,i)=>{if(navKeys[i]&&tx[navKeys[i]])el.textContent=tx[navKeys[i]];});
+  // 3. Top nav buttons — preserve emoji prefix
+  document.querySelectorAll('.top-nav-btn').forEach((el,i)=>{
+    const k=navKeys[i];if(k&&tx[k]){
+      const parts=el.textContent.trim().split(' ');
+      el.textContent=(parts[0]||'')+' '+tx[k];
+    }
   });
+  // 4. Re-render event card list (uses hardcoded strings like "READ →", "All sides")
+  if(document.getElementById('conflict-list')?.children.length) renderList(currentCat);
+  // 5. Update ticker
+  if(typeof updateTicker==='function') updateTicker();
+  // 6. Re-render cyber/viz/alerts if active (they contain hardcoded strings)
+  const activeScreen=document.querySelector('.screen.active')?.id||'';
+  if(activeScreen==='screen-cyber') renderCyberScreen();
+  if(activeScreen==='screen-alerts') renderAlertsList(alertsData);
+  if(activeScreen==='screen-detail'){
+    // Re-render current tab in detail view
+    setNTab(document.querySelector('.ntab.active'), currentTabIdx);
+  }
 }
+
 
 async function selectLanguage(code){
   currentLang=code;
@@ -1114,14 +1220,30 @@ async function selectLanguage(code){
     showToast(`✅ ${lang?.native}`);return;
   }
   try{
-    const resp=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:code,strings:UI_STRINGS})});
-    if(!resp.ok)throw new Error(`HTTP ${resp.status}`);
+    // Translate using Claude API directly — no server needed
+    const langName=lang?.name||code;
+    const stringsToTranslate=Object.entries(UI_STRINGS).map(([k,v])=>k+': '+v).join('\n');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:4000,
+        messages:[{role:'user',content:`Translate these UI strings to ${langName}. Return ONLY a JSON object with the same keys, values translated. Keep emojis, symbols like →←★✓·, and placeholder variables unchanged. Keep very short strings concise. Be natural, not literal.\n\n${stringsToTranslate}`}]
+      })
+    });
+    if(!resp.ok)throw new Error('API error');
     const data=await resp.json();
-    const tx={...UI_STRINGS,...(data.translated||{})};
+    const raw=data.content?.[0]?.text||'';
+    const jsonMatch=raw.match(/\{[\s\S]+\}/);
+    if(!jsonMatch)throw new Error('No JSON');
+    const translated=JSON.parse(jsonMatch[0]);
+    const tx={...UI_STRINGS,...translated};
     txCache[code]=tx;applyTranslations(tx);
     document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
     showToast(`✅ ${lang?.native}`);
   }catch(e){
+    // Fallback: show English with a note
     document.getElementById('translate-status').textContent=`⚠️ Translation unavailable`;
     showToast(`⚠️ Could not translate`);
   }
@@ -1436,7 +1558,7 @@ function updateTimelineRange(pct){
 // ══════════════════════════════════════════════════════════
 function openAllConflictsModal(){
   const count=events.length;
-  document.getElementById('all-conflicts-count').textContent=`${count} active conflicts tracked`;
+  document.getElementById('all-conflicts-count').textContent=`${count} ${T("map_count_label")}`;
   document.getElementById('see-all-count').textContent=count;
   const grouped={military:[],unrest:[],humanitarian:[],terrorism:[],cyber:[]};
   events.forEach(e=>grouped[e.cat]?.push(e));
@@ -1678,7 +1800,7 @@ async function openEvent(id){
   currentTabIdx=0;
   document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('active',i===0));
   document.getElementById('tl-feed').style.display='none';document.getElementById('econ-feed').style.display='none';document.getElementById('news-feed').style.display='block';
-  document.getElementById('news-feed').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">Fetching live news…</div></div>';
+  document.getElementById('news-feed').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">${T('detail_loading')}</div></div>';
   switchTab('detail',null);
   updateFollowBtn();
   // Invalidate cache so we always fetch fresh articles on open
@@ -1738,13 +1860,13 @@ function openArticle(a){
   document.getElementById('m-outlet').textContent=a.outlet.toUpperCase();
   document.getElementById('m-headline').textContent=a.headline;
   document.getElementById('m-body').textContent=a.body||a.excerpt||'';
-  document.getElementById('m-url').href=a.url||'#';
+  const urlEl=document.getElementById('m-url');urlEl.href=a.url||'#';urlEl.target=a.url&&a.url!=='#'?'_blank':'_self';
   openModal('modal-article');
 }
 
 function renderTimeline(){
   const ev=events.find(e=>e.id===currentEvent);
-  if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML='<div style="text-align:center;padding:36px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.2);">No timeline data</div>';return;}
+  if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML='<div style="text-align:center;padding:36px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.2);">${T('detail_no_timeline')}</div>';return;}
   // Visual timeline graph
   const startY=ev.startYear||2022,now=2026;
   const totalSpan=now-startY;
@@ -1850,21 +1972,23 @@ function dismissBanner(){document.getElementById('alert-banner').classList.remov
 // ══════════════════════════════════════════════════════════
 function eventCard(ev){
   const tbClass={military:'tb-military',unrest:'tb-unrest',humanitarian:'tb-humanitarian',terrorism:'tb-terrorism',cyber:'tb-cyber'}[ev.cat]||'tb-military';
-  const tbLabel={military:'⚔️ Armed Conflict',unrest:{protest:'✊ Mass Protest',coup:'👁️ Coup',revolution:'🔥 Revolution',election:'🗳️ Election Crisis'}[ev.subtype]||'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crisis',terrorism:'💥 Terrorism',cyber:'💻 Cyber Operation'}[ev.cat];
-  const chips=(ev.markets||[]).slice(0,4).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;}).join('');
+  const _tbRaw={military:'⚔️ Armed Conflict',unrest:{protest:'✊ Mass Protest',coup:'👁️ Coup',revolution:'🔥 Revolution',election:'🗳️ Election Crisis'}[ev.subtype]||'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crisis',terrorism:'💥 Terrorism',cyber:'💻 Cyber Operation'}[ev.cat];
+  const _tbKeys={military:'type_military',unrest:'type_unrest_'+( ev.subtype||'all'),humanitarian:'type_humanitarian',terrorism:'type_terrorism',cyber:'type_cyber'};
+  const tbLabel=T(_tbKeys[ev.cat])||_tbRaw;
+  const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;}).join('');
   return`<div class="event-card" onclick="openEvent(${ev.id})">
-    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;">
-      <div style="font-size:22px;flex-shrink:0;letter-spacing:2px;line-height:1;" class="emoji">${ev.flags}</div>
-      <div style="flex:1;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div>
+    <div class="ec-row">
+      <div class="ec-flags emoji">${ev.flags}</div>
+      <div class="ec-info">
+        <div class="ec-title-row"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div>
         <div class="ec-meta">${ev.parties} · ${ev.region}</div>
       </div>
     </div>
     <div class="type-badge ${tbClass}">${tbLabel}</div>
-    <div class="ec-summary">${(ev.econContext||'').substring(0,110)}…</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;">
-      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);">All sides · Live news</div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--red2);font-weight:500;">READ →</div>
+    <div class="ec-summary">${(ev.econContext||'').substring(0,100)}…</div>
+    <div class="ec-footer">
+      <span class="ec-footer-label"
+      <span class="ec-cta">${T('detail_read')}</span>
     </div>
     ${chips?`<div class="mkt-ribbon">${chips}</div>`:''}
   </div>`;
@@ -1873,7 +1997,19 @@ function eventCard(ev){
 function renderList(cat){
   currentCat=cat;
   const filtered=events.filter(e=>e.cat===cat);
-  document.getElementById('conflict-list').innerHTML=filtered.length?filtered.map(e=>eventCard(e)).join('')+`<div style="height:8px;"></div>`:`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events in this category</div>`;
+  const el=document.getElementById('conflict-list');
+  if(!filtered.length){
+    el.innerHTML=`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events in this category</div>`;
+    return;
+  }
+  // Render first 6 immediately, rest on idle
+  el.innerHTML = filtered.slice(0,6).map(e=>eventCard(e)).join('');
+  if(filtered.length > 6){
+    const renderRest = () => {
+      el.innerHTML += filtered.slice(6).map(e=>eventCard(e)).join('') + '<div style="height:8px;"></div>';
+    };
+    requestIdleCallback ? requestIdleCallback(renderRest) : setTimeout(renderRest, 200);
+  }
 }
 function renderUnrestList(filter='all'){
   const filtered=events.filter(e=>e.cat==='unrest'&&(filter==='all'||e.subtype===filter));
@@ -1948,6 +2084,10 @@ function lazyRenderList(items,renderFn,containerId,batchSize=8){
 // ══════════════════════════════════════════════════════════
 let mapMode='default';let clusterGroup=null;let tileLayers={};
 function initMap(){
+  if(typeof L === 'undefined'){
+    // Leaflet not loaded yet (async) - wait for it
+    setTimeout(initMap, 100); return;
+  }
   leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:false,scrollWheelZoom:false,minZoom:1,maxZoom:10});
   L.control.zoom({position:'bottomright'}).addTo(leafletMap);
 
@@ -2013,10 +2153,10 @@ function addMapMarkers(){
   events.forEach(ev=>{
     if(!ev.lat||!ev.lng)return;
     const color=evColor(ev);
-    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin${ev.sev==='critical'?' pulse':''}" style="border-color:${color};box-shadow:0 0 8px ${color}33;">${evEmoji(ev)}</div><div class="marker-label"><span class="emoji">${ev.flags}</span> ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
+    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin${ev.sev==='critical'?' pulse':''}" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label"><span class="emoji">${ev.flags}</span> ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
     const marker=L.marker([ev.lat,ev.lng],{icon});
     const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;}).join('');
-    marker.bindPopup(`<div class="map-popup"><div class="mpp-flags emoji">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">Read All Sides →</button></div>`,{maxWidth:280,minWidth:230});
+    marker.bindPopup(`<div class="map-popup"><div class="mpp-flags emoji">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">${T('detail_read')}</button></div>`,{maxWidth:280,minWidth:230});
     // Mobile: also open bottom sheet on tap
     marker.on('click',()=>{if(window.innerWidth<768)openConflictSheet(ev.id);});
     if(clusterEnabled&&clusterGroup){clusterGroup.addLayer(marker);}else{marker.addTo(leafletMap);}
@@ -2040,7 +2180,7 @@ function openConflictSheet(id){
       ${ev.casualties?`<span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);">· ${fmtNum(ev.casualties)} casualties</span>`:''}
     </div>
     <p style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:16px;">${(ev.econContext||'').substring(0,180)}…</p>
-    <button class="btn btn-red" onclick="closeBottomSheet();openEvent(${ev.id})">Read All Sides →</button>`;
+    <button class="btn btn-red" onclick="closeBottomSheet();openEvent(${ev.id})">${T('detail_read')}</button>`;
   document.getElementById('bs-overlay').classList.add('bs-show');
   document.getElementById('bs-conflict').classList.add('bs-open');
 }
@@ -2215,6 +2355,13 @@ function renderRelated(ev){
   }).join('');
   return`<div style="padding:12px 18px 0;"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">Related Conflicts</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${chips}</div></div>`;
 }
+function goHome(){
+  stopNewsRefresh();
+  switchTab('map');
+  // Scroll to top of map screen
+  document.getElementById('screen-map')?.scrollTo(0,0);
+  window.scrollTo(0,0);
+}
 function goBack(){
   const order=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
   const i=order.indexOf(lastScreen);
@@ -2381,7 +2528,7 @@ function toggleFollow(){
 function updateFollowBtn(){
   const btn=document.getElementById('follow-btn');if(!btn)return;
   const following=currentUser?.following?.includes(currentEvent);
-  btn.textContent=following?'★ Following':'★ Follow';
+  btn.textContent=following?T('detail_following'):T('detail_follow');
   btn.style.color=following?'var(--amber)':'rgba(255,255,255,.4)';
   btn.style.borderColor=following?'rgba(217,140,10,.4)':'var(--border)';
 }
