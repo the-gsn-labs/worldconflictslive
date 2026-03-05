@@ -165,8 +165,8 @@ button{font-family:inherit;cursor:pointer;}
   position:relative;
   background:#0b111e;
 }
-.leaflet-container{background:#0b111e !important;}
-.leaflet-tile{filter:brightness(1.0) saturate(0.8) contrast(1.05);}
+.leaflet-container{background:#0d1117 !important;}
+.leaflet-tile{filter:brightness(1.4) contrast(1.1);}
 .leaflet-control-attribution{display:none !important;}
 .leaflet-popup-content-wrapper{background:#111416 !important;border:1px solid var(--border2) !important;border-radius:14px !important;box-shadow:0 12px 48px rgba(0,0,0,.8) !important;padding:0 !important;}
 .leaflet-popup-content{margin:0 !important;padding:0 !important;}
@@ -1937,9 +1937,12 @@ function initMap(){
   leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:false,scrollWheelZoom:false,minZoom:1,maxZoom:10});
   L.control.zoom({position:'bottomright'}).addTo(leafletMap);
 
-  tileLayers.dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19});
-  tileLayers.satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'',maxZoom:19});
+  // Base dark tiles — CartoDB Dark Matter (no labels underneath, labels on top layer)
+  tileLayers.dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19});
+  tileLayers.labels = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19,zIndex:200,pane:'overlayPane'});
+  tileLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'',maxZoom:19});
   tileLayers.dark.addTo(leafletMap);
+  tileLayers.labels.addTo(leafletMap);
 
   clusterGroup=L.markerClusterGroup({
     maxClusterRadius:60,spiderfyOnMaxZoom:true,showCoverageOnHover:false,
@@ -1964,10 +1967,14 @@ function initMap(){
 
 function toggleSatellite(btn){
   if(mapMode==='satellite'){
-    leafletMap.removeLayer(tileLayers.satellite);tileLayers.dark.addTo(leafletMap);
+    leafletMap.removeLayer(tileLayers.satellite);
+    tileLayers.dark.addTo(leafletMap);
+    tileLayers.labels.addTo(leafletMap);
     mapMode='default';btn.classList.remove('mctrl-active');
   }else{
-    leafletMap.removeLayer(tileLayers.dark);tileLayers.satellite.addTo(leafletMap);
+    leafletMap.removeLayer(tileLayers.dark);
+    leafletMap.removeLayer(tileLayers.labels);
+    tileLayers.satellite.addTo(leafletMap);
     mapMode='satellite';btn.classList.add('mctrl-active');
   }
 }
