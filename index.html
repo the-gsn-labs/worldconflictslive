@@ -166,7 +166,7 @@ button{font-family:inherit;cursor:pointer;}
   background:#0b111e;
 }
 .leaflet-container{background:#0b111e !important;}
-.leaflet-tile{filter:brightness(.85) saturate(.6) hue-rotate(175deg);}
+.leaflet-tile{filter:brightness(1.0) saturate(0.8) contrast(1.05);}
 .leaflet-control-attribution{display:none !important;}
 .leaflet-popup-content-wrapper{background:#111416 !important;border:1px solid var(--border2) !important;border-radius:14px !important;box-shadow:0 12px 48px rgba(0,0,0,.8) !important;padding:0 !important;}
 .leaflet-popup-content{margin:0 !important;padding:0 !important;}
@@ -1937,16 +1937,8 @@ function initMap(){
   leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:false,scrollWheelZoom:false,minZoom:1,maxZoom:10});
   L.control.zoom({position:'bottomright'}).addTo(leafletMap);
 
-  tileLayers.dark=L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',{attribution:'',maxZoom:20});
+  tileLayers.dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19});
   tileLayers.satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'',maxZoom:19});
-  // Fallback to CartoDB if Stadia fails
-  tileLayers.dark.on('tileerror',()=>{
-    if(mapMode!=='satellite'){
-      leafletMap.removeLayer(tileLayers.dark);
-      tileLayers.dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19});
-      tileLayers.dark.addTo(leafletMap);
-    }
-  });
   tileLayers.dark.addTo(leafletMap);
 
   clusterGroup=L.markerClusterGroup({
