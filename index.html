@@ -5,270 +5,371 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>World Conflicts Live — Every Source · Every Side · No Agenda</title>
 <meta name="description" content="Real-time conflict tracking. Every source, every side, no agenda."/>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
-  --ink:#0b0d0c;--surface:#111310;--surface2:#181a17;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
-  --paper:#f0ebe0;--red:#c0392b;--amber:#d4820a;--green:#27ae60;
-  --mono:'JetBrains Mono',monospace;--display:'Bebas Neue',sans-serif;--serif:'Crimson Pro',serif;
-  --nav-h:52px;--ticker-h:22px;
+  --ink:#07090a;--surface:#0e1012;--surface2:#141618;--surface3:#1a1d20;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --paper:#eeeae0;--red:#c8321e;--red2:#e03d27;--amber:#d98c0a;--green:#1fa355;
+  --blue:#2c7be5;--purple:#9b4dca;
+  --mono:'DM Mono',monospace;--display:'Barlow Condensed',sans-serif;--serif:'Playfair Display',serif;
+  --nav-h:54px;--ticker-h:24px;
+  --glow-red:0 0 20px rgba(200,50,30,0.25);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html{font-size:16px;}
-body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow-x:hidden;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--paper);font-family:var(--display);overflow-x:hidden;font-weight:400;letter-spacing:.01em;}
+
+/* GRAIN OVERLAY */
+body::before{content:'';position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:9999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size:200px 200px;}
+
 a{color:inherit;text-decoration:none;}
 button{font-family:inherit;cursor:pointer;}
 [dir="rtl"]{direction:rtl;text-align:right;}
 
-/* TICKER */
-.ticker-wrap{position:fixed;top:0;left:0;right:0;z-index:700;background:var(--red);height:var(--ticker-h);display:flex;align-items:center;overflow:hidden;}
-.ticker-lbl{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.6);padding:0 10px;flex-shrink:0;display:flex;align-items:center;background:rgba(0,0,0,0.22);letter-spacing:.08em;text-transform:uppercase;height:100%;}
-.ticker-inner{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:#fff;white-space:nowrap;animation:ticker 90s linear infinite;}
+/* ══ TICKER ══ */
+.ticker-wrap{position:fixed;top:0;left:0;right:0;z-index:700;background:var(--red);height:var(--ticker-h);display:flex;align-items:center;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.08);}
+.ticker-lbl{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.7);padding:0 12px;flex-shrink:0;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.28);letter-spacing:.12em;text-transform:uppercase;height:100%;border-right:1px solid rgba(255,255,255,.12);}
+.live-pulse{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s ease-in-out infinite;}
+.ticker-inner{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:#fff;white-space:nowrap;animation:ticker 100s linear infinite;}
 @keyframes ticker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
-.t-up{color:#7effa0;}.t-dn{color:#ffb3b3;}
+.t-up{color:#a0ffb8;font-weight:500;}.t-dn{color:#ffb3a8;font-weight:500;}
 
-/* ALERT BANNER */
-.alert-banner{display:none;position:fixed;top:var(--ticker-h);left:0;right:0;z-index:690;background:linear-gradient(90deg,#7a0000,#c0392b);padding:9px 16px;font-family:var(--mono);font-size:11px;color:#fff;cursor:pointer;animation:slideDown .4s ease;}
+/* ══ ALERT BANNER ══ */
+.alert-banner{display:none;position:fixed;top:var(--ticker-h);left:0;right:0;z-index:690;
+  background:linear-gradient(90deg,rgba(180,30,10,.98),rgba(200,50,30,.95));
+  padding:10px 18px;font-family:var(--mono);font-size:11px;color:#fff;cursor:pointer;
+  animation:slideDown .35s cubic-bezier(.16,1,.3,1);border-bottom:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(12px);}
 .alert-banner.show{display:flex;align-items:center;gap:10px;}
 @keyframes slideDown{from{transform:translateY(-100%)}to{transform:none}}
-.ab-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1s infinite;flex-shrink:0;}
-.ab-close{margin-left:auto;opacity:.6;font-size:16px;padding:0 4px;background:none;border:none;color:#fff;cursor:pointer;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.ab-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1s infinite;flex-shrink:0;}
+.ab-close{margin-left:auto;opacity:.5;font-size:18px;padding:2px 6px;background:none;border:none;color:#fff;cursor:pointer;line-height:1;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
 
-/* TOP NAV */
-.top-nav{display:none;position:fixed;left:0;right:0;z-index:600;background:rgba(10,12,11,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:var(--nav-h);}
-.top-nav-inner{max-width:1600px;margin:0 auto;display:flex;align-items:center;padding:0 24px;height:100%;}
-.top-wordmark{font-family:var(--display);font-size:22px;letter-spacing:.05em;flex-shrink:0;margin-right:28px;cursor:pointer;}
-.top-wordmark span{color:var(--red);}
+/* ══ TOP NAV ══ */
+.top-nav{display:none;position:fixed;left:0;right:0;z-index:600;
+  background:rgba(7,9,10,0.96);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);height:var(--nav-h);}
+.top-nav-inner{max-width:1600px;margin:0 auto;display:flex;align-items:center;padding:0 28px;height:100%;gap:8px;}
+.top-wordmark{font-family:var(--display);font-size:24px;font-weight:900;letter-spacing:.06em;flex-shrink:0;margin-right:24px;cursor:pointer;text-transform:uppercase;}
+.top-wordmark span{color:var(--red2);}
 .top-nav-links{display:flex;gap:2px;flex:1;}
-.top-nav-btn{padding:8px 14px;font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,0.45);background:none;border:none;border-radius:6px;cursor:pointer;transition:all .18s;white-space:nowrap;}
-.top-nav-btn:hover{color:var(--paper);background:rgba(255,255,255,0.05);}
-.top-nav-btn.active{color:var(--paper);background:rgba(192,57,43,0.15);border:1px solid rgba(192,57,43,0.25);}
-.top-nav-right{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.1em;}
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1.4s ease-in-out infinite;flex-shrink:0;}
+.top-nav-btn{padding:7px 13px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);background:none;border:none;border-radius:6px;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.top-nav-btn:hover{color:var(--paper);background:rgba(255,255,255,.05);}
+.top-nav-btn.active{color:var(--paper);background:rgba(200,50,30,.15);border:1px solid rgba(200,50,30,.3);}
+.top-nav-right{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--red2);letter-spacing:.12em;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red2);animation:blink 1.4s ease-in-out infinite;flex-shrink:0;}
 
-/* MOBILE NAV */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#0d0f0d;border-top:1px solid var(--border);display:flex;z-index:600;padding:5px 0 env(safe-area-inset-bottom,5px);}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer;border:none;background:none;color:rgba(255,255,255,0.28);transition:color .2s;}
+/* ══ MOBILE NAV ══ */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(7,9,10,.97);border-top:1px solid var(--border);display:flex;z-index:600;padding:5px 0 env(safe-area-inset-bottom,5px);backdrop-filter:blur(20px);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;cursor:pointer;border:none;background:none;color:rgba(255,255,255,.25);transition:color .2s;}
 .nav-item.active{color:var(--paper);}
-.nav-icon{font-size:18px;line-height:1;}
-.nav-label{font-family:var(--mono);font-size:8px;letter-spacing:.05em;text-transform:uppercase;}
-.nav-pip{width:14px;height:2px;border-radius:1px;background:var(--red);opacity:0;transition:opacity .2s;margin-top:1px;}
+.nav-icon{font-size:17px;line-height:1;}
+.nav-label{font-family:var(--mono);font-size:7.5px;letter-spacing:.06em;text-transform:uppercase;}
+.nav-pip{width:16px;height:2px;border-radius:1px;background:var(--red2);opacity:0;transition:opacity .2s;margin-top:2px;}
 .nav-item.active .nav-pip{opacity:1;}
 
-/* LAYOUT */
+/* ══ LAYOUT ══ */
 .app-body{padding-top:var(--ticker-h);padding-bottom:72px;}
-.screen{display:none;min-height:calc(100vh - var(--ticker-h) - 72px);animation:fadeIn .22s ease;}
+.screen{display:none;min-height:calc(100vh - var(--ticker-h) - 72px);animation:fadeIn .2s ease;}
 .screen.active{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
-.page-head{padding:16px 18px 12px;}
-.page-title{font-family:var(--display);font-size:32px;letter-spacing:.04em;line-height:1;}
-.page-sub{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page-head{padding:20px 18px 14px;}
+.page-title{font-family:var(--display);font-size:38px;font-weight:900;letter-spacing:.04em;line-height:1;text-transform:uppercase;}
+.page-sub{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-top:5px;}
 .inner-pad{padding:0 18px;}
-.pill{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:999px;font-family:var(--mono);font-size:11px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);color:rgba(255,255,255,0.45);transition:all .18s;}
-.pill.active,.pill:hover{border-color:var(--red);color:var(--paper);background:rgba(192,57,43,0.12);}
-.scroll-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:8px 18px;}
+
+/* ══ PILLS ══ */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:6px;font-family:var(--mono);font-size:10px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);color:rgba(255,255,255,.4);transition:all .18s;letter-spacing:.04em;text-transform:uppercase;font-weight:500;}
+.pill.active,.pill:hover{border-color:var(--red2);color:var(--paper);background:rgba(200,50,30,.12);}
+.pill.active{box-shadow:0 0 0 1px rgba(200,50,30,.2);}
+.scroll-row{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:8px 18px;}
 .scroll-row::-webkit-scrollbar{display:none;}
+
+/* ══ SEVERITY DOTS ══ */
 .sev-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.sev-critical{background:#c0392b;box-shadow:0 0 6px #c0392b88;}
-.sev-high{background:#d4820a;box-shadow:0 0 5px #d4820a66;}
+.sev-critical{background:#c8321e;box-shadow:0 0 8px rgba(200,50,30,.6);}
+.sev-high{background:#d98c0a;box-shadow:0 0 6px rgba(217,140,10,.5);}
 .sev-medium{background:#c8b800;}
-.sev-low{background:#27ae60;}
-.up{color:#27ae60;}.dn{color:#c0392b;}
-.up-bg{background:rgba(39,174,96,0.15);color:#27ae60;padding:2px 7px;border-radius:4px;}
-.dn-bg{background:rgba(192,57,43,0.15);color:#c0392b;padding:2px 7px;border-radius:4px;}
-.toast{position:fixed;top:calc(var(--ticker-h)+8px);left:50%;transform:translateX(-50%);background:#1e201d;border:1px solid rgba(255,255,255,0.12);color:var(--paper);border-radius:10px;padding:12px 20px;font-family:var(--mono);font-size:11px;white-space:nowrap;z-index:800;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 32px rgba(0,0,0,0.6);}
+.sev-low{background:#1fa355;}
+.up{color:#1fa355;}.dn{color:#c8321e;}
+.up-bg{background:rgba(31,163,85,.14);color:#4ade80;padding:2px 8px;border-radius:4px;font-weight:500;}
+.dn-bg{background:rgba(200,50,30,.14);color:#f87171;padding:2px 8px;border-radius:4px;font-weight:500;}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;top:calc(var(--ticker-h)+10px);left:50%;transform:translateX(-50%);background:#1a1d20;border:1px solid rgba(255,255,255,.14);color:var(--paper);border-radius:8px;padding:11px 20px;font-family:var(--mono);font-size:11px;white-space:nowrap;z-index:800;opacity:0;pointer-events:none;transition:opacity .25s;box-shadow:0 12px 40px rgba(0,0,0,.7);}
 .toast.show{opacity:1;}
-.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 20px;gap:14px;}
-.spinner{width:26px;height:26px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;}
+
+/* ══ SPINNER ══ */
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 20px;gap:14px;}
+.spinner{width:24px;height:24px;border:2px solid rgba(255,255,255,.08);border-top-color:var(--red);border-radius:50%;animation:spin .75s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:.1em;}
-.error-box{margin:16px 18px;background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.22);border-radius:10px;padding:15px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.5);line-height:1.8;}
-.btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;display:block;}
+.loading-text{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase;}
+.error-box{margin:16px 18px;background:rgba(200,50,30,.08);border:1px solid rgba(200,50,30,.2);border-radius:10px;padding:16px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.45);line-height:1.8;}
+
+/* ══ BUTTONS ══ */
+.btn{width:100%;padding:14px;border:none;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .2s;display:block;}
 .btn:active{transform:scale(.98);}
-.btn-red{background:var(--red);color:#fff;}
-.btn-amber{background:var(--amber);color:#0b0d0c;}
-.btn-ghost{background:transparent;color:rgba(255,255,255,0.3);border:1px solid var(--border);}
+.btn-red{background:var(--red2);color:#fff;}
+.btn-red:hover{background:#d94530;}
+.btn-amber{background:var(--amber);color:#07090a;}
+.btn-amber:hover{background:#e89510;}
+.btn-ghost{background:transparent;color:rgba(255,255,255,.3);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--border2);color:rgba(255,255,255,.5);}
 
-/* MODALS */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:700;align-items:flex-end;justify-content:center;backdrop-filter:blur(8px);}
+/* ══ MODALS ══ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.84);z-index:700;align-items:flex-end;justify-content:center;backdrop-filter:blur(12px);}
 .modal-overlay.open{display:flex;}
-.modal-sheet{background:#141614;border-radius:20px 20px 0 0;width:100%;max-width:600px;border-top:1px solid rgba(255,255,255,0.1);animation:slideUp .3s cubic-bezier(.16,1,.3,1);max-height:92vh;overflow-y:auto;}
+.modal-sheet{background:#111416;border-radius:18px 18px 0 0;width:100%;max-width:580px;border-top:1px solid rgba(255,255,255,.09);animation:slideUp .3s cubic-bezier(.16,1,.3,1);max-height:92vh;overflow-y:auto;}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
-.modal-handle{width:36px;height:3px;border-radius:2px;background:rgba(255,255,255,0.12);margin:14px auto 0;}
-.modal-pad{padding:20px 22px 40px;}
-.email-input{width:100%;padding:13px 15px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:9px;color:var(--paper);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:10px;}
-.email-input:focus{border-color:rgba(255,255,255,0.2);}
+.modal-handle{width:40px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);margin:14px auto 0;}
+.modal-pad{padding:22px 24px 44px;}
+.email-input{width:100%;padding:13px 15px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--paper);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:10px;transition:border-color .2s;}
+.email-input:focus{border-color:rgba(255,255,255,.22);}
 
-/* MAP */
-.map-header{padding:14px 18px 10px;display:flex;justify-content:space-between;align-items:center;}
-.wordmark{font-family:var(--display);font-size:26px;letter-spacing:.05em;line-height:1;cursor:pointer;}
-.wordmark span{color:var(--red);}
-.live-row{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.1em;}
-#conflict-map{width:100%;height:280px;z-index:1;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.leaflet-container{background:#0c0e0c !important;}
-.leaflet-tile{filter:brightness(.68) saturate(.4) hue-rotate(100deg);}
+/* ══ MAP ══ */
+.map-header{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;}
+.wordmark{font-family:var(--display);font-size:28px;font-weight:900;letter-spacing:.06em;line-height:1;cursor:pointer;text-transform:uppercase;}
+.wordmark span{color:var(--red2);}
+.slogan-text{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.2);letter-spacing:.12em;text-transform:uppercase;margin-top:3px;}
+.live-row{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--red2);letter-spacing:.12em;}
+#conflict-map{width:100%;height:300px;z-index:1;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.leaflet-container{background:#080a0b !important;}
+.leaflet-tile{filter:brightness(.6) saturate(.35) hue-rotate(155deg);}
 .leaflet-control-attribution{display:none !important;}
-.leaflet-popup-content-wrapper{background:#161816 !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 36px rgba(0,0,0,.7) !important;padding:0 !important;}
+.leaflet-popup-content-wrapper{background:#111416 !important;border:1px solid var(--border2) !important;border-radius:14px !important;box-shadow:0 12px 48px rgba(0,0,0,.8) !important;padding:0 !important;}
 .leaflet-popup-content{margin:0 !important;padding:0 !important;}
-.leaflet-popup-tip{background:#161816 !important;}
-.leaflet-popup-close-button{color:rgba(255,255,255,.4) !important;top:8px !important;right:10px !important;}
+.leaflet-popup-tip{background:#111416 !important;}
+.leaflet-popup-close-button{color:rgba(255,255,255,.35) !important;top:10px !important;right:12px !important;font-size:18px !important;}
 .conflict-marker{display:flex;flex-direction:column;align-items:center;cursor:pointer;}
-.marker-pin{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid currentColor;background:rgba(8,10,9,.88);backdrop-filter:blur(8px);animation:mpulse 2.5s ease-out infinite;}
-@keyframes mpulse{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
-.marker-label{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.65);white-space:nowrap;margin-top:2px;letter-spacing:.05em;text-shadow:0 1px 4px #000,0 0 8px #000;}
-.map-hint{text-align:center;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.2);padding:4px 0;}
-.map-popup{padding:14px 16px;}
-.mpp-flags{font-size:20px;margin-bottom:4px;letter-spacing:2px;}
-.mpp-title{font-family:var(--display);font-size:18px;letter-spacing:.03em;color:var(--paper);margin-bottom:2px;}
-.mpp-region{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
-.mpp-btn{width:100%;padding:9px;background:var(--red);color:#fff;border:none;border-radius:7px;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;}
-.cat-tabs{display:flex;border-bottom:1px solid var(--border);}
-.cat-tab{flex:1;padding:11px 5px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.3);cursor:pointer;text-align:center;background:none;border:none;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
-.cat-tab.active{color:var(--paper);border-bottom-color:var(--red);}
+.marker-pin{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid currentColor;background:rgba(7,9,10,.9);backdrop-filter:blur(8px);animation:mpulse 2.8s ease-out infinite;}
+@keyframes mpulse{0%{box-shadow:0 0 0 0 currentColor}60%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.marker-label{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.6);white-space:nowrap;margin-top:2px;letter-spacing:.04em;text-shadow:0 1px 5px #000,0 0 10px #000;}
+.map-hint{text-align:center;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.18);padding:5px 0;letter-spacing:.06em;}
+.map-popup{padding:15px 17px 17px;}
+.mpp-flags{font-size:22px;margin-bottom:5px;letter-spacing:2px;}
+.mpp-title{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:.04em;color:var(--paper);margin-bottom:2px;text-transform:uppercase;}
+.mpp-region{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+.mpp-btn{width:100%;padding:10px;background:var(--red2);color:#fff;border:none;border-radius:8px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .2s;}
+.mpp-btn:hover{background:#d94530;}
 
-/* EVENTS */
-.event-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:10px;cursor:pointer;transition:border-color .2s,transform .15s;}
-.event-card:hover{border-color:rgba(255,255,255,.14);transform:translateY(-1px);}
-.ec-title{font-family:var(--display);font-size:19px;letter-spacing:.03em;line-height:1.05;flex:1;}
-.ec-meta{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);margin-top:3px;}
-.ec-summary{font-size:15px;color:rgba(255,255,255,.5);line-height:1.6;font-style:italic;margin-bottom:9px;}
-.type-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;}
-.tb-military{background:rgba(192,57,43,.2);color:#f57a6a;border:1px solid rgba(192,57,43,.3);}
-.tb-unrest{background:rgba(212,130,10,.2);color:#f5c96a;border:1px solid rgba(212,130,10,.3);}
-.tb-humanitarian{background:rgba(39,174,96,.15);color:#7ef5a9;border:1px solid rgba(39,174,96,.25);}
-.tb-terrorism{background:rgba(130,30,160,.2);color:#d07ef5;border:1px solid rgba(160,30,160,.3);}
-.mkt-ribbon{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-top:10px;border-top:1px solid var(--border);margin-top:9px;}
+/* MAP LEGEND */
+.map-legend{display:flex;gap:14px;padding:7px 18px 10px;flex-wrap:wrap;}
+.ml-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.04em;}
+.ml-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* MAP TIMELINE RANGE */
+.map-timeline-bar{margin:0 18px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;}
+.mtb-label{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.mtb-range{display:flex;align-items:center;gap:8px;}
+.mtb-track{flex:1;height:3px;background:rgba(255,255,255,.08);border-radius:2px;position:relative;cursor:pointer;}
+.mtb-fill{height:100%;background:var(--red2);border-radius:2px;transition:width .3s;}
+.mtb-handle{position:absolute;top:50%;right:0;transform:translate(50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--red2);border:2px solid var(--paper);cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.5);}
+.mtb-dates{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);margin-top:4px;}
+.mtb-showing{font-family:var(--mono);font-size:10px;color:var(--paper);}
+
+/* CAT TABS */
+.cat-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{flex:1;min-width:fit-content;padding:12px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);cursor:pointer;text-align:center;background:none;border:none;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;font-weight:500;}
+.cat-tab.active{color:var(--paper);border-bottom-color:var(--red2);}
+
+/* ══ SEE ALL CONFLICTS ══ */
+.see-all-btn{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 18px 14px;padding:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.see-all-btn:hover{border-color:var(--red2);color:var(--paper);background:rgba(200,50,30,.08);}
+.see-all-count{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--red2);color:#fff;font-size:10px;font-weight:700;}
+
+/* ══ EVENTS ══ */
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;transition:border-color .2s,transform .15s,box-shadow .2s;}
+.event-card:hover{border-color:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.ec-title{font-family:var(--display);font-size:21px;font-weight:800;letter-spacing:.04em;line-height:1.05;flex:1;text-transform:uppercase;}
+.ec-meta{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.28);margin-top:3px;letter-spacing:.04em;}
+.ec-summary{font-family:var(--display);font-size:15px;font-weight:400;color:rgba(255,255,255,.45);line-height:1.65;margin-bottom:10px;}
+.type-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:5px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;font-weight:500;}
+.tb-military{background:rgba(200,50,30,.18);color:#ff8a7a;border:1px solid rgba(200,50,30,.3);}
+.tb-unrest{background:rgba(217,140,10,.18);color:#ffd47a;border:1px solid rgba(217,140,10,.3);}
+.tb-humanitarian{background:rgba(31,163,85,.14);color:#6fffa0;border:1px solid rgba(31,163,85,.25);}
+.tb-terrorism{background:rgba(155,77,202,.18);color:#d07ef5;border:1px solid rgba(155,77,202,.3);}
+.mkt-ribbon{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-top:10px;border-top:1px solid var(--border);margin-top:10px;}
 .mkt-ribbon::-webkit-scrollbar{display:none;}
-.mkt-chip{display:flex;flex-direction:column;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:7px 11px;flex-shrink:0;min-width:68px;cursor:pointer;transition:border-color .18s;}
-.mkt-chip:hover{border-color:rgba(255,255,255,.2);}
-.mc-name{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);margin-bottom:2px;}
+.mkt-chip{display:flex;flex-direction:column;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;flex-shrink:0;min-width:72px;cursor:pointer;transition:all .18s;}
+.mkt-chip:hover{border-color:rgba(255,255,255,.18);transform:translateY(-1px);}
+.mc-name{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);margin-bottom:2px;letter-spacing:.05em;}
 .mc-val{font-family:var(--mono);font-size:13px;font-weight:500;}
 .mc-chg{font-family:var(--mono);font-size:9px;margin-top:1px;}
 
-/* DETAIL */
-.detail-hero{padding:16px 18px 18px;background:linear-gradient(180deg,#180a07,#0b0d0c);border-bottom:1px solid var(--border);}
-.back-btn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.35);cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:5px;border:none;background:none;text-transform:uppercase;padding:0;}
-.d-title{font-family:var(--display);font-size:32px;letter-spacing:.03em;line-height:1;margin-bottom:7px;}
+/* ══ DETAIL ══ */
+.detail-hero{padding:18px 18px 20px;background:linear-gradient(180deg,rgba(30,10,5,.8) 0%,var(--ink) 100%);border-bottom:1px solid var(--border);}
+.back-btn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.3);cursor:pointer;margin-bottom:14px;display:inline-flex;align-items:center;gap:5px;border:none;background:none;text-transform:uppercase;padding:0;transition:color .2s;}
+.back-btn:hover{color:var(--paper);}
+.d-title{font-family:var(--display);font-size:36px;font-weight:900;letter-spacing:.04em;line-height:1;margin-bottom:8px;text-transform:uppercase;}
 .news-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
 .news-tabs::-webkit-scrollbar{display:none;}
-.ntab{padding:11px 12px;font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.32);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;border:none;background:none;}
-.ntab.active{color:var(--paper);border-bottom-color:var(--red);}
+.ntab{padding:12px 12px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;border:none;background:none;font-weight:500;}
+.ntab.active{color:var(--paper);border-bottom-color:var(--red2);}
 .article-card{padding:15px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
 .article-card:hover{background:rgba(255,255,255,.02);}
-.art-outlet{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.05em;}
-.art-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);margin-left:auto;}
-.art-headline{font-size:16px;font-weight:600;line-height:1.35;margin:5px 0;}
-.art-excerpt{font-size:14px;color:rgba(255,255,255,.45);line-height:1.65;font-style:italic;margin-bottom:8px;}
-.align-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.04em;}
+.art-outlet{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.38);letter-spacing:.06em;}
+.art-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);}
+.art-headline{font-family:var(--display);font-size:17px;font-weight:700;line-height:1.3;margin:5px 0;letter-spacing:.02em;}
+.art-excerpt{font-family:var(--display);font-size:14px;font-weight:400;color:rgba(255,255,255,.4);line-height:1.7;margin-bottom:8px;}
+.align-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-family:var(--mono);font-size:9px;letter-spacing:.05em;font-weight:500;}
 .locked-article{padding:15px 18px;border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
-.locked-blur{filter:blur(5px);opacity:.38;pointer-events:none;user-select:none;}
-.locked-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:rgba(11,13,12,.65);backdrop-filter:blur(2px);cursor:pointer;}
-.locked-badge{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(212,130,10,.3);padding:4px 12px;border-radius:999px;background:rgba(212,130,10,.1);}
-.tl-item{display:flex;gap:14px;padding:0 18px 18px;}
-.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:3px;}
-.tl-date{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);margin-bottom:4px;}
-.tl-event{font-size:14px;line-height:1.65;color:rgba(255,255,255,.72);}
-.tl-tag{display:inline-block;font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:3px;margin-top:5px;}
+.locked-blur{filter:blur(5px);opacity:.35;pointer-events:none;user-select:none;}
+.locked-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(7,9,10,.7);backdrop-filter:blur(3px);cursor:pointer;}
+.locked-badge{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(217,140,10,.3);padding:5px 14px;border-radius:6px;background:rgba(217,140,10,.1);}
 
-/* MARKETS */
-.mkt-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .2s;}
-.mkt-card:hover{border-color:rgba(255,255,255,.14);}
+/* ══ TIMELINE ══ */
+.tl-item{display:flex;gap:14px;padding:0 18px 20px;}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--red2);flex-shrink:0;margin-top:4px;box-shadow:0 0 8px rgba(200,50,30,.5);}
+.tl-date{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);margin-bottom:4px;letter-spacing:.06em;}
+.tl-event{font-family:var(--display);font-size:15px;font-weight:500;line-height:1.65;color:rgba(255,255,255,.75);}
+.tl-tag{display:inline-block;font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:3px;margin-top:5px;font-weight:500;}
+
+/* ══ TIMELINE GRAPH ══ */
+.tl-graph{margin:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;overflow:hidden;}
+.tl-graph-header{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.tl-graph-range{font-family:var(--mono);font-size:9px;color:var(--red2);letter-spacing:.06em;}
+.tl-graph-canvas{position:relative;overflow-x:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent;}
+.tl-graph-canvas::-webkit-scrollbar{height:3px;}
+.tl-graph-canvas::-webkit-scrollbar-track{background:transparent;}
+.tl-graph-canvas::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+/* ══ MARKETS ══ */
+.mkt-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s,box-shadow .2s;}
+.mkt-card:hover{border-color:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 8px 32px rgba(0,0,0,.4);}
 .mkc-head{padding:15px 16px 10px;display:flex;align-items:center;gap:13px;}
-.mkc-price{font-family:var(--mono);font-size:19px;font-weight:500;}
-.mkt-context{padding:10px 16px 14px;border-top:1px solid var(--border);font-size:13px;color:rgba(255,255,255,.5);line-height:1.75;font-style:italic;}
-.mkt-links{padding:0 16px 13px;display:flex;gap:7px;flex-wrap:wrap;}
-.mkt-link-tag{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(192,57,43,.1);color:var(--red);border:1px solid rgba(192,57,43,.2);cursor:pointer;transition:background .15s;}
-.mkt-link-tag:hover{background:rgba(192,57,43,.2);}
-.mover-row{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .18s;}
-.mover-row:hover{border-color:rgba(255,255,255,.16);}
-.mr-name{font-size:14px;font-weight:600;line-height:1.2;}
-.mr-ticker{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);}
+.mkc-price{font-family:var(--mono);font-size:20px;font-weight:500;}
+.mkt-context{padding:10px 16px 14px;border-top:1px solid var(--border);font-family:var(--display);font-size:14px;color:rgba(255,255,255,.45);line-height:1.75;}
+.mkt-links{padding:0 16px 14px;display:flex;gap:7px;flex-wrap:wrap;}
+.mkt-link-tag{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:5px;background:rgba(200,50,30,.1);color:var(--red2);border:1px solid rgba(200,50,30,.2);cursor:pointer;transition:background .15s;font-weight:500;}
+.mkt-link-tag:hover{background:rgba(200,50,30,.22);}
+.mover-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .18s;}
+.mover-row:hover{border-color:rgba(255,255,255,.14);transform:translateY(-1px);}
+.mr-name{font-family:var(--display);font-size:15px;font-weight:700;line-height:1.2;letter-spacing:.02em;}
+.mr-ticker{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.04em;}
 
-/* ALERTS */
+/* ══ TOP 10 ASSETS SECTION ══ */
+.assets-section{margin:0 0 20px;}
+.assets-header{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:14px 18px 8px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:8px;}
+.assets-header-dot{width:6px;height:6px;border-radius:50%;}
+.asset-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.asset-row:hover{background:rgba(255,255,255,.02);}
+.asset-rank{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.2);width:20px;text-align:center;flex-shrink:0;}
+.asset-icon{font-size:20px;flex-shrink:0;}
+.asset-info{flex:1;}
+.asset-name{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.02em;}
+.asset-ticker{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.04em;}
+.asset-price{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right;}
+.asset-mcap{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);text-align:right;margin-top:1px;}
+.asset-chg{font-family:var(--mono);font-size:11px;font-weight:500;text-align:right;min-width:52px;}
+.asset-bar{height:3px;border-radius:2px;margin-top:3px;transition:width .6s ease;}
+
+/* ══ CONFLICT ASSETS SECTION ══ */
+.conflict-assets-section{margin:0 0 20px;background:rgba(200,50,30,.04);border-top:1px solid rgba(200,50,30,.15);border-bottom:1px solid rgba(200,50,30,.15);}
+
+/* ══ ALERTS ══ */
 .alert-item{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:background .15s;}
 .alert-item:hover{background:rgba(255,255,255,.02);}
-.alert-item.unread{border-left:2px solid var(--red);padding-left:16px;}
-.al-conflict{font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:.1em;margin-bottom:3px;}
-.al-title{font-size:15px;font-weight:600;line-height:1.35;margin-bottom:3px;}
-.al-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);}
+.alert-item.unread{border-left:2px solid var(--red2);padding-left:16px;}
+.al-conflict{font-family:var(--mono);font-size:9px;color:var(--red2);letter-spacing:.1em;margin-bottom:3px;text-transform:uppercase;}
+.al-title{font-family:var(--display);font-size:16px;font-weight:600;line-height:1.35;margin-bottom:3px;}
+.al-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);}
 
-/* LANGUAGE */
-.lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 18px 28px;}
-.lang-btn{padding:11px 7px;background:var(--surface);border:1px solid var(--border);border-radius:11px;cursor:pointer;text-align:center;transition:all .18s;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.04em;}
-.lang-btn:hover,.lang-btn.active{border-color:var(--red);color:var(--paper);background:rgba(192,57,43,.12);}
-.lang-flag{font-size:20px;display:block;margin-bottom:4px;}
+/* ══ LANGUAGE ══ */
+.lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 18px 28px;}
+.lang-btn{padding:12px 8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .18s;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.04em;font-weight:400;}
+.lang-btn:hover,.lang-btn.active{border-color:var(--red2);color:var(--paper);background:rgba(200,50,30,.12);}
+.lang-btn.active{box-shadow:0 0 0 1px rgba(200,50,30,.25);}
+.lang-flag{font-size:22px;display:block;margin-bottom:5px;line-height:1;}
+.lang-name{font-size:11px;line-height:1.3;}
 
-/* ECON */
+/* ══ ECON ══ */
 .econ-panel{margin:15px 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
-.econ-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
-.econ-title{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);}
-.econ-context{padding:13px 16px;font-size:14px;color:rgba(255,255,255,.52);line-height:1.75;font-style:italic;border-bottom:1px solid var(--border);}
-.econ-row{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.econ-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
+.econ-title{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:500;}
+.econ-context{padding:14px 16px;font-family:var(--display);font-size:14px;color:rgba(255,255,255,.5);line-height:1.75;border-bottom:1px solid var(--border);}
+.econ-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
 .econ-row:last-child{border-bottom:none;}
 .econ-row:hover{background:rgba(255,255,255,.02);}
-.er-name{font-size:14px;font-weight:600;}
-.er-why{font-size:12px;color:rgba(255,255,255,.38);font-style:italic;line-height:1.5;}
+.er-name{font-family:var(--display);font-size:15px;font-weight:700;}
+.er-why{font-family:var(--display);font-size:12px;color:rgba(255,255,255,.35);line-height:1.5;}
 .er-price{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right;flex-shrink:0;}
 .er-chg{font-family:var(--mono);font-size:10px;text-align:right;margin-top:2px;}
 
-/* PROFILE */
-.profile-hero{padding:20px 18px 24px;background:linear-gradient(180deg,#111310,#0b0d0c);border-bottom:1px solid var(--border);text-align:center;}
-.premium-box{margin:18px;background:linear-gradient(135deg,#1a1300,#18100a);border:1px solid rgba(212,130,10,.3);border-radius:14px;padding:20px;}
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);cursor:pointer;}
-.toggle{width:40px;height:22px;border-radius:11px;background:rgba(255,255,255,.1);position:relative;transition:background .2s;flex-shrink:0;}
-.toggle.on{background:var(--red);}
-.t-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;}
-.toggle.on .t-knob{left:21px;}
+/* ══ PROFILE ══ */
+.profile-hero{padding:24px 18px 28px;background:linear-gradient(180deg,var(--surface) 0%,var(--ink) 100%);border-bottom:1px solid var(--border);text-align:center;}
+.premium-box{margin:18px;background:linear-gradient(135deg,#140e00,#1a0e07);border:1px solid rgba(217,140,10,.28);border-radius:14px;padding:22px;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.settings-row:hover{background:rgba(255,255,255,.02);}
+.settings-row-label{font-family:var(--display);font-size:15px;font-weight:600;}
+.toggle{width:42px;height:23px;border-radius:12px;background:rgba(255,255,255,.08);position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--red2);}
+.t-knob{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.toggle.on .t-knob{left:22px;}
 
-/* DESKTOP */
+/* ══ DESKTOP ══ */
 @media(min-width:900px){
-  :root{--nav-h:56px;}
+  :root{--nav-h:58px;}
   .top-nav{display:flex;top:var(--ticker-h);}
   .bottom-nav{display:none;}
   .app-body{padding-top:calc(var(--ticker-h) + var(--nav-h));padding-bottom:0;}
   .screen{min-height:calc(100vh - var(--ticker-h) - var(--nav-h));}
-  .dw{max-width:1600px;margin:0 auto;padding:20px 24px 40px;}
-  #screen-map .dw{display:grid;grid-template-columns:1fr 420px;gap:20px;}
+  .dw{max-width:1600px;margin:0 auto;padding:24px 28px 48px;}
+  #screen-map .dw{display:grid;grid-template-columns:1fr 440px;gap:24px;align-items:start;}
   #screen-map .map-col{position:sticky;top:calc(var(--ticker-h) + var(--nav-h) + 20px);}
-  #screen-map .map-header{padding:0 0 12px;}
-  #conflict-map{height:420px;border-radius:14px;border:1px solid var(--border);}
+  #screen-map .map-header{padding:0 0 14px;}
+  #conflict-map{height:440px;border-radius:14px;border:1px solid var(--border);}
   #screen-map .scroll-row{padding:10px 0;}
   #screen-map #conflict-list{padding:0;}
-  #screen-markets .dw{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
-  #screen-markets .page-head{grid-column:1/-1;padding:0 0 12px;}
-  .movers-section{grid-column:1/-1;}
-  #screen-detail .dw,#screen-alerts .dw,#screen-language .dw{max-width:900px;}
-  #screen-profile .dw{max-width:700px;}
+  #screen-map .see-all-btn{margin:0 0 14px;}
+  #screen-markets .dw{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  #screen-markets .page-head{grid-column:1/-1;padding:0 0 14px;}
+  #screen-markets .markets-right{grid-column:2;grid-row:2/5;}
+  #screen-markets .markets-left{grid-column:1;grid-row:2;}
+  #screen-markets .conflict-assets-full{grid-column:1/-1;}
   .lang-grid{grid-template-columns:repeat(5,1fr);}
-  .page-head{padding:0 0 14px;}
-  .scroll-row{padding:0 0 10px;}
+  .page-head{padding:0 0 16px;}
+  .scroll-row{padding:0 0 12px;}
+  #screen-detail .dw,#screen-alerts .dw,#screen-language .dw{max-width:860px;}
+  #screen-profile .dw{max-width:680px;}
 }
 @media(min-width:1200px){
-  #screen-map .dw{grid-template-columns:1fr 480px;}
-  #conflict-map{height:480px;}
+  #screen-map .dw{grid-template-columns:1fr 500px;}
+  #conflict-map{height:500px;}
   .lang-grid{grid-template-columns:repeat(6,1fr);}
 }
 </style>
 </head>
 <body>
 
-<div class="ticker-wrap"><span class="ticker-lbl">📡 LIVE</span><div style="overflow:hidden;flex:1;"><div class="ticker-inner" id="ticker-all">◆ Loading…</div></div></div>
-<div class="alert-banner" id="alert-banner" onclick="handleBannerClick()"><div class="ab-dot"></div><span id="ab-text"></span><button class="ab-close" onclick="event.stopPropagation();dismissBanner()">✕</button></div>
+<div class="ticker-wrap">
+  <span class="ticker-lbl"><div class="live-pulse"></div>LIVE</span>
+  <div style="overflow:hidden;flex:1;">
+    <div class="ticker-inner" id="ticker-all">◆ Loading markets…</div>
+  </div>
+</div>
+<div class="alert-banner" id="alert-banner" onclick="handleBannerClick()">
+  <div class="ab-dot"></div>
+  <span id="ab-text"></span>
+  <button class="ab-close" onclick="event.stopPropagation();dismissBanner()">✕</button>
+</div>
 
 <nav class="top-nav" id="top-nav">
   <div class="top-nav-inner">
     <div class="top-wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div>
     <div class="top-nav-links">
-      <button class="top-nav-btn active" onclick="switchTab('map',this)">🗺️ Map</button>
-      <button class="top-nav-btn" onclick="switchTab('unrest',this)">✊ Unrest</button>
-      <button class="top-nav-btn" onclick="switchTab('markets',this)">📈 Markets</button>
-      <button class="top-nav-btn" onclick="switchTab('alerts',this)">🔔 Alerts</button>
-      <button class="top-nav-btn" onclick="switchTab('language',this)">🌐 Language</button>
-      <button class="top-nav-btn" onclick="switchTab('profile',this)">⚙️ Settings</button>
+      <button class="top-nav-btn active" onclick="switchTab('map',this)" data-i18n-nav="0">🗺️ Map</button>
+      <button class="top-nav-btn" onclick="switchTab('unrest',this)" data-i18n-nav="1">✊ Unrest</button>
+      <button class="top-nav-btn" onclick="switchTab('markets',this)" data-i18n-nav="2">📈 Markets</button>
+      <button class="top-nav-btn" onclick="switchTab('alerts',this)" data-i18n-nav="3">🔔 Alerts</button>
+      <button class="top-nav-btn" onclick="switchTab('language',this)" data-i18n-nav="4">🌐 Language</button>
+      <button class="top-nav-btn" onclick="switchTab('profile',this)" data-i18n-nav="5">⚙️ Settings</button>
     </div>
     <div class="top-nav-right"><div class="live-dot"></div>LIVE</div>
   </div>
@@ -276,204 +377,332 @@ button{font-family:inherit;cursor:pointer;}
 
 <div class="app-body">
 
-<!-- MAP -->
+<!-- ═══════════════════════════ MAP ═══════════════════════════ -->
 <div class="screen active" id="screen-map"><div class="dw">
   <div class="map-col">
     <div class="map-header">
-      <div><div class="wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div><div class="slogan-text" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;">Every source · Every side · No agenda</div></div>
-      <div class="live-row"><div class="live-dot"></div>LIVE</div>
+      <div>
+        <div class="wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div>
+        <div class="slogan-text">Every source · Every side · No agenda</div>
+      </div>
+      <div class="live-row"><div class="live-dot"></div><span>LIVE</span></div>
     </div>
     <div id="conflict-map"></div>
-    <div class="map-hint">🤏 Pinch to zoom · Tap pins for details</div>
-    <div class="scroll-row">
-      <span class="pill active" onclick="filterMap('all',this)">🌍 All</span>
-      <span class="pill" onclick="filterMap('military',this)">⚔️ Military</span>
-      <span class="pill" onclick="filterMap('unrest',this)">✊ Unrest</span>
-      <span class="pill" onclick="filterMap('humanitarian',this)">🕊️ Humanitarian</span>
-      <span class="pill" onclick="filterMap('terrorism',this)">💥 Terrorism</span>
+    <div class="map-legend">
+      <div class="ml-item"><div class="ml-dot" style="background:#c8321e;box-shadow:0 0 6px rgba(200,50,30,.6);"></div><span>Critical</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#d98c0a;box-shadow:0 0 5px rgba(217,140,10,.5);"></div><span>High</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#d07ef5;"></div><span>Terrorism</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#ffd47a;"></div><span>Unrest</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#6fffa0;"></div><span>Humanitarian</span></div>
     </div>
-    <div style="margin:0 18px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:11px;">
-      <div style="flex:1;"><div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.18);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;">Sponsored</div><div style="font-size:14px;color:rgba(255,255,255,.45);">Track conflict-driven market moves in real time</div></div>
-      <button style="font-family:var(--mono);font-size:11px;color:var(--amber);background:none;border:none;cursor:pointer;" onclick="openModal('modal-premium')">Learn →</button>
+
+    <!-- MAP FILTER PILLS -->
+    <div class="scroll-row" id="map-filter-row">
+      <span class="pill active" onclick="filterMap('all',this)" data-i18n="filter_all">🌍 All</span>
+      <span class="pill" onclick="filterMap('military',this)" data-i18n="filter_military">⚔️ Military</span>
+      <span class="pill" onclick="filterMap('unrest',this)" data-i18n="filter_unrest">✊ Unrest</span>
+      <span class="pill" onclick="filterMap('humanitarian',this)" data-i18n="filter_humanitarian">🕊️ Humanitarian</span>
+      <span class="pill" onclick="filterMap('terrorism',this)" data-i18n="filter_terrorism">💥 Terrorism</span>
+      <span class="pill" onclick="filterMap('critical',this)" data-i18n="filter_critical">🔴 Critical</span>
+    </div>
+
+    <!-- TIMELINE RANGE BAR -->
+    <div class="map-timeline-bar">
+      <div class="mtb-label">
+        <span data-i18n="timeline_showing">Showing timeline</span>
+        <span class="mtb-showing" id="mtb-showing-label">All time · 13 conflicts</span>
+      </div>
+      <div class="mtb-range">
+        <span style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);">2022</span>
+        <div class="mtb-track" id="mtb-track">
+          <div class="mtb-fill" id="mtb-fill" style="width:100%;"></div>
+          <div class="mtb-handle" id="mtb-handle"></div>
+        </div>
+        <span style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);">Now</span>
+      </div>
+      <div class="mtb-dates" id="mtb-dates">
+        <span>Jan 2022</span><span>Jan 2023</span><span>Jan 2024</span><span>Jan 2025</span><span>Mar 2026</span>
+      </div>
+    </div>
+
+    <!-- SEE ALL CONFLICTS -->
+    <div class="see-all-btn" onclick="openAllConflictsModal()" id="see-all-btn">
+      <span data-i18n="see_all_conflicts">See all conflicts</span>
+      <span class="see-all-count" id="see-all-count">13</span>
+      <span style="font-size:12px;opacity:.5;">→</span>
     </div>
   </div>
+
   <div class="list-col">
     <div class="cat-tabs">
-      <button class="cat-tab active" onclick="setCatTab(this,'military')">⚔️ Military</button>
-      <button class="cat-tab" onclick="setCatTab(this,'unrest')">✊ Unrest</button>
-      <button class="cat-tab" onclick="setCatTab(this,'humanitarian')">🕊️ Crises</button>
-      <button class="cat-tab" onclick="setCatTab(this,'terrorism')">💥 Terror</button>
+      <button class="cat-tab active" onclick="setCatTab(this,'military')" data-i18n="cat_military">⚔️ Military</button>
+      <button class="cat-tab" onclick="setCatTab(this,'unrest')" data-i18n="cat_unrest">✊ Unrest</button>
+      <button class="cat-tab" onclick="setCatTab(this,'humanitarian')" data-i18n="cat_humanitarian">🕊️ Crises</button>
+      <button class="cat-tab" onclick="setCatTab(this,'terrorism')" data-i18n="cat_terrorism">💥 Terror</button>
     </div>
-    <div style="padding:12px 18px 0;" id="conflict-list"><div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">Loading…</div></div></div>
+    <div style="padding:12px 18px 0;" id="conflict-list">
+      <div class="spinner-wrap"><div class="spinner"></div><div class="loading-text" data-i18n="loading">Loading…</div></div>
+    </div>
   </div>
 </div></div>
 
-<!-- UNREST -->
+<!-- ═══════════════════════════ UNREST ═══════════════════════════ -->
 <div class="screen" id="screen-unrest"><div class="dw">
-  <div class="page-head"><div class="page-title">CIVIL UNREST</div><div class="page-sub">Protests · Coups · Revolutions · Election Crises</div></div>
+  <div class="page-head">
+    <div class="page-title" data-i18n="unrest_title">CIVIL UNREST</div>
+    <div class="page-sub" data-i18n="unrest_sub">Protests · Coups · Revolutions · Election Crises</div>
+  </div>
   <div class="scroll-row" style="padding:0 18px 14px;">
-    <span class="pill active" onclick="filterUnrest('all',this)">All</span>
-    <span class="pill" onclick="filterUnrest('protest',this)">✊ Protest</span>
-    <span class="pill" onclick="filterUnrest('coup',this)">👁️ Coup</span>
-    <span class="pill" onclick="filterUnrest('revolution',this)">🔥 Revolution</span>
-    <span class="pill" onclick="filterUnrest('election',this)">🗳️ Election Crisis</span>
+    <span class="pill active" onclick="filterUnrest('all',this)" data-i18n="filter_all">All</span>
+    <span class="pill" onclick="filterUnrest('protest',this)" data-i18n="filter_protest">✊ Protest</span>
+    <span class="pill" onclick="filterUnrest('coup',this)" data-i18n="filter_coup">👁️ Coup</span>
+    <span class="pill" onclick="filterUnrest('revolution',this)" data-i18n="filter_revolution">🔥 Revolution</span>
+    <span class="pill" onclick="filterUnrest('election',this)" data-i18n="filter_election">🗳️ Election Crisis</span>
   </div>
   <div style="padding:0 18px;" id="unrest-list"></div>
 </div></div>
 
-<!-- MARKETS -->
+<!-- ═══════════════════════════ MARKETS ═══════════════════════════ -->
 <div class="screen" id="screen-markets"><div class="dw">
-  <div class="page-head"><div class="page-title">MARKETS</div><div class="page-sub">Conflict-driven price movements · Tap any asset for chart + context</div></div>
-  <div class="movers-section">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-      <div><div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:12px 18px 7px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.5);"><span style="color:var(--green);">▲</span>Top 5 Benefiting</div><div id="winners-list" style="padding:0 18px 10px;display:flex;flex-direction:column;gap:8px;"></div></div>
-      <div><div style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:12px 18px 7px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.5);"><span style="color:var(--red);">▼</span>Top 5 Declining</div><div id="losers-list" style="padding:0 18px 10px;display:flex;flex-direction:column;gap:8px;"></div></div>
+  <div class="page-head">
+    <div class="page-title" data-i18n="markets_title">MARKETS</div>
+    <div class="page-sub" data-i18n="markets_sub">Conflict-driven price movements · Tap any asset for chart + context</div>
+  </div>
+
+  <!-- TOP 10 MOST VALUED ASSETS -->
+  <div class="assets-section markets-left">
+    <div class="assets-header">
+      <div class="assets-header-dot" style="background:#d98c0a;box-shadow:0 0 5px rgba(217,140,10,.5);"></div>
+      <span data-i18n="top10_title">Top 10 Most Valued Global Assets</span>
+    </div>
+    <div id="top10-list"></div>
+  </div>
+
+  <!-- CONFLICT-AFFECTED ASSETS -->
+  <div class="conflict-assets-section markets-right">
+    <div class="assets-header" style="padding:14px 18px 8px;">
+      <div class="assets-header-dot" style="background:#c8321e;box-shadow:0 0 6px rgba(200,50,30,.6);"></div>
+      <span data-i18n="conflict_assets_title">Assets Affected by Conflict</span>
+    </div>
+    <div id="conflict-assets-list" style="padding:0 18px 14px;display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <!-- MOVERS -->
+  <div class="conflict-assets-full" style="grid-column:1/-1;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border);margin-top:4px;">
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:13px 18px 8px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.4);">
+          <span style="color:#4ade80;">▲</span><span data-i18n="top_winning">Top 5 Benefiting</span>
+        </div>
+        <div id="winners-list" style="padding:0 18px 14px;display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
+      <div style="border-left:1px solid var(--border);">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:13px 18px 8px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.4);">
+          <span style="color:#f87171;">▼</span><span data-i18n="top_losing">Top 5 Declining</span>
+        </div>
+        <div id="losers-list" style="padding:0 18px 14px;display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
     </div>
   </div>
-  <div style="padding:0 18px;grid-column:1/-1;" id="markets-list"><div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">Fetching live data…</div></div></div>
+
+  <!-- DETAILED MARKET CARDS -->
+  <div style="grid-column:1/-1;padding:0;" id="markets-list">
+    <div class="spinner-wrap"><div class="spinner"></div><div class="loading-text" data-i18n="loading_markets">Fetching live data…</div></div>
+  </div>
+
 </div></div>
 
-<!-- DETAIL -->
+<!-- ═══════════════════════════ DETAIL ═══════════════════════════ -->
 <div class="screen" id="screen-detail"><div class="dw">
   <div class="detail-hero">
-    <button class="back-btn" onclick="goBack()">← Back</button>
-    <div style="font-size:24px;margin-bottom:5px;letter-spacing:3px;" id="d-flags"></div>
+    <button class="back-btn" onclick="goBack()" data-i18n="back">← Back</button>
+    <div style="font-size:26px;margin-bottom:6px;letter-spacing:3px;" id="d-flags"></div>
     <div class="d-title" id="d-title"></div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:5px;" id="d-meta"></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;" id="d-meta"></div>
   </div>
-  <div style="padding:13px 18px 10px;">
-    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:8px;">Source Classification</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;">
-      <span class="align-badge" style="background:rgba(30,80,160,.3);color:#89c4f5;border:1px solid rgba(137,196,245,.25);">🏛️ State-funded</span>
-      <span class="align-badge" style="background:rgba(160,60,20,.3);color:#f5b36a;border:1px solid rgba(245,179,106,.25);">🗳️ Politically aligned</span>
-      <span class="align-badge" style="background:rgba(30,130,70,.3);color:#7ef5a9;border:1px solid rgba(126,245,169,.25);">✊ Independent</span>
-      <span class="align-badge" style="background:rgba(150,30,130,.3);color:#f57ef5;border:1px solid rgba(245,126,245,.25);">📢 Opposition</span>
+  <div style="padding:14px 18px 12px;">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px;" data-i18n="source_class">Source Classification</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;">
+      <span class="align-badge" style="background:rgba(44,123,229,.2);color:#89c4f5;border:1px solid rgba(137,196,245,.2);">🏛️ State-funded</span>
+      <span class="align-badge" style="background:rgba(217,140,10,.18);color:#ffd47a;border:1px solid rgba(255,212,122,.2);">🗳️ Politically aligned</span>
+      <span class="align-badge" style="background:rgba(31,163,85,.14);color:#6fffa0;border:1px solid rgba(111,255,160,.2);">✊ Independent</span>
+      <span class="align-badge" style="background:rgba(155,77,202,.18);color:#d07ef5;border:1px solid rgba(208,126,245,.2);">📢 Opposition</span>
     </div>
-    <div style="font-size:14px;color:rgba(255,255,255,.42);font-style:italic;line-height:1.7;" id="d-summary"></div>
+    <div style="font-family:var(--display);font-size:15px;color:rgba(255,255,255,.4);line-height:1.7;" id="d-summary"></div>
   </div>
   <div id="econ-panel-wrap"></div>
   <div class="news-tabs">
-    <button class="ntab active" onclick="setNTab(this,0)">All</button>
-    <button class="ntab" onclick="setNTab(this,1)">🏛️ State</button>
-    <button class="ntab" onclick="setNTab(this,2)">🗳️ Aligned</button>
-    <button class="ntab" onclick="setNTab(this,3)">✊ Indep.</button>
-    <button class="ntab" onclick="setNTab(this,4)">📢 Opp.</button>
-    <button class="ntab" onclick="setNTab(this,5)">📅 Timeline</button>
-    <button class="ntab" onclick="setNTab(this,6)">💰 Economic</button>
+    <button class="ntab active" onclick="setNTab(this,0)" data-i18n="tab_all">All</button>
+    <button class="ntab" onclick="setNTab(this,1)" data-i18n="tab_state">🏛️ State</button>
+    <button class="ntab" onclick="setNTab(this,2)" data-i18n="tab_aligned">🗳️ Aligned</button>
+    <button class="ntab" onclick="setNTab(this,3)" data-i18n="tab_indep">✊ Indep.</button>
+    <button class="ntab" onclick="setNTab(this,4)" data-i18n="tab_opp">📢 Opp.</button>
+    <button class="ntab" onclick="setNTab(this,5)" data-i18n="tab_timeline">📅 Timeline</button>
+    <button class="ntab" onclick="setNTab(this,6)" data-i18n="tab_economic">💰 Economic</button>
   </div>
   <div id="news-feed"></div>
   <div id="tl-feed" style="display:none;padding-top:18px;"></div>
   <div id="econ-feed" style="display:none;padding:14px 18px;"></div>
 </div></div>
 
-<!-- ALERTS -->
+<!-- ═══════════════════════════ ALERTS ═══════════════════════════ -->
 <div class="screen" id="screen-alerts"><div class="dw">
-  <div class="page-head"><div class="page-title">ALERTS</div><div class="page-sub">Breaking developments · Updated every 60 seconds</div></div>
+  <div class="page-head">
+    <div class="page-title" data-i18n="alerts_title">ALERTS</div>
+    <div class="page-sub" data-i18n="breaking_news">Breaking developments · Updated every 60 seconds</div>
+  </div>
   <div class="scroll-row" style="padding:0 18px 12px;">
-    <span class="pill active" onclick="filterAlerts('all',this)">All</span>
-    <span class="pill" onclick="filterAlerts('breaking',this)">🔴 Breaking</span>
-    <span class="pill" onclick="filterAlerts('market',this)">📈 Market</span>
-    <span class="pill" onclick="filterAlerts('following',this)">★ Following</span>
+    <span class="pill active" onclick="filterAlerts('all',this)" data-i18n="filter_all">All</span>
+    <span class="pill" onclick="filterAlerts('breaking',this)" data-i18n="filter_breaking">🔴 Breaking</span>
+    <span class="pill" onclick="filterAlerts('market',this)" data-i18n="filter_market">📈 Market</span>
+    <span class="pill" onclick="filterAlerts('following',this)" data-i18n="filter_following">★ Following</span>
   </div>
   <div id="alerts-list"></div>
   <div style="padding:14px 18px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);text-align:center;" id="alerts-ts"></div>
 </div></div>
 
-<!-- LANGUAGE -->
+<!-- ═══════════════════════════ LANGUAGE ═══════════════════════════ -->
 <div class="screen" id="screen-language"><div class="dw">
-  <div class="page-head"><div class="page-title">🌐 LANGUAGE</div><div class="page-sub">AI-powered translation · 45+ languages</div></div>
-  <div style="padding:0 18px 12px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.35);min-height:20px;" id="translate-status"></div>
+  <div class="page-head">
+    <div class="page-title">🌐 LANGUAGE</div>
+    <div class="page-sub" data-i18n="language_sub">AI-powered translation · 45+ languages</div>
+  </div>
+  <div style="padding:0 18px 12px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.35);min-height:22px;" id="translate-status"></div>
   <div class="lang-grid" id="lang-grid"></div>
 </div></div>
 
-<!-- PROFILE -->
+<!-- ═══════════════════════════ PROFILE ═══════════════════════════ -->
 <div class="screen" id="screen-profile"><div class="dw">
   <div class="profile-hero">
-    <div style="font-size:52px;margin-bottom:10px;">🧭</div>
-    <div style="font-family:var(--display);font-size:28px;letter-spacing:.04em;">WORLD ANALYST</div>
-    <div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);margin-top:4px;">Free Plan · Member since Mar 2025</div>
+    <div style="font-size:52px;margin-bottom:12px;filter:grayscale(.2);">🧭</div>
+    <div style="font-family:var(--display);font-size:30px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;" data-i18n="world_analyst">WORLD ANALYST</div>
+    <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.28);margin-top:5px;letter-spacing:.08em;" data-i18n="free_plan">Free Plan · Member since Mar 2025</div>
   </div>
   <div class="premium-box">
-    <div style="font-family:var(--display);font-size:24px;color:var(--amber);letter-spacing:.04em;margin-bottom:4px;">GO PREMIUM</div>
-    <div style="font-family:var(--mono);font-size:10px;color:rgba(212,130,10,.55);letter-spacing:.1em;margin-bottom:14px;">$1.99 / MONTH · CANCEL ANYTIME</div>
-    <div style="font-size:15px;color:rgba(255,255,255,.65);line-height:2;">✓ All articles — every source, no limits<br/>✓ Live market data 60s refresh<br/>✓ Full historical timelines<br/>✓ AI translations — 45+ languages<br/>✓ Real-time push + email alerts<br/>✓ Zero ads. Ever.</div>
-    <button class="btn btn-amber" style="margin-top:14px;" onclick="openModal('modal-premium')">UPGRADE NOW</button>
+    <div style="font-family:var(--display);font-size:26px;font-weight:900;color:var(--amber);letter-spacing:.05em;margin-bottom:4px;text-transform:uppercase;" data-i18n="go_premium">GO PREMIUM</div>
+    <div style="font-family:var(--mono);font-size:10px;color:rgba(217,140,10,.5);letter-spacing:.12em;margin-bottom:16px;" data-i18n="prem_price">$1.99 / MONTH · CANCEL ANYTIME</div>
+    <div style="font-family:var(--display);font-size:15px;font-weight:500;color:rgba(255,255,255,.6);line-height:2.1;">
+      <div data-i18n="prem_1">✓ All articles — every source, no limits</div>
+      <div data-i18n="prem_2">✓ Live market data 60s refresh</div>
+      <div data-i18n="prem_3">✓ Full historical timelines</div>
+      <div data-i18n="prem_4">✓ AI translations — 45+ languages</div>
+      <div data-i18n="prem_5">✓ Real-time push + email alerts</div>
+      <div data-i18n="prem_6">✓ Zero ads. Ever.</div>
+    </div>
+    <button class="btn btn-amber" style="margin-top:16px;" onclick="openModal('modal-premium')" data-i18n="upgrade">UPGRADE NOW</button>
   </div>
-  <div style="padding:0 18px;margin-bottom:8px;"><div style="font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:14px 0 7px;">Settings</div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Breaking conflict alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Market impact alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Daily digest email</span><div class="toggle"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Source classification labels</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="toggleRow(this)"><span style="font-size:15px;">Security alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
-  <div class="settings-row" onclick="switchTab('language')"><span style="font-size:15px;">🌐 Change language</span><span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);">→</span></div>
+  <div style="padding:0 18px;margin-bottom:8px;">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:16px 0 8px;" data-i18n="settings">Settings</div>
+  </div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_breaking">Breaking conflict alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_market">Market impact alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_digest">Daily digest email</span><div class="toggle"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_labels">Source classification labels</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_security">Security alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="switchTab('language')"><span class="settings-row-label" data-i18n="s_language">🌐 Change language</span><span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">→</span></div>
 </div></div>
 
 </div><!-- end app-body -->
 
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="switchTab('map',this)"><span class="nav-icon">🗺️</span><span class="nav-label">Map</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('unrest',this)"><span class="nav-icon">✊</span><span class="nav-label">Unrest</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('markets',this)"><span class="nav-icon">📈</span><span class="nav-label">Markets</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('alerts',this)"><span class="nav-icon">🔔</span><span class="nav-label">Alerts</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('language',this)"><span class="nav-icon">🌐</span><span class="nav-label">Lang</span><div class="nav-pip"></div></button>
-  <button class="nav-item" onclick="switchTab('profile',this)"><span class="nav-icon">⚙️</span><span class="nav-label">Profile</span><div class="nav-pip"></div></button>
+  <button class="nav-item active" onclick="switchTab('map',this)"><span class="nav-icon">🗺️</span><span class="nav-label" data-i18n="nav_map">Map</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('unrest',this)"><span class="nav-icon">✊</span><span class="nav-label" data-i18n="nav_unrest">Unrest</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('markets',this)"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav_markets">Markets</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('alerts',this)"><span class="nav-icon">🔔</span><span class="nav-label" data-i18n="nav_alerts">Alerts</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('language',this)"><span class="nav-icon">🌐</span><span class="nav-label" data-i18n="nav_language">Lang</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('profile',this)"><span class="nav-icon">⚙️</span><span class="nav-label" data-i18n="nav_profile">Profile</span><div class="nav-pip"></div></button>
 </nav>
 
-<!-- MODALS -->
-<div class="modal-overlay" id="modal-article"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
-  <div id="m-align" style="margin-bottom:10px;"></div>
-  <div id="m-outlet" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);margin-bottom:8px;"></div>
-  <div id="m-headline" style="font-family:var(--display);font-size:24px;letter-spacing:.03em;line-height:1.1;margin-bottom:12px;"></div>
-  <div id="m-body" style="font-size:15px;line-height:1.85;color:rgba(255,255,255,.6);font-style:italic;margin-bottom:22px;"></div>
-  <a id="m-url" href="#" target="_blank" rel="noopener noreferrer" style="display:block;width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:10px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;text-align:center;">Read Full Article at Source →</a>
-  <button onclick="closeModal('modal-article')" class="btn btn-ghost" style="margin-top:8px;">Close</button>
-</div></div></div>
+<!-- ═══════════════════════════ MODALS ═══════════════════════════ -->
+<!-- ALL CONFLICTS MODAL -->
+<div class="modal-overlay" id="modal-all-conflicts">
+  <div class="modal-sheet" style="max-height:85vh;">
+    <div class="modal-handle"></div>
+    <div class="modal-pad" style="padding-bottom:20px;">
+      <div style="font-family:var(--display);font-size:24px;font-weight:900;letter-spacing:.04em;margin-bottom:4px;text-transform:uppercase;" data-i18n="all_conflicts_title">All Conflicts</div>
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.08em;margin-bottom:16px;" id="all-conflicts-count">13 active conflicts tracked</div>
+      <div id="all-conflicts-list" style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto;"></div>
+      <button onclick="closeModal('modal-all-conflicts')" class="btn btn-ghost" style="margin-top:16px;" data-i18n="close">Close</button>
+    </div>
+  </div>
+</div>
 
-<div class="modal-overlay" id="modal-market"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
-  <div id="mm-icon" style="font-size:40px;margin-bottom:10px;"></div>
-  <div id="mm-name" style="font-family:var(--display);font-size:28px;letter-spacing:.03em;margin-bottom:5px;"></div>
-  <div id="mm-price-row" style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px;"></div>
-  <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px;">Why this is moving</div>
-  <div id="mm-why" style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.6);font-style:italic;margin-bottom:18px;"></div>
-  <div id="mm-chart" style="margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;"></div>
-  <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px;">Related conflicts</div>
-  <div id="mm-events" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;"></div>
-  <button onclick="closeModal('modal-market')" class="btn btn-ghost">Close</button>
-</div></div></div>
+<!-- ARTICLE MODAL -->
+<div class="modal-overlay" id="modal-article">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div id="m-align" style="margin-bottom:10px;"></div>
+    <div id="m-outlet" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.32);margin-bottom:8px;letter-spacing:.08em;"></div>
+    <div id="m-headline" style="font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:.03em;line-height:1.1;margin-bottom:14px;"></div>
+    <div id="m-body" style="font-family:var(--display);font-size:15px;line-height:1.85;color:rgba(255,255,255,.55);margin-bottom:22px;"></div>
+    <a id="m-url" href="#" target="_blank" rel="noopener noreferrer" style="display:block;width:100%;padding:14px;background:var(--red2);color:#fff;border:none;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-align:center;" data-i18n="read_full">Read Full Article at Source →</a>
+    <button onclick="closeModal('modal-article')" class="btn btn-ghost" style="margin-top:8px;" data-i18n="close">Close</button>
+  </div></div>
+</div>
 
-<div class="modal-overlay" id="modal-email"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
-  <div style="font-size:36px;margin-bottom:12px;">🔔</div>
-  <div style="font-family:var(--display);font-size:28px;letter-spacing:.04em;margin-bottom:7px;">STAY INFORMED</div>
-  <div style="font-size:15px;color:rgba(255,255,255,.5);line-height:1.75;margin-bottom:20px;">Get breaking conflict alerts and weekly market impact digests. Free forever.</div>
-  <input class="email-input" id="email-input" type="email" placeholder="your@email.com"/>
-  <button class="btn btn-red" onclick="submitEmail()">GET FREE ALERTS →</button>
-  <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-email')">Maybe later</button>
-  <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.18);text-align:center;margin-top:12px;line-height:1.8;">No spam. Unsubscribe anytime. Your data is never sold.</div>
-</div></div></div>
+<!-- MARKET MODAL -->
+<div class="modal-overlay" id="modal-market">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div id="mm-icon" style="font-size:44px;margin-bottom:10px;"></div>
+    <div id="mm-name" style="font-family:var(--display);font-size:30px;font-weight:900;letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase;"></div>
+    <div id="mm-price-row" style="display:flex;align-items:baseline;gap:12px;margin-bottom:18px;"></div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;" data-i18n="why_moving">Why this is moving</div>
+    <div id="mm-why" style="font-family:var(--display);font-size:15px;line-height:1.8;color:rgba(255,255,255,.55);margin-bottom:20px;"></div>
+    <div id="mm-chart" style="margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;"></div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;" data-i18n="related">Related conflicts</div>
+    <div id="mm-events" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;"></div>
+    <button onclick="closeModal('modal-market')" class="btn btn-ghost" data-i18n="close">Close</button>
+  </div></div>
+</div>
 
-<div class="modal-overlay" id="modal-premium"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
-  <div style="font-size:36px;margin-bottom:12px;">⭐</div>
-  <div style="font-family:var(--display);font-size:28px;color:var(--amber);letter-spacing:.04em;margin-bottom:5px;">GO PREMIUM</div>
-  <div style="font-family:var(--mono);font-size:10px;color:rgba(212,130,10,.6);letter-spacing:.1em;margin-bottom:18px;">$1.99 / MONTH · CANCEL ANYTIME</div>
-  <div style="font-size:15px;color:rgba(255,255,255,.65);line-height:2.1;margin-bottom:20px;">✓ All articles — every source, no limits<br/>✓ Live market data 60s refresh<br/>✓ Full historical timelines<br/>✓ AI translations — 45+ languages<br/>✓ Push + email alerts<br/>✓ Zero ads. Ever.</div>
-  <button class="btn btn-amber" onclick="closeModal('modal-premium');openModal('modal-email')">START FREE TRIAL →</button>
-  <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-premium')">Not now</button>
-</div></div></div>
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="modal-email">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div style="font-size:38px;margin-bottom:14px;">🔔</div>
+    <div style="font-family:var(--display);font-size:30px;font-weight:900;letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase;" data-i18n="stay_informed">STAY INFORMED</div>
+    <div style="font-family:var(--display);font-size:15px;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:22px;" data-i18n="email_desc">Get breaking conflict alerts and weekly market impact digests. Free forever.</div>
+    <input class="email-input" id="email-input" type="email" placeholder="your@email.com"/>
+    <button class="btn btn-red" onclick="submitEmail()" data-i18n="get_alerts">GET FREE ALERTS →</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-email')" data-i18n="maybe_later">Maybe later</button>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.16);text-align:center;margin-top:14px;line-height:1.8;" data-i18n="privacy">No spam. Unsubscribe anytime. Your data is never sold.</div>
+  </div></div>
+</div>
 
-<div class="modal-overlay" id="modal-unlock"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
-  <div style="font-size:36px;margin-bottom:12px;">🔒</div>
-  <div style="font-family:var(--display);font-size:26px;letter-spacing:.04em;margin-bottom:10px;">UNLOCK FULL SPECTRUM</div>
-  <div style="font-size:15px;color:rgba(255,255,255,.5);line-height:1.75;margin-bottom:20px;">Free users get 3 articles per source category. Upgrade to read every perspective without limits.</div>
-  <button class="btn btn-amber" style="margin-bottom:9px;" onclick="closeModal('modal-unlock');openModal('modal-premium')">UPGRADE FOR $1.99/MO →</button>
-  <button class="btn btn-ghost" onclick="closeModal('modal-unlock')">Stay on free plan</button>
-</div></div></div>
+<!-- PREMIUM MODAL -->
+<div class="modal-overlay" id="modal-premium">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div style="font-size:38px;margin-bottom:14px;">⭐</div>
+    <div style="font-family:var(--display);font-size:30px;font-weight:900;color:var(--amber);letter-spacing:.05em;margin-bottom:5px;text-transform:uppercase;" data-i18n="go_premium">GO PREMIUM</div>
+    <div style="font-family:var(--mono);font-size:10px;color:rgba(217,140,10,.55);letter-spacing:.12em;margin-bottom:20px;" data-i18n="prem_price">$1.99 / MONTH · CANCEL ANYTIME</div>
+    <div style="font-family:var(--display);font-size:15px;font-weight:500;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:22px;">
+      <div data-i18n="prem_1">✓ All articles — every source, no limits</div>
+      <div data-i18n="prem_2">✓ Live market data 60s refresh</div>
+      <div data-i18n="prem_3">✓ Full historical timelines</div>
+      <div data-i18n="prem_4">✓ AI translations — 45+ languages</div>
+      <div data-i18n="prem_5">✓ Push + email alerts</div>
+      <div data-i18n="prem_6">✓ Zero ads. Ever.</div>
+    </div>
+    <button class="btn btn-amber" onclick="closeModal('modal-premium');openModal('modal-email')" data-i18n="start_trial">START FREE TRIAL →</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-premium')" data-i18n="not_now">Not now</button>
+  </div></div>
+</div>
+
+<!-- UNLOCK MODAL -->
+<div class="modal-overlay" id="modal-unlock">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div style="font-size:38px;margin-bottom:14px;">🔒</div>
+    <div style="font-family:var(--display);font-size:28px;font-weight:900;letter-spacing:.04em;margin-bottom:12px;text-transform:uppercase;" data-i18n="unlock_title">UNLOCK FULL SPECTRUM</div>
+    <div style="font-family:var(--display);font-size:15px;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:22px;" data-i18n="unlock_desc">Free users get 3 articles per source category. Upgrade to read every perspective without limits.</div>
+    <button class="btn btn-amber" style="margin-bottom:9px;" onclick="closeModal('modal-unlock');openModal('modal-premium')" data-i18n="upgrade_cta">UPGRADE FOR $1.99/MO →</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-unlock')" data-i18n="stay_free">Stay on free plan</button>
+  </div></div>
+</div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════
-// LANGUAGES — 45+, alphabetical, with flags
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
+// LANGUAGES — 45+
+// ══════════════════════════════════════════════════════════
 const LANGUAGES=[
   {code:'am',flag:'🇪🇹',native:'አማርኛ'},{code:'ar',flag:'🇸🇦',native:'العربية',rtl:true},
   {code:'bn',flag:'🇧🇩',native:'বাংলা'},{code:'ca',flag:'🏴󠁥󠁳󠁣󠁴󠁿',native:'Català'},
@@ -500,95 +729,67 @@ const LANGUAGES=[
   {code:'zh',flag:'🇨🇳',native:'中文 (简)'},{code:'zh-TW',flag:'🇹🇼',native:'中文 (繁)'},
 ];
 let currentLang=localStorage.getItem('wcl_lang')||'en';
-let txCache={};
-let txArticleCache={};
+let txCache={};let txArticleCache={};
 
-function buildLangGrid(){
-  document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>
-    `<div class="lang-btn ${l.code===currentLang?'active':''}" onclick="selectLanguage('${l.code}')">
-      <span class="lang-flag">${l.flag}</span>${l.native}
-    </div>`).join('');
-}
-
-// All UI strings to translate
+// ══════════════════════════════════════════════════════════
+// UI STRING KEYS (slogan always stays in English)
+// ══════════════════════════════════════════════════════════
 const UI_STRINGS={
-  slogan:'Every source · Every side · No agenda',
   nav_map:'Map',nav_unrest:'Unrest',nav_markets:'Markets',nav_alerts:'Alerts',nav_language:'Language',nav_profile:'Profile',
-  cat_military:'⚔️ Military',cat_unrest:'✊ Unrest',cat_crises:'🕊️ Crises',cat_terror:'💥 Terror',
+  cat_military:'⚔️ Military',cat_unrest:'✊ Unrest',cat_humanitarian:'🕊️ Crises',cat_terrorism:'💥 Terror',
   tab_all:'All',tab_state:'🏛️ State',tab_aligned:'🗳️ Aligned',tab_indep:'✊ Indep.',tab_opp:'📢 Opp.',tab_timeline:'📅 Timeline',tab_economic:'💰 Economic',
   back:'← Back',read_full:'Read Full Article at Source →',close:'Close',
-  all_sides:'All sides · Live news',read:'READ →',
-  live_news:'Fetching live news…',loading:'Loading…',
-  source_class:'Source Classification',state_label:'State-funded',aligned_label:'Politically aligned',indep_label:'Independent',opp_label:'Opposition',
-  price_impact:'Price Impact & Economic Fallout',economic_context:'Economic Context',why_moving:'Why this is moving',related:'Related conflicts',history:'12-Month Price History',
+  source_class:'Source Classification',why_moving:'Why this is moving',related:'Related conflicts',
   breaking_news:'Breaking developments · Updated every 60 seconds',
   markets_sub:'Conflict-driven price movements · Tap any asset for chart + context',
   unrest_title:'CIVIL UNREST',unrest_sub:'Protests · Coups · Revolutions · Election Crises',
-  alerts_title:'ALERTS',markets_title:'MARKETS',language_title:'🌐 LANGUAGE',
-  language_sub:'AI-powered translation · 45+ languages',
+  alerts_title:'ALERTS',markets_title:'MARKETS',language_sub:'AI-powered translation · 45+ languages',
+  top10_title:'Top 10 Most Valued Global Assets',conflict_assets_title:'Assets Affected by Conflict',
   top_winning:'Top 5 Benefiting',top_losing:'Top 5 Declining',
-  go_premium:'GO PREMIUM',upgrade:'UPGRADE NOW',per_month:'MONTH',cancel:'CANCEL ANYTIME',
-  prem_1:'All articles — every source, no limits',prem_2:'Live market data 60s refresh',
-  prem_3:'Full historical timelines',prem_4:'AI translations — 45+ languages',
-  prem_5:'Push + email alerts',prem_6:'Zero ads. Ever.',
+  timeline_showing:'Showing timeline',see_all_conflicts:'See all conflicts',
+  all_conflicts_title:'All Conflicts',
+  filter_all:'All',filter_military:'⚔️ Military',filter_unrest:'✊ Unrest',
+  filter_humanitarian:'🕊️ Humanitarian',filter_terrorism:'💥 Terrorism',filter_critical:'🔴 Critical',
+  filter_breaking:'🔴 Breaking',filter_market:'📈 Market',filter_following:'★ Following',
+  filter_protest:'✊ Protest',filter_coup:'👁️ Coup',filter_revolution:'🔥 Revolution',filter_election:'🗳️ Election Crisis',
+  go_premium:'GO PREMIUM',upgrade:'UPGRADE NOW',prem_price:'$1.99 / MONTH · CANCEL ANYTIME',
+  prem_1:'✓ All articles — every source, no limits',prem_2:'✓ Live market data 60s refresh',
+  prem_3:'✓ Full historical timelines',prem_4:'✓ AI translations — 45+ languages',
+  prem_5:'✓ Push + email alerts',prem_6:'✓ Zero ads. Ever.',
   start_trial:'START FREE TRIAL →',not_now:'Not now',
   stay_informed:'STAY INFORMED',email_desc:'Get breaking conflict alerts and weekly market impact digests. Free forever.',
   get_alerts:'GET FREE ALERTS →',maybe_later:'Maybe later',privacy:'No spam. Unsubscribe anytime. Your data is never sold.',
   unlock_title:'UNLOCK FULL SPECTRUM',unlock_desc:'Free users get 3 articles per source category. Upgrade to read every perspective without limits.',
   upgrade_cta:'UPGRADE FOR $1.99/MO →',stay_free:'Stay on free plan',
   world_analyst:'WORLD ANALYST',free_plan:'Free Plan · Member since Mar 2025',settings:'Settings',
-  s_breaking:'Breaking conflict alerts',s_market:'Market impact alerts',s_digest:'Daily digest email',s_labels:'Source classification labels',s_security:'Security alerts',s_language:'🌐 Change language',
-  sponsored:'Sponsored',ad_text:'Track conflict-driven market moves in real time',learn:'Learn →',
+  s_breaking:'Breaking conflict alerts',s_market:'Market impact alerts',s_digest:'Daily digest email',
+  s_labels:'Source classification labels',s_security:'Security alerts',s_language:'🌐 Change language',
+  loading:'Loading…',loading_markets:'Fetching live data…',
   map_hint:'🤏 Pinch to zoom · Tap pins for details',
-  read_all:'Read All Sides →',current:'CURRENT',change:'CHANGE',trend:'TREND',
-  no_articles:'NO ARTICLES IN THIS CATEGORY',no_events:'No events in this category',
-  unlock_more:'more articles',unlock_sub:'Unlock all · $1.99/mo →',
-  free_label:'free',premium_label:'premium',
 };
 
-// Map of selector -> string key
-const I18N_MAP=[
-  ['.wordmark-slogan','slogan'],['.nav-map-lbl','nav_map'],['.nav-unrest-lbl','nav_unrest'],
-  ['.nav-markets-lbl','nav_markets'],['.nav-alerts-lbl','nav_alerts'],['.nav-language-lbl','nav_language'],['.nav-profile-lbl','nav_profile'],
-];
+function buildLangGrid(){
+  document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>
+    `<div class="lang-btn ${l.code===currentLang?'active':''}" onclick="selectLanguage('${l.code}')">
+      <span class="lang-flag">${l.flag}</span>
+      <span class="lang-name">${l.native}</span>
+    </div>`).join('');
+}
 
 function applyTranslations(tx){
-  // Nav items
-  const navLabels=document.querySelectorAll('.nav-label');
-  const navKeys=['nav_map','nav_unrest','nav_markets','nav_alerts','nav_language','nav_profile'];
-  navLabels.forEach((el,i)=>{if(tx[navKeys[i]])el.textContent=tx[navKeys[i]];});
-  // Top nav buttons
-  const topBtns=document.querySelectorAll('.top-nav-btn');
-  const topKeys=['nav_map','nav_unrest','nav_markets','nav_alerts','nav_language','nav_profile'];
-  topBtns.forEach((el,i)=>{
-    if(tx[topKeys[i]]){const emoji=el.textContent.match(/^\S+\s/)?.[0]||'';el.textContent=emoji+tx[topKeys[i]];}
+  // Slogan ALWAYS stays in English
+  document.querySelectorAll('.slogan-text').forEach(el=>{el.textContent='Every source · Every side · No agenda';});
+  // Translate all [data-i18n] elements
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    if(tx[key])el.textContent=tx[key];
   });
-  // Page titles and subs
-  const ps=document.querySelector('#screen-unrest .page-title');if(ps&&tx.unrest_title)ps.textContent=tx.unrest_title;
-  const pss=document.querySelector('#screen-unrest .page-sub');if(pss&&tx.unrest_sub)pss.textContent=tx.unrest_sub;
-  const pm=document.querySelector('#screen-markets .page-title');if(pm&&tx.markets_title)pm.textContent=tx.markets_title;
-  const pms=document.querySelector('#screen-markets .page-sub');if(pms&&tx.markets_sub)pms.textContent=tx.markets_sub;
-  const pa=document.querySelector('#screen-alerts .page-title');if(pa&&tx.alerts_title)pa.textContent=tx.alerts_title;
-  const pas=document.querySelector('#screen-alerts .page-sub');if(pas&&tx.breaking_news)pas.textContent=tx.breaking_news;
-  const pl=document.querySelector('#screen-language .page-title');if(pl&&tx.language_title)pl.textContent=tx.language_title;
-  const pls=document.querySelector('#screen-language .page-sub');if(pls&&tx.language_sub)pls.textContent=tx.language_sub;
-  // Slogan
-  document.querySelectorAll('.slogan-text').forEach(el=>{if(tx.slogan)el.textContent=tx.slogan;});
-  // Map hint
-  const mh=document.querySelector('.map-hint');if(mh&&tx.map_hint)mh.textContent=tx.map_hint;
-  // Cat tabs
-  const catTabs=document.querySelectorAll('.cat-tab');
-  const catKeys=['cat_military','cat_unrest','cat_crises','cat_terror'];
-  catTabs.forEach((el,i)=>{if(tx[catKeys[i]])el.textContent=tx[catKeys[i]];});
-  // Back button
-  document.querySelectorAll('.back-btn').forEach(el=>{if(tx.back)el.textContent=tx.back;});
-  // Movers headers
-  const wh=document.querySelector('#screen-markets .movers-section');
-  if(wh){
-    const spans=wh.querySelectorAll('span:not(.nav-label)');
-    if(spans[0]&&tx.top_winning)spans[0].textContent=tx.top_winning;
-    if(spans[1]&&tx.top_losing)spans[1].textContent=tx.top_losing;
-  }
+  // Nav labels specifically
+  const navOrder=['nav_map','nav_unrest','nav_markets','nav_alerts','nav_language','nav_profile'];
+  document.querySelectorAll('.nav-label[data-i18n]').forEach((el,i)=>{const k=el.getAttribute('data-i18n');if(tx[k])el.textContent=tx[k];});
+  document.querySelectorAll('.top-nav-btn[data-i18n-nav]').forEach(el=>{
+    const i=parseInt(el.getAttribute('data-i18n-nav'));const key=navOrder[i];if(tx[key]){const emoji=el.textContent.match(/^\S+\s/)?.[0]||'';el.textContent=emoji+tx[key];}
+  });
 }
 
 async function selectLanguage(code){
@@ -599,33 +800,25 @@ async function selectLanguage(code){
   document.getElementById('html-root').setAttribute('dir',lang?.rtl?'rtl':'ltr');
   if(code==='en'){
     applyTranslations(UI_STRINGS);
-    document.getElementById('translate-status').textContent='✅ English';
-    showToast('🇬🇧 English');
-    return;
+    document.getElementById('translate-status').textContent='';
+    showToast('🇬🇧 English');return;
   }
   document.getElementById('translate-status').textContent='🌐 Translating…';
   showToast('🌐 Translating…');
   if(txCache[code]){
     applyTranslations(txCache[code]);
     document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
-    showToast(`✅ ${lang?.native}`);
-    return;
+    showToast(`✅ ${lang?.native}`);return;
   }
   try{
-    const resp=await fetch('/api/translate',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lang:code,strings:UI_STRINGS}),
-    });
+    const resp=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:code,strings:UI_STRINGS})});
     if(!resp.ok)throw new Error(`HTTP ${resp.status}`);
     const data=await resp.json();
     const tx={...UI_STRINGS,...(data.translated||{})};
-    txCache[code]=tx;
-    applyTranslations(tx);
+    txCache[code]=tx;applyTranslations(tx);
     document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
     showToast(`✅ ${lang?.native}`);
   }catch(e){
-    console.error('Translation error:',e);
     document.getElementById('translate-status').textContent=`⚠️ Translation unavailable`;
     showToast(`⚠️ Could not translate`);
   }
@@ -637,20 +830,18 @@ async function translateArticles(arts,langCode){
   if(txArticleCache[key])return txArticleCache[key];
   try{
     const payload=arts.slice(0,9).map(a=>({h:a.headline,e:(a.excerpt||'').substring(0,120)}));
-    const resp=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lang:langCode,articles:payload})});
+    const resp=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:langCode,articles:payload})});
     if(!resp.ok)throw new Error('fail');
     const data=await resp.json();
     const txArts=data.articles||[];
     const result=arts.map((a,i)=>({...a,headline:txArts[i]?.h||a.headline,excerpt:txArts[i]?.e||a.excerpt}));
-    txArticleCache[key]=result;
-    return result;
+    txArticleCache[key]=result;return result;
   }catch(e){return arts;}
 }
 
-// ══════════════════════════════
-// ALIGNMENT
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
+// ALIGNMENT DATA
+// ══════════════════════════════════════════════════════════
 const outlets={
   'bbc news':{type:'state',label:'State-BBC',flag:'🇬🇧'},'bbc':{type:'state',label:'State-BBC',flag:'🇬🇧'},
   'al jazeera':{type:'state',label:'State-Qatar',flag:'🇶🇦'},'russia today':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},
@@ -675,37 +866,102 @@ function getAlign(name){
   return{type:'unverified',label:'Unverified',flag:'❓'};
 }
 const alignStyle={
-  state:'background:rgba(30,80,160,.3);color:#89c4f5;border:1px solid rgba(137,196,245,.25);',
-  aligned:'background:rgba(160,60,20,.3);color:#f5b36a;border:1px solid rgba(245,179,106,.25);',
-  independent:'background:rgba(30,130,70,.3);color:#7ef5a9;border:1px solid rgba(126,245,169,.25);',
-  opposition:'background:rgba(150,30,130,.3);color:#f57ef5;border:1px solid rgba(245,126,245,.25);',
-  unverified:'background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.1);',
+  state:'background:rgba(44,123,229,.2);color:#89c4f5;border:1px solid rgba(137,196,245,.2);',
+  aligned:'background:rgba(217,140,10,.18);color:#ffd47a;border:1px solid rgba(255,212,122,.2);',
+  independent:'background:rgba(31,163,85,.14);color:#6fffa0;border:1px solid rgba(111,255,160,.2);',
+  opposition:'background:rgba(155,77,202,.18);color:#d07ef5;border:1px solid rgba(208,126,245,.2);',
+  unverified:'background:rgba(255,255,255,.05);color:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.1);',
 };
-const alignDot={state:'#89c4f5',aligned:'#f5b36a',independent:'#7ef5a9',opposition:'#f57ef5',unverified:'rgba(255,255,255,.2)'};
+const alignDot={state:'#89c4f5',aligned:'#ffd47a',independent:'#6fffa0',opposition:'#d07ef5',unverified:'rgba(255,255,255,.2)'};
 function alignBadge(al){return`<span class="align-badge" style="${alignStyle[al.type]||alignStyle.unverified}">${al.flag} ${al.label}</span>`;}
 
-// ══════════════════════════════
-// EVENTS
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
+// EVENTS DATA
+// ══════════════════════════════════════════════════════════
 const events=[
-  {id:0,cat:'military',flags:'🇮🇱🇵🇸',title:'Gaza Conflict',region:'Middle East',parties:'Israel · Gaza',sev:'critical',lat:31.5,lng:34.5,query:'Gaza Israel conflict 2025',econContext:'The conflict has disrupted regional trade, frozen foreign investment across the Levant, and driven safe-haven flows into gold. Tourism revenues across Egypt, Jordan and Israel have dropped sharply. Reconstruction costs estimated at $50bn+.',markets:['crude','gold','ils','lmt'],timeline:[{date:'Oct 2023',event:'Hamas launches large-scale attack on southern Israel. Israel declares war.',tag:'Outbreak',tc:'rgba(192,57,43,.4)'},{date:'Nov 2023',event:'IDF ground offensive begins in northern Gaza.',tag:'Escalation',tc:'rgba(192,57,43,.4)'},{date:'Jan 2025',event:'Phase-one ceasefire agreed. Hostage-prisoner exchange begins.',tag:'Ceasefire',tc:'rgba(30,107,58,.4)'},{date:'Mar 2025',event:'Ceasefire under strain. Both sides allege violations.',tag:'Fragile',tc:'rgba(212,130,10,.4)'}]},
-  {id:1,cat:'military',flags:'🇷🇺🇺🇦',title:'Russia–Ukraine War',region:'Eastern Europe',parties:'Russia · Ukraine',sev:'critical',lat:49.0,lng:31.0,query:'Russia Ukraine war 2025',econContext:'The war restructured global energy markets. Europe spent €800bn replacing Russian gas. Ukrainian grain corridor disruptions raised global wheat prices 40%+. Reconstruction estimated at $486bn.',markets:['natgas','wheat','rub','rtx'],timeline:[{date:'Feb 2022',event:'Russia launches full-scale invasion.',tag:'Invasion',tc:'rgba(192,57,43,.4)'},{date:'Sep 2022',event:'Ukraine liberates Kherson and Kharkiv.',tag:'Advance',tc:'rgba(30,107,58,.4)'},{date:'Jan 2025',event:'Frontlines largely static. Peace talks proposed.',tag:'Diplomacy',tc:'rgba(30,107,58,.4)'}]},
-  {id:2,cat:'military',flags:'🇮🇷🇮🇱',title:'Iran–Israel Tensions',region:'Middle East',parties:'Iran · Israel · USA',sev:'critical',lat:32.5,lng:52.0,query:'Iran Israel nuclear tensions 2025',econContext:'Iran\'s nuclear programme creates structural oil price risk. Hormuz closure could spike oil $20-40/barrel. US carrier groups repositioned. Gold at multi-year highs on safe-haven demand.',markets:['crude','gold','rtx'],timeline:[{date:'Apr 2024',event:'Iran launches first-ever direct missile attack on Israeli territory.',tag:'Historic',tc:'rgba(192,57,43,.4)'},{date:'Jul 2024',event:'Israel strikes Hamas chief in Tehran.',tag:'Flashpoint',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'Nuclear talks collapsed. Escalation risk elevated.',tag:'Escalation',tc:'rgba(192,57,43,.4)'}]},
-  {id:3,cat:'military',flags:'🇸🇩',title:'Sudan Civil War',region:'East Africa',parties:'SAF · RSF',sev:'critical',lat:15.5,lng:32.5,query:'Sudan civil war 2025',econContext:'Sudan\'s economy has collapsed. Oil production halted. 10 million displaced. Agricultural output cut dramatically, affecting regional food prices.',markets:['wheat','gold'],timeline:[{date:'Apr 2023',event:'Fighting erupts between SAF and RSF.',tag:'Outbreak',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'SAF retakes parts of Khartoum. RSF entrenched in Darfur.',tag:'Ongoing',tc:'rgba(192,57,43,.4)'}]},
-  {id:4,cat:'military',flags:'🇹🇼🇨🇳',title:'Taiwan Strait Standoff',region:'East Asia',parties:'Taiwan · China · USA',sev:'high',lat:24.0,lng:121.0,query:'Taiwan China military tensions 2025',econContext:'Taiwan produces 90% of the world\'s advanced semiconductors. A conflict would trigger a global chip shortage estimated at $1 trillion in lost output.',markets:['gold','rtx','lmt'],timeline:[{date:'Aug 2022',event:'China launches largest-ever military exercises around Taiwan.',tag:'Escalation',tc:'rgba(192,57,43,.4)'},{date:'Feb 2025',event:'US approves $8bn arms package for Taiwan.',tag:'Tensions',tc:'rgba(192,57,43,.4)'}]},
-  {id:5,cat:'military',flags:'🇮🇳🇵🇰',title:'Kashmir Standoff',region:'South Asia',parties:'India · Pakistan',sev:'high',lat:33.5,lng:75.0,query:'India Pakistan Kashmir conflict 2025',econContext:'Nuclear-armed rivals. Any escalation would freeze $30bn trade corridor. Gold surges on subcontinental safe-haven demand.',markets:['gold'],timeline:[{date:'Aug 2019',event:'India revokes Article 370.',tag:'Political',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'Military exercises by both sides.',tag:'Tensions',tc:'rgba(192,57,43,.4)'}]},
-  {id:100,cat:'unrest',subtype:'protest',flags:'🇷🇸',title:'Serbia Protests',region:'Balkans',parties:'Citizens · Government',sev:'high',lat:44.8,lng:20.5,query:'Serbia protests opposition 2025',econContext:'Investor confidence shaken. Serbia\'s EU accession under scrutiny. Tourism and FDI declining.',markets:['gold'],timeline:[{date:'Nov 2024',event:'Novi Sad train station canopy collapse kills 15.',tag:'Trigger',tc:'rgba(192,57,43,.4)'},{date:'Feb 2025',event:'Millions march in Belgrade.',tag:'Peak',tc:'rgba(30,107,58,.4)'}]},
-  {id:101,cat:'unrest',subtype:'election',flags:'🇻🇪',title:'Venezuela Crisis',region:'Latin America',parties:'Government · Opposition',sev:'high',lat:8.0,lng:-66.0,query:'Venezuela Maduro political crisis 2025',econContext:'Venezuela\'s oil output at 25% of 2013 peak. US sanctions cost $6bn annually. Mass emigration of 7 million.',markets:['crude'],timeline:[{date:'Jul 2024',event:'Disputed presidential election.',tag:'Election',tc:'rgba(212,130,10,.4)'},{date:'Aug 2024',event:'Mass protests. Scores killed.',tag:'Repression',tc:'rgba(192,57,43,.4)'}]},
-  {id:102,cat:'unrest',subtype:'coup',flags:'🇳🇪🇲🇱🇧🇫',title:'Sahel Military Takeovers',region:'West Africa',parties:'Military Juntas · Populations',sev:'high',lat:17.0,lng:2.0,query:'Sahel coup military Niger Mali Burkina Faso 2025',econContext:'France lost €1.5bn in annual development contracts. Wagner Group presence destabilised security. 20+ million facing food insecurity.',markets:['gold','wheat'],timeline:[{date:'Jul 2023',event:'Military coup in Niger.',tag:'Coup',tc:'rgba(130,30,160,.4)'},{date:'Jan 2025',event:'French military fully withdrawn.',tag:'Shift',tc:'rgba(192,57,43,.4)'}]},
-  {id:200,cat:'humanitarian',flags:'🇸🇩',title:'Darfur Crisis',region:'East Africa',parties:'Civilians · RSF',sev:'critical',lat:13.5,lng:24.0,query:'Darfur humanitarian crisis famine 2025',econContext:'UN declares famine conditions. WFP requires $4.1bn to respond. 5 million face starvation.',markets:['wheat'],timeline:[{date:'Apr 2023',event:'RSF advances into Darfur.',tag:'Crisis',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'ICC issues new arrest warrants.',tag:'Famine',tc:'rgba(192,57,43,.4)'}]},
-  {id:201,cat:'humanitarian',flags:'🇨🇳',title:'Uyghur Situation',region:'Northwest China',parties:'Uyghur population · Chinese authorities',sev:'high',lat:43.0,lng:87.5,query:'Uyghur Xinjiang human rights 2025',econContext:'Western sanctions on Xinjiang goods affect $40bn in annual trade including cotton and polysilicon (35% of global solar supply).',markets:['gold'],timeline:[{date:'2017',event:'Mass detention campaign begins.',tag:'Start',tc:'rgba(192,57,43,.4)'},{date:'2022',event:'UN report describes possible crimes against humanity.',tag:'UN Report',tc:'rgba(212,130,10,.4)'}]},
-  {id:300,cat:'terrorism',flags:'🇳🇬🇳🇪🇲🇱',title:'ISIS–Sahel Insurgency',region:'West Africa',parties:'ISIS-GS · JNIM · Civilians',sev:'critical',lat:14.0,lng:3.0,query:'ISIS Sahel jihadist attacks 2025',econContext:'Insurgency destroyed agricultural productivity across Lake Chad basin. 3 million displaced. Record casualties in 2024.',markets:['gold','wheat'],timeline:[{date:'2015',event:'ISIS-GS and JNIM establish Sahel presence.',tag:'Emergence',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'Attacks reach coastal West Africa.',tag:'Expansion',tc:'rgba(192,57,43,.4)'}]},
-  {id:301,cat:'terrorism',flags:'🇸🇴',title:'Al-Shabaab — Somalia',region:'East Africa',parties:'Al-Shabaab · Government · AMISOM',sev:'high',lat:5.5,lng:46.0,query:'Al-Shabaab Somalia attacks 2025',econContext:'Al-Shabaab taxes trade across large areas of Somalia. Regional maritime trade disrupted, raising Gulf of Aden shipping insurance.',markets:['crude'],timeline:[{date:'2006',event:'Al-Shabaab emerges as major force.',tag:'Emergence',tc:'rgba(192,57,43,.4)'},{date:'Mar 2025',event:'Major offensive operations ongoing.',tag:'Active',tc:'rgba(192,57,43,.4)'}]},
+  {id:0,cat:'military',flags:'🇮🇱🇵🇸',title:'Gaza Conflict',region:'Middle East',parties:'Israel · Gaza',sev:'critical',lat:31.5,lng:34.5,query:'Gaza Israel conflict 2025',startYear:2023,
+   econContext:'The conflict has disrupted regional trade, frozen foreign investment across the Levant, and driven safe-haven flows into gold. Tourism revenues across Egypt, Jordan and Israel have dropped sharply. Reconstruction costs estimated at $50bn+.',
+   markets:['crude','gold','ils','lmt'],
+   timeline:[{date:'Oct 2023',event:'Hamas launches large-scale attack on southern Israel. Israel declares war.',tag:'Outbreak',tc:'rgba(200,50,30,.4)'},{date:'Nov 2023',event:'IDF ground offensive begins in northern Gaza.',tag:'Escalation',tc:'rgba(200,50,30,.4)'},{date:'Jan 2025',event:'Phase-one ceasefire agreed. Hostage-prisoner exchange begins.',tag:'Ceasefire',tc:'rgba(31,163,85,.4)'},{date:'Mar 2025',event:'Ceasefire under strain. Both sides allege violations.',tag:'Fragile',tc:'rgba(217,140,10,.4)'}]},
+  {id:1,cat:'military',flags:'🇷🇺🇺🇦',title:'Russia–Ukraine War',region:'Eastern Europe',parties:'Russia · Ukraine',sev:'critical',lat:49.0,lng:31.0,query:'Russia Ukraine war 2025',startYear:2022,
+   econContext:'The war restructured global energy markets. Europe spent €800bn replacing Russian gas. Ukrainian grain corridor disruptions raised global wheat prices 40%+. Reconstruction estimated at $486bn.',
+   markets:['natgas','wheat','rub','rtx'],
+   timeline:[{date:'Feb 2022',event:'Russia launches full-scale invasion.',tag:'Invasion',tc:'rgba(200,50,30,.4)'},{date:'Sep 2022',event:'Ukraine liberates Kherson and Kharkiv.',tag:'Advance',tc:'rgba(31,163,85,.4)'},{date:'Jan 2025',event:'Frontlines largely static. Peace talks proposed.',tag:'Diplomacy',tc:'rgba(31,163,85,.4)'}]},
+  {id:2,cat:'military',flags:'🇮🇷🇮🇱',title:'Iran–Israel Tensions',region:'Middle East',parties:'Iran · Israel · USA',sev:'critical',lat:32.5,lng:52.0,query:'Iran Israel nuclear tensions 2025',startYear:2024,
+   econContext:"Iran's nuclear programme creates structural oil price risk. Hormuz closure could spike oil $20-40/barrel. US carrier groups repositioned. Gold at multi-year highs on safe-haven demand.",
+   markets:['crude','gold','rtx'],
+   timeline:[{date:'Apr 2024',event:'Iran launches first-ever direct missile attack on Israeli territory.',tag:'Historic',tc:'rgba(200,50,30,.4)'},{date:'Jul 2024',event:'Israel strikes Hamas chief in Tehran.',tag:'Flashpoint',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'Nuclear talks collapsed. Escalation risk elevated.',tag:'Escalation',tc:'rgba(200,50,30,.4)'}]},
+  {id:3,cat:'military',flags:'🇸🇩',title:'Sudan Civil War',region:'East Africa',parties:'SAF · RSF',sev:'critical',lat:15.5,lng:32.5,query:'Sudan civil war 2025',startYear:2023,
+   econContext:'Sudan\'s economy has collapsed. Oil production halted. 10 million displaced. Agricultural output cut dramatically, affecting regional food prices.',
+   markets:['wheat','gold'],
+   timeline:[{date:'Apr 2023',event:'Fighting erupts between SAF and RSF.',tag:'Outbreak',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'SAF retakes parts of Khartoum. RSF entrenched in Darfur.',tag:'Ongoing',tc:'rgba(200,50,30,.4)'}]},
+  {id:4,cat:'military',flags:'🇹🇼🇨🇳',title:'Taiwan Strait Standoff',region:'East Asia',parties:'Taiwan · China · USA',sev:'high',lat:24.0,lng:121.0,query:'Taiwan China military tensions 2025',startYear:2022,
+   econContext:'Taiwan produces 90% of the world\'s advanced semiconductors. A conflict would trigger a global chip shortage estimated at $1 trillion in lost output.',
+   markets:['gold','rtx','lmt'],
+   timeline:[{date:'Aug 2022',event:'China launches largest-ever military exercises around Taiwan.',tag:'Escalation',tc:'rgba(200,50,30,.4)'},{date:'Feb 2025',event:'US approves $8bn arms package for Taiwan.',tag:'Tensions',tc:'rgba(200,50,30,.4)'}]},
+  {id:5,cat:'military',flags:'🇮🇳🇵🇰',title:'Kashmir Standoff',region:'South Asia',parties:'India · Pakistan',sev:'high',lat:33.5,lng:75.0,query:'India Pakistan Kashmir conflict 2025',startYear:2019,
+   econContext:'Nuclear-armed rivals. Any escalation would freeze $30bn trade corridor. Gold surges on subcontinental safe-haven demand.',
+   markets:['gold'],
+   timeline:[{date:'Aug 2019',event:'India revokes Article 370.',tag:'Political',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'Military exercises by both sides.',tag:'Tensions',tc:'rgba(200,50,30,.4)'}]},
+  {id:100,cat:'unrest',subtype:'protest',flags:'🇷🇸',title:'Serbia Protests',region:'Balkans',parties:'Citizens · Government',sev:'high',lat:44.8,lng:20.5,query:'Serbia protests opposition 2025',startYear:2024,
+   econContext:'Investor confidence shaken. Serbia\'s EU accession under scrutiny. Tourism and FDI declining.',
+   markets:['gold'],
+   timeline:[{date:'Nov 2024',event:'Novi Sad train station canopy collapse kills 15.',tag:'Trigger',tc:'rgba(200,50,30,.4)'},{date:'Feb 2025',event:'Millions march in Belgrade.',tag:'Peak',tc:'rgba(31,163,85,.4)'}]},
+  {id:101,cat:'unrest',subtype:'election',flags:'🇻🇪',title:'Venezuela Crisis',region:'Latin America',parties:'Government · Opposition',sev:'high',lat:8.0,lng:-66.0,query:'Venezuela Maduro political crisis 2025',startYear:2024,
+   econContext:'Venezuela\'s oil output at 25% of 2013 peak. US sanctions cost $6bn annually. Mass emigration of 7 million.',
+   markets:['crude'],
+   timeline:[{date:'Jul 2024',event:'Disputed presidential election.',tag:'Election',tc:'rgba(217,140,10,.4)'},{date:'Aug 2024',event:'Mass protests. Scores killed.',tag:'Repression',tc:'rgba(200,50,30,.4)'}]},
+  {id:102,cat:'unrest',subtype:'coup',flags:'🇳🇪🇲🇱🇧🇫',title:'Sahel Military Takeovers',region:'West Africa',parties:'Military Juntas · Populations',sev:'high',lat:17.0,lng:2.0,query:'Sahel coup military Niger Mali Burkina Faso 2025',startYear:2023,
+   econContext:'France lost €1.5bn in annual development contracts. Wagner Group presence destabilised security. 20+ million facing food insecurity.',
+   markets:['gold','wheat'],
+   timeline:[{date:'Jul 2023',event:'Military coup in Niger.',tag:'Coup',tc:'rgba(155,77,202,.4)'},{date:'Jan 2025',event:'French military fully withdrawn.',tag:'Shift',tc:'rgba(200,50,30,.4)'}]},
+  {id:200,cat:'humanitarian',flags:'🇸🇩',title:'Darfur Crisis',region:'East Africa',parties:'Civilians · RSF',sev:'critical',lat:13.5,lng:24.0,query:'Darfur humanitarian crisis famine 2025',startYear:2023,
+   econContext:'UN declares famine conditions. WFP requires $4.1bn to respond. 5 million face starvation.',
+   markets:['wheat'],
+   timeline:[{date:'Apr 2023',event:'RSF advances into Darfur.',tag:'Crisis',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'ICC issues new arrest warrants.',tag:'Famine',tc:'rgba(200,50,30,.4)'}]},
+  {id:201,cat:'humanitarian',flags:'🇨🇳',title:'Uyghur Situation',region:'Northwest China',parties:'Uyghur population · Chinese authorities',sev:'high',lat:43.0,lng:87.5,query:'Uyghur Xinjiang human rights 2025',startYear:2017,
+   econContext:'Western sanctions on Xinjiang goods affect $40bn in annual trade including cotton and polysilicon (35% of global solar supply).',
+   markets:['gold'],
+   timeline:[{date:'2017',event:'Mass detention campaign begins.',tag:'Start',tc:'rgba(200,50,30,.4)'},{date:'2022',event:'UN report describes possible crimes against humanity.',tag:'UN Report',tc:'rgba(217,140,10,.4)'}]},
+  {id:300,cat:'terrorism',flags:'🇳🇬🇳🇪🇲🇱',title:'ISIS–Sahel Insurgency',region:'West Africa',parties:'ISIS-GS · JNIM · Civilians',sev:'critical',lat:14.0,lng:3.0,query:'ISIS Sahel jihadist attacks 2025',startYear:2015,
+   econContext:'Insurgency destroyed agricultural productivity across Lake Chad basin. 3 million displaced. Record casualties in 2024.',
+   markets:['gold','wheat'],
+   timeline:[{date:'2015',event:'ISIS-GS and JNIM establish Sahel presence.',tag:'Emergence',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'Attacks reach coastal West Africa.',tag:'Expansion',tc:'rgba(200,50,30,.4)'}]},
+  {id:301,cat:'terrorism',flags:'🇸🇴',title:'Al-Shabaab — Somalia',region:'East Africa',parties:'Al-Shabaab · Government · AMISOM',sev:'high',lat:5.5,lng:46.0,query:'Al-Shabaab Somalia attacks 2025',startYear:2006,
+   econContext:'Al-Shabaab taxes trade across large areas of Somalia. Regional maritime trade disrupted, raising Gulf of Aden shipping insurance.',
+   markets:['crude'],
+   timeline:[{date:'2006',event:'Al-Shabaab emerges as major force.',tag:'Emergence',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'Major offensive operations ongoing.',tag:'Active',tc:'rgba(200,50,30,.4)'}]},
 ];
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
+// TOP 10 MOST VALUED GLOBAL ASSETS (realistic)
+// ══════════════════════════════════════════════════════════
+const TOP10_ASSETS=[
+  {rank:1,icon:'🍎',name:'Apple',ticker:'AAPL',price:'$213.49',mcap:'$3.26T',change:'+1.2%',dir:'up',bar:100},
+  {rank:2,icon:'🤖',name:'NVIDIA',ticker:'NVDA',price:'$875.40',mcap:'$2.15T',change:'+3.4%',dir:'up',bar:66},
+  {rank:3,icon:'🔍',name:'Microsoft',ticker:'MSFT',price:'$418.32',mcap:'$3.11T',change:'+0.8%',dir:'up',bar:95},
+  {rank:4,icon:'🛒',name:'Amazon',ticker:'AMZN',price:'$192.45',mcap:'$2.04T',change:'+1.5%',dir:'up',bar:63},
+  {rank:5,icon:'₿',name:'Bitcoin',ticker:'BTC',price:'$83,420',mcap:'$1.65T',change:'+2.1%',dir:'up',bar:50},
+  {rank:6,icon:'🔎',name:'Alphabet',ticker:'GOOG',price:'$175.20',mcap:'$2.14T',change:'-0.3%',dir:'dn',bar:65},
+  {rank:7,icon:'⚡',name:'Tesla',ticker:'TSLA',price:'$245.80',mcap:'$784B',change:'-1.8%',dir:'dn',bar:24},
+  {rank:8,icon:'🥇',name:'Gold',ticker:'XAU/USD',price:'$2,381',mcap:'$15.6T',change:'+1.8%',dir:'up',bar:100},
+  {rank:9,icon:'🛢️',name:'Brent Crude',ticker:'BRT',price:'$87.42',mcap:'Commodity',change:'+3.2%',dir:'up',bar:0},
+  {rank:10,icon:'🏦',name:'Berkshire Hathaway',ticker:'BRK-B',price:'$458.20',mcap:'$663B',change:'+0.4%',dir:'up',bar:20},
+];
+
+// CONFLICT-AFFECTED ASSETS
+const CONFLICT_ASSETS=[
+  {icon:'🛢️',name:'Brent Crude',ticker:'BRT',price:'$87.42',change:'+3.2%',dir:'up',conflicts:['Gaza Conflict','Iran–Israel Tensions'],why:'Hormuz closure risk + Russian export curbs'},
+  {icon:'🥇',name:'Gold',ticker:'XAU',price:'$2,381',change:'+1.8%',dir:'up',conflicts:['Iran–Israel Tensions','Taiwan Strait'],why:'Safe-haven demand at multi-year highs'},
+  {icon:'🌾',name:'Wheat',ticker:'CBOT',price:'$6.42',change:'+4.1%',dir:'up',conflicts:['Russia–Ukraine War','Darfur Crisis'],why:'Black Sea corridor disruptions, -29% supply'},
+  {icon:'🔥',name:'Natural Gas',ticker:'TTF',price:'$3.82',change:'+5.1%',dir:'up',conflicts:['Russia–Ukraine War'],why:'Pipeline cuts, EU storage at 48%'},
+  {icon:'🏭',name:'Raytheon',ticker:'RTX',price:'$108.40',change:'+2.8%',dir:'up',conflicts:['Multiple'],why:'NATO 2%+ GDP drive, $100bn backlog'},
+  {icon:'💱',name:'USD/Shekel',ticker:'ILS',price:'3.84',change:'+1.2%',dir:'dn',conflicts:['Gaza Conflict'],why:'War costs, $30bn currency interventions'},
+];
+
+// ══════════════════════════════════════════════════════════
 // MARKET DEFINITIONS
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
 const marketDefs=[
   {id:'crude',icon:'🛢️',name:'Brent Crude',ticker:'BRT',events:['Gaza Conflict','Iran–Israel Tensions','Venezuela Crisis'],why:'Strait of Hormuz closure risk and Russian export restrictions are structural drivers. Each major Middle East escalation historically adds $5–8/barrel.',history:[82,84,83,86,85,88,87,89,91,90,92,87]},
   {id:'gold',icon:'🥇',name:'Gold',ticker:'XAU/USD',events:['Iran–Israel Tensions','Taiwan Strait Standoff','Kashmir Standoff'],why:'Safe-haven demand surges during multi-conflict periods. Central bank buying at record pace. Outperforms all assets when two or more critical conflicts escalate.',history:[2150,2180,2175,2220,2250,2280,2310,2340,2370,2360,2390,2381]},
@@ -717,40 +973,95 @@ const marketDefs=[
   {id:'lmt',icon:'🚀',name:'Lockheed Martin',ticker:'NYSE:LMT',events:['Russia–Ukraine War','Taiwan Strait Standoff','Gaza Conflict'],why:'F-35 demand surging. Poland, Germany, Finland placed multi-billion orders. HIMARS and THAAD contracts expanding. $135bn backlog.',history:[435,442,448,454,458,462,464,466,468,469,471,472.5]},
 ];
 const winnerDefs=[{id:'rtx',icon:'🏭',name:'Raytheon',ticker:'RTX'},{id:'lmt',icon:'🚀',name:'Lockheed',ticker:'LMT'},{id:'gold',icon:'🥇',name:'Gold',ticker:'XAU'},{id:'crude',icon:'🛢️',name:'Brent Crude',ticker:'BRT'},{id:'natgas',icon:'🔥',name:'Nat. Gas',ticker:'TTF'}];
-const loserDefs=[{icon:'✈️',name:'Airlines Index',ticker:'XAL',change:'-2.1%',dir:'dn'},{icon:'🏨',name:'Tourism ETF',ticker:'AWAY',change:'-1.4%',dir:'dn'},{icon:'🚢',name:'Dry Bulk Shipping',ticker:'BDIY',change:'-3.2%',dir:'dn'},{icon:'💱',name:'Egyptian Pound',ticker:'EGP',change:'-2.8%',dir:'dn'},{icon:'💊',name:'EM Pharma',ticker:'EMPH',change:'-0.9%',dir:'dn'}];
+const loserDefs=[{icon:'✈️',name:'Airlines Index',ticker:'XAL',change:'-2.1%',dir:'dn'},{icon:'🏨',name:'Tourism ETF',ticker:'AWAY',change:'-1.4%',dir:'dn'},{icon:'🚢',name:'Dry Bulk Shipping',ticker:'BDIY',change:'-3.2%',dir:'dn'},{icon:'💱',name:'Egyptian Pound',ticker:'EGP',change:'-2.8%',dir:'dn'},{icon:'💊',name:'EM Pharma ETF',ticker:'EMPH',change:'-0.9%',dir:'dn'}];
 const mktFallback={crude:{price:'$87.42',change:'+3.2%',dir:'up',raw:87.42},gold:{price:'$2,381',change:'+1.8%',dir:'up',raw:2381},natgas:{price:'$3.82',change:'+5.1%',dir:'up',raw:3.82},wheat:{price:'$6.42',change:'+4.1%',dir:'up',raw:6.42},rub:{price:'92.40',change:'+0.8%',dir:'dn',raw:92.4},ils:{price:'3.84',change:'+1.2%',dir:'up',raw:3.84},rtx:{price:'$108.40',change:'+2.8%',dir:'up',raw:108.4},lmt:{price:'$472.50',change:'+1.9%',dir:'up',raw:472.5}};
 const cryptoData={BTC:'$83,420',ETH:'$2,041',XRP:'$2.21',SOL:'$135.40',BNB:'$598',AVAX:'$22.10',DOGE:'$0.172',ADA:'$0.71'};
 let liveMarkets={};let liveNews={};let currentEvent=0;let lastScreen='map';
 let currentCat='military';let currentTabIdx=0;let leafletMap=null;let mapMarkers=[];
-let newsRefreshTimer=null;let bannerEventId=null;let latestAlertHeadline='';
-let alertsData=[];
+let newsRefreshTimer=null;let bannerEventId=null;let latestAlertHeadline='';let alertsData=[];
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
 // MAP
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
 function initMap(){
   leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:true,scrollWheelZoom:false,minZoom:1,maxZoom:8});
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19}).addTo(leafletMap);
   addMapMarkers();
 }
-function evColor(e){if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#7ef5a9';if(e.cat==='unrest')return'#f5c96a';return{critical:'#c0392b',high:'#d4820a',medium:'#c8b800'}[e.sev]||'#aaa';}
+function evColor(e){if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
 function evEmoji(e){if(e.cat==='terrorism')return'💥';if(e.cat==='humanitarian')return'🕊️';if(e.cat==='unrest')return'✊';return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';}
+
 function addMapMarkers(){
   mapMarkers.forEach(m=>m.remove());mapMarkers=[];
   events.forEach(ev=>{
     if(!ev.lat||!ev.lng)return;
     const color=evColor(ev);
-    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label">${ev.flags} ${ev.parties}</div></div>`,iconSize:[220,54],iconAnchor:[110,20],popupAnchor:[0,-22]});
+    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label">${ev.flags} ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
     const marker=L.marker([ev.lat,ev.lng],{icon}).addTo(leafletMap);
     const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;}).join('');
-    marker.bindPopup(`<div class="map-popup"><div class="mpp-flags">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:6px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">Read All Sides →</button></div>`,{maxWidth:270,minWidth:220});
+    marker.bindPopup(`<div class="map-popup"><div class="mpp-flags">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">Read All Sides →</button></div>`,{maxWidth:280,minWidth:230});
     mapMarkers.push(marker);
   });
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
+// TIMELINE BAR
+// ══════════════════════════════════════════════════════════
+function initTimelineBar(){
+  const track=document.getElementById('mtb-track');
+  let dragging=false;
+  const handle=document.getElementById('mtb-handle');
+  track.addEventListener('click',(e)=>{
+    const rect=track.getBoundingClientRect();
+    const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+    updateTimelineRange(pct);
+  });
+  handle.addEventListener('mousedown',(e)=>{dragging=true;e.preventDefault();});
+  document.addEventListener('mousemove',(e)=>{if(!dragging)return;const rect=track.getBoundingClientRect();const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));updateTimelineRange(pct);});
+  document.addEventListener('mouseup',()=>{dragging=false;});
+  handle.addEventListener('touchstart',(e)=>{dragging=true;e.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',(e)=>{if(!dragging)return;const rect=track.getBoundingClientRect();const pct=Math.max(0,Math.min(1,(e.touches[0].clientX-rect.left)/rect.width));updateTimelineRange(pct);},{passive:false});
+  document.addEventListener('touchend',()=>{dragging=false;});
+}
+function updateTimelineRange(pct){
+  document.getElementById('mtb-fill').style.width=(pct*100)+'%';
+  const startYear=2022,endYear=2026;
+  const cutoffYear=startYear+(endYear-startYear)*pct;
+  const months=['Jan','Apr','Jul','Oct'];
+  const cutoffDate=`${months[Math.floor((cutoffYear%1)*4)]} ${Math.floor(cutoffYear)}`;
+  const visible=events.filter(e=>!e.startYear||(e.startYear<=(cutoffYear+.1)));
+  document.getElementById('mtb-showing-label').textContent=`Up to ${cutoffDate} · ${visible.length} conflicts`;
+  // Dim markers not in range
+  mapMarkers.forEach((m,i)=>{const ev=events[i];if(!ev)return;const show=!ev.startYear||(ev.startYear<=(cutoffYear+.1));m.setOpacity(show?1:0.15);});
+}
+
+// ══════════════════════════════════════════════════════════
+// SEE ALL CONFLICTS MODAL
+// ══════════════════════════════════════════════════════════
+function openAllConflictsModal(){
+  const count=events.length;
+  document.getElementById('all-conflicts-count').textContent=`${count} active conflicts tracked`;
+  document.getElementById('see-all-count').textContent=count;
+  const grouped={military:[],unrest:[],humanitarian:[],terrorism:[]};
+  events.forEach(e=>grouped[e.cat]?.push(e));
+  const catLabel={military:'⚔️ Military Conflicts',unrest:'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crises',terrorism:'💥 Terrorism'};
+  let html='';
+  for(const[cat,evs]of Object.entries(grouped)){
+    if(!evs.length)continue;
+    html+=`<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;padding:10px 0 6px;">${catLabel[cat]}</div>`;
+    html+=evs.map(ev=>`<div onclick="closeModal('modal-all-conflicts');openEvent(${ev.id});" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .18s;" onmouseover="this.style.borderColor='rgba(255,255,255,.14)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:18px;letter-spacing:2px;flex-shrink:0;">${ev.flags}</div>
+      <div style="flex:1;"><div style="font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.02em;">${ev.title}</div><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);">${ev.region} · ${ev.parties}</div></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div class="sev-dot sev-${ev.sev}"></div><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);text-transform:uppercase;">${ev.sev}</span></div>
+    </div>`).join('');
+  }
+  document.getElementById('all-conflicts-list').innerHTML=html;
+  openModal('modal-all-conflicts');
+}
+
+// ══════════════════════════════════════════════════════════
 // MARKET DATA
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
 async function fetchMarketData(){
   for(const s of [{id:'rtx',sym:'RTX'},{id:'lmt',sym:'LMT'}]){
     try{
@@ -764,85 +1075,158 @@ async function fetchMarketData(){
     }catch(e){}
   }
   for(const[id,fb]of Object.entries(mktFallback)){if(!liveMarkets[id])liveMarkets[id]=fb;}
-  updateTicker();renderMarkets();renderMovers();renderList('military');addMapMarkers();
+  updateTicker();renderTop10();renderConflictAssets();renderMarkets();renderMovers();renderList('military');addMapMarkers();
   setTimeout(fetchMarketData,60000);
 }
 
 function makeSpark(id,dir,tall=false){
   const def=marketDefs.find(d=>d.id===id);
   const pts=def?.history||Array.from({length:12},(_,i)=>{const b=liveMarkets[id]?.raw||100;return b+(dir==='up'?1:-1)*(i/11)*b*.04+(Math.random()-.5)*b*.02;});
-  const w=300,h=tall?80:42;
+  const w=300,h=tall?88:44;
   const mn=Math.min(...pts),mx=Math.max(...pts);
-  const sp=pts.map((v,i)=>`${(i/(pts.length-1))*w},${h-((v-mn)/(mx-mn||1))*(h-4)-2}`).join(' ');
-  const col=dir==='up'?'#27ae60':'#c0392b';
-  return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;"><polyline points="${sp} ${w},${h} 0,${h}" fill="${col}" opacity=".12" stroke="none"/><polyline points="${sp}" fill="none" stroke="${col}" stroke-width="${tall?2:1.8}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const sp=pts.map((v,i)=>`${(i/(pts.length-1))*w},${h-((v-mn)/(mx-mn||1))*(h-6)-3}`).join(' ');
+  const col=dir==='up'?'#1fa355':'#c8321e';
+  return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;"><defs><linearGradient id="sg${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs><polygon points="${sp} ${w},${h} 0,${h}" fill="url(#sg${id})"/><polyline points="${sp}" fill="none" stroke="${col}" stroke-width="${tall?2:1.8}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function makeMiniSpark(dir,w=60,h=28){
+  const pts=Array.from({length:10},(_,i)=>50+(dir==='up'?1:-1)*i*2+(Math.random()-.5)*6);
+  const mn=Math.min(...pts),mx=Math.max(...pts);
+  const sp=pts.map((v,i)=>`${(i/9)*w},${h-((v-mn)/(mx-mn||1))*(h-4)-2}`).join(' ');
+  const col=dir==='up'?'#1fa355':'#c8321e';
+  return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:${w}px;height:${h}px;flex-shrink:0;"><polyline points="${sp}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
 function updateTicker(){
-  const crypto=Object.entries(cryptoData).map(([s,p])=>`◆ ${s} <span class="t-up">${p}</span>`).join(' &nbsp;');
+  const crypto=Object.entries(cryptoData).map(([s,p])=>`◆ ${s} <span class="t-up">${p}</span>`).join('  ');
   const mkts=[
-    `◆ OIL <span class="${liveMarkets.crude?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.crude?.price||'$—'} ${liveMarkets.crude?.change||''}</span>`,
-    `◆ GOLD <span class="${liveMarkets.gold?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.gold?.price||'$—'} ${liveMarkets.gold?.change||''}</span>`,
+    `◆ OIL <span class="${liveMarkets.crude?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.crude?.price||'—'} ${liveMarkets.crude?.change||''}</span>`,
+    `◆ GOLD <span class="${liveMarkets.gold?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.gold?.price||'—'} ${liveMarkets.gold?.change||''}</span>`,
     `◆ SILVER <span class="t-up">$27.40 +1.1%</span>`,`◆ DXY <span class="t-dn">104.2 -0.3%</span>`,
     `◆ EUR/USD <span class="t-up">1.0821 +0.2%</span>`,`◆ USD/JPY <span class="t-dn">149.3 -0.4%</span>`,
-    `◆ NATGAS <span class="${liveMarkets.natgas?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.natgas?.price||'$—'} ${liveMarkets.natgas?.change||''}</span>`,
-    `◆ WHEAT <span class="${liveMarkets.wheat?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.wheat?.price||'$—'} ${liveMarkets.wheat?.change||''}</span>`,
+    `◆ NATGAS <span class="${liveMarkets.natgas?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.natgas?.price||'—'} ${liveMarkets.natgas?.change||''}</span>`,
+    `◆ WHEAT <span class="${liveMarkets.wheat?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.wheat?.price||'—'} ${liveMarkets.wheat?.change||''}</span>`,
     `◆ S&amp;P500 <span class="t-up">5,842 +0.6%</span>`,`◆ NASDAQ <span class="t-up">18,240 +0.8%</span>`,
+    `◆ NVDA <span class="t-up">$875.40 +3.4%</span>`,`◆ AAPL <span class="t-up">$213.49 +1.2%</span>`,
     `◆ RTX <span class="${liveMarkets.rtx?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.rtx?.price||'—'} ${liveMarkets.rtx?.change||''}</span>`,
     `◆ LMT <span class="${liveMarkets.lmt?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.lmt?.price||'—'} ${liveMarkets.lmt?.change||''}</span>`,
-  ].join(' &nbsp;');
-  document.getElementById('ticker-all').innerHTML=crypto+'  &nbsp;&nbsp;  '+mkts;
+  ].join('  ');
+  document.getElementById('ticker-all').innerHTML=crypto+'  &nbsp;  '+mkts;
+}
+
+function renderTop10(){
+  document.getElementById('top10-list').innerHTML=TOP10_ASSETS.map(a=>{
+    const barColor=a.dir==='up'?'rgba(31,163,85,.5)':'rgba(200,50,30,.5)';
+    return`<div class="asset-row" onclick="showToast('${a.name} · ${a.price}')">
+      <div class="asset-rank">${a.rank}</div>
+      <div style="font-size:20px;flex-shrink:0;">${a.icon}</div>
+      <div class="asset-info">
+        <div class="asset-name">${a.name}</div>
+        <div class="asset-ticker">${a.ticker}</div>
+        ${a.mcap!=='Commodity'?`<div style="height:2px;background:rgba(255,255,255,.05);border-radius:1px;margin-top:4px;width:100%;"><div class="asset-bar" style="width:${a.bar}%;background:${barColor};"></div></div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div class="asset-price ${a.dir==='up'?'up':'dn'}">${a.price}</div>
+        <div class="asset-mcap">${a.mcap}</div>
+      </div>
+      <div class="asset-chg ${a.dir==='up'?'up':'dn'}">${a.change}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderConflictAssets(){
+  document.getElementById('conflict-assets-list').innerHTML=CONFLICT_ASSETS.map(a=>`
+    <div class="mover-row" onclick="showToast('${a.name}: ${a.why}')">
+      <div style="font-size:18px;flex-shrink:0;">${a.icon}</div>
+      <div style="flex:1;">
+        <div class="mr-name">${a.name}</div>
+        <div class="mr-ticker">${a.ticker} · ${a.conflicts.join(', ')}</div>
+        <div style="font-family:var(--display);font-size:12px;color:rgba(255,255,255,.35);margin-top:2px;">${a.why}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="${a.dir==='up'?'up':'dn'}">${a.price}</div>
+        <div style="font-family:var(--mono);font-size:10px;" class="${a.dir==='up'?'up':'dn'}">${a.change}</div>
+      </div>
+      ${makeMiniSpark(a.dir)}
+    </div>`).join('');
 }
 
 function renderMarkets(){
   const months=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
-  document.getElementById('markets-list').innerHTML=marketDefs.map(m=>{
-    const live=liveMarkets[m.id]||{price:'—',change:'—',dir:'up'};
-    return`<div class="mkt-card" onclick="openMarket('${m.id}')">
-      <div class="mkc-head"><div style="font-size:26px;flex-shrink:0;">${m.icon}</div>
-        <div style="flex:1;"><div style="font-size:16px;font-weight:600;">${m.name}</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);">${m.ticker}</div></div>
-        <div style="text-align:right;"><div class="mkc-price ${live.dir==='up'?'up':'dn'}">${live.price}</div><div style="font-family:var(--mono);font-size:11px;margin-top:2px;"><span class="${live.dir==='up'?'up-bg':'dn-bg'}">${live.change}</span></div></div>
-      </div>
-      <div style="padding:0 16px 6px;">${makeSpark(m.id,live.dir,false)}</div>
-      <div style="display:flex;justify-content:space-between;padding:0 16px 10px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);"><span>${months[0]}</span><span>${months[3]}</span><span>${months[6]}</span><span>${months[9]}</span><span>Now</span></div>
-      <div class="mkt-context">${m.why}</div>
-      <div class="mkt-links">${m.events.map(en=>`<span class="mkt-link-tag" onclick="event.stopPropagation();openEventByName('${en}')">⚔️ ${en}</span>`).join('')}</div>
+  document.getElementById('markets-list').innerHTML=`
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:18px 18px 10px;color:rgba(255,255,255,.3);border-top:1px solid var(--border);">Detailed Asset Analysis</div>
+    <div style="padding:0 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+    ${marketDefs.map(m=>{
+      const live=liveMarkets[m.id]||{price:'—',change:'—',dir:'up'};
+      return`<div class="mkt-card" onclick="openMarket('${m.id}')">
+        <div class="mkc-head">
+          <div style="font-size:28px;flex-shrink:0;">${m.icon}</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--display);font-size:17px;font-weight:800;letter-spacing:.02em;">${m.name}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.04em;">${m.ticker}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="mkc-price ${live.dir==='up'?'up':'dn'}">${live.price}</div>
+            <div style="font-family:var(--mono);font-size:11px;margin-top:3px;"><span class="${live.dir==='up'?'up-bg':'dn-bg'}">${live.change}</span></div>
+          </div>
+        </div>
+        <div style="padding:0 16px 4px;">${makeSpark(m.id,live.dir,false)}</div>
+        <div style="display:flex;justify-content:space-between;padding:0 16px 10px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.18);">
+          <span>${months[0]}</span><span>${months[3]}</span><span>${months[6]}</span><span>${months[9]}</span><span>Now</span>
+          <span style="color:rgba(200,50,30,.6);">12m</span>
+        </div>
+        <div class="mkt-context">${m.why}</div>
+        <div class="mkt-links">${m.events.map(en=>`<span class="mkt-link-tag" onclick="event.stopPropagation();openEventByName('${en}')">⚔️ ${en}</span>`).join('')}</div>
+      </div>`;
+    }).join('')}
     </div>`;
-  }).join('');
 }
 
 function renderMovers(){
   document.getElementById('winners-list').innerHTML=winnerDefs.map(w=>{
     const live=liveMarkets[w.id]||{price:'—',change:'+—',dir:'up'};
-    return`<div class="mover-row" onclick="openMarket('${w.id}')"><div style="font-size:20px;flex-shrink:0;">${w.icon}</div><div style="flex:1;"><div class="mr-name">${w.name}</div><div class="mr-ticker">${w.ticker}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="up">${live.price}</div><div style="font-family:var(--mono);font-size:10px;" class="up">${live.change}</div></div></div>`;
+    return`<div class="mover-row" onclick="openMarket('${w.id}')"><div style="font-size:18px;flex-shrink:0;">${w.icon}</div><div style="flex:1;"><div class="mr-name">${w.name}</div><div class="mr-ticker">${w.ticker}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="up">${live.price}</div><div style="font-family:var(--mono);font-size:10px;" class="up">${live.change}</div></div></div>`;
   }).join('');
-  document.getElementById('losers-list').innerHTML=loserDefs.map(l=>`<div class="mover-row"><div style="font-size:20px;flex-shrink:0;">${l.icon}</div><div style="flex:1;"><div class="mr-name">${l.name}</div><div class="mr-ticker">${l.ticker}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="dn">—</div><div style="font-family:var(--mono);font-size:10px;" class="dn">${l.change}</div></div></div>`).join('');
+  document.getElementById('losers-list').innerHTML=loserDefs.map(l=>`<div class="mover-row"><div style="font-size:18px;flex-shrink:0;">${l.icon}</div><div style="flex:1;"><div class="mr-name">${l.name}</div><div class="mr-ticker">${l.ticker}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="dn">—</div><div style="font-family:var(--mono);font-size:10px;" class="dn">${l.change}</div></div></div>`).join('');
 }
 
 function openMarket(id){
   const m=liveMarkets[id]||{};const def=marketDefs.find(d=>d.id===id);if(!def)return;
   document.getElementById('mm-icon').textContent=def.icon;
   document.getElementById('mm-name').textContent=def.name;
-  document.getElementById('mm-price-row').innerHTML=`<span style="font-family:var(--mono);font-size:26px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</span><span class="${m.dir==='up'?'up-bg':'dn-bg'}" style="font-size:14px;">${m.change||'—'}</span>`;
+  document.getElementById('mm-price-row').innerHTML=`<span style="font-family:var(--mono);font-size:28px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</span><span class="${m.dir==='up'?'up-bg':'dn-bg'}" style="font-size:14px;">${m.change||'—'}</span>`;
   document.getElementById('mm-why').textContent=def.why;
   const months=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
   document.getElementById('mm-chart').innerHTML=`
-    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;">12-Month Price History</div>
-    ${makeSpark(id,m.dir||'up',true)}
-    <div style="display:flex;justify-content:space-between;margin-top:5px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);"><span>${months[0]}</span><span>${months[3]}</span><span>${months[6]}</span><span>${months[9]}</span><span>Now</span></div>
-    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-      <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px;">CURRENT</div><div style="font-family:var(--mono);font-size:16px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div></div>
-      <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px;">CHANGE</div><div style="font-family:var(--mono);font-size:16px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div>
-      <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px;">TREND</div><div style="font-size:18px;">${m.dir==='up'?'📈':'📉'}</div></div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+      <span>12-Month Price History</span>
+      <span style="color:rgba(200,50,30,.6);font-size:8px;">Mar 2025 → Mar 2026</span>
     </div>
-  `;
+    ${makeSpark(id,m.dir||'up',true)}
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.2);">
+      <span>${months[0]}</span><span>${months[2]}</span><span>${months[4]}</span><span>${months[6]}</span><span>${months[8]}</span><span>${months[10]}</span><span>Now</span>
+    </div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.28);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase;">CURRENT</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.28);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase;">CHANGE</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.28);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase;">TREND</div>
+        <div style="font-size:20px;">${m.dir==='up'?'📈':'📉'}</div>
+      </div>
+    </div>`;
   document.getElementById('mm-events').innerHTML=def.events.map(en=>`<span class="mkt-link-tag" onclick="closeModal('modal-market');openEventByName('${en}')">⚔️ ${en}</span>`).join('');
   openModal('modal-market');
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
 // NEWS
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
 const FREE_LIMIT=3;
 async function fetchNews(id){
   if(liveNews[id])return;
@@ -853,61 +1237,44 @@ async function fetchNews(id){
     if(data.status==='ok'&&data.articles?.length){
       liveNews[id]=data.articles.map(a=>{
         const al=getAlign(a.source?.name||'');
-        return{outlet:a.source?.name||'Unknown',alignment:al,time:timeAgo(a.publishedAt),
-          ts:new Date(a.publishedAt).getTime()||Date.now(),headline:a.title||'',
-          excerpt:a.description||'',body:a.content?.replace(/\[\+\d+ chars\]/,'').trim()||a.description||'',url:a.url||'#'};
-      });
-      liveNews[id].sort((a,b)=>b.ts-a.ts);
+        return{outlet:a.source?.name||'Unknown',alignment:al,time:timeAgo(a.publishedAt),ts:new Date(a.publishedAt).getTime()||Date.now(),headline:a.title||'',excerpt:a.description||'',body:a.content?.replace(/\[\+\d+ chars\]/,'').trim()||a.description||'',url:a.url||'#'};
+      });liveNews[id].sort((a,b)=>b.ts-a.ts);
     }else liveNews[id]=null;
   }catch(e){liveNews[id]=null;}
 }
-function startNewsRefresh(){
-  stopNewsRefresh();
-  newsRefreshTimer=setInterval(()=>{
-    const arts=liveNews[currentEvent];if(!arts)return;
-    arts.forEach(a=>{a.time=timeAgo(a.ts);});
-    renderFeedHTML(arts,currentTabIdx);
-  },8000);
-}
+function startNewsRefresh(){stopNewsRefresh();newsRefreshTimer=setInterval(()=>{const arts=liveNews[currentEvent];if(!arts)return;arts.forEach(a=>{a.time=timeAgo(a.ts);});renderFeedHTML(arts,currentTabIdx);},8000);}
 function stopNewsRefresh(){if(newsRefreshTimer){clearInterval(newsRefreshTimer);newsRefreshTimer=null;}}
 function timeAgo(d){
-  if(!d)return'';
-  const diff=(Date.now()-(typeof d==='number'?d:new Date(d)))/1000;
-  if(diff<60)return`${Math.floor(diff)}s ago`;
-  if(diff<3600)return`${Math.floor(diff/60)}m ago`;
-  if(diff<86400)return`${Math.floor(diff/3600)}h ago`;
-  return`${Math.floor(diff/86400)}d ago`;
+  if(!d)return'';const diff=(Date.now()-(typeof d==='number'?d:new Date(d)))/1000;
+  if(diff<60)return`${Math.floor(diff)}s ago`;if(diff<3600)return`${Math.floor(diff/60)}m ago`;
+  if(diff<86400)return`${Math.floor(diff/3600)}h ago`;return`${Math.floor(diff/86400)}d ago`;
 }
+
 async function openEvent(id){
   currentEvent=id;stopNewsRefresh();if(leafletMap)leafletMap.closePopup();
-  const ev=events.find(e=>e.id===id);
-  lastScreen=ev.cat==='unrest'?'unrest':'map';
+  const ev=events.find(e=>e.id===id);lastScreen=ev.cat==='unrest'?'unrest':'map';
   document.getElementById('d-flags').textContent=ev.flags;
   document.getElementById('d-title').textContent=ev.title;
   document.getElementById('d-summary').textContent=(ev.econContext||'').substring(0,200);
   document.getElementById('d-meta').innerHTML=`<div class="sev-dot sev-${ev.sev}"></div><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.38);">${ev.parties}</span><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);">· ${ev.region}</span>`;
-  const chips=(ev.markets||[]).map(mid=>{
-    const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';
-    return`<div class="econ-row" onclick="openMarket('${mid}')"><div style="font-size:20px;flex-shrink:0;">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why.substring(0,70)}…</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;
-  }).join('');
+  const chips=(ev.markets||[]).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<div class="econ-row" onclick="openMarket('${mid}')"><div style="font-size:20px;flex-shrink:0;">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why.substring(0,70)}…</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;}).join('');
   document.getElementById('econ-panel-wrap').innerHTML=chips?`<div class="econ-panel"><div class="econ-header"><span style="font-size:18px;">💹</span><span class="econ-title">Price Impact & Economic Fallout</span></div><div class="econ-context">${ev.econContext||''}</div>${chips}</div>`:'';
   currentTabIdx=0;
   document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('active',i===0));
-  document.getElementById('tl-feed').style.display='none';
-  document.getElementById('econ-feed').style.display='none';
-  document.getElementById('news-feed').style.display='block';
+  document.getElementById('tl-feed').style.display='none';document.getElementById('econ-feed').style.display='none';document.getElementById('news-feed').style.display='block';
   document.getElementById('news-feed').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">Fetching live news…</div></div>';
   switchTab('detail',null);
   await fetchNews(id);
   if(currentLang!=='en'&&liveNews[id]){const tx=await translateArticles(liveNews[id],currentLang);liveNews[id]=tx;}
   renderNewsFeed(0);startNewsRefresh();
 }
+
 function renderNewsFeed(tabIdx){
-  currentTabIdx=tabIdx;
-  const arts=liveNews[currentEvent];
-  if(!arts){document.getElementById('news-feed').innerHTML=`<div class="error-box">⚠️ Live news loads at worldconflictslive.vercel.app</div>${getFallback()}`;return;}
+  currentTabIdx=tabIdx;const arts=liveNews[currentEvent];
+  if(!arts){document.getElementById('news-feed').innerHTML=`<div class="error-box">⚠️ Live news loads on worldconflictslive.vercel.app</div>${getFallback()}`;return;}
   renderFeedHTML(arts,tabIdx);
 }
+
 function renderFeedHTML(arts,tabIdx){
   if(tabIdx===0){
     const groups={state:[],aligned:[],independent:[],opposition:[],unverified:[]};
@@ -916,9 +1283,7 @@ function renderFeedHTML(arts,tabIdx){
     const html=Object.entries(groups).map(([grp,ga])=>{
       if(!ga.length)return'';
       const free=ga.slice(0,FREE_LIMIT),locked=ga.slice(FREE_LIMIT);
-      return`<div style="padding:9px 18px 5px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.25);">${labels[grp]}<span style="color:rgba(39,174,96,.7);">· ${free.length} free</span>${locked.length?`<span style="color:rgba(212,130,10,.55);">· +${locked.length} premium</span>`:''}</div>
-      ${free.map(a=>artCard(a)).join('')}
-      ${locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);">Unlock all · $1.99/mo →</div></div></div>`:''}`;
+      return`<div style="padding:10px 18px 5px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.22);">${labels[grp]}<span style="color:rgba(31,163,85,.7);">· ${free.length} free</span>${locked.length?`<span style="color:rgba(217,140,10,.55);">· +${locked.length} premium</span>`:''}</div>${free.map(a=>artCard(a)).join('')}${locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.38);">Unlock all · $1.99/mo →</div></div></div>`:''}`;
     }).join('');
     document.getElementById('news-feed').innerHTML=html||emptyState();return;
   }
@@ -926,11 +1291,16 @@ function renderFeedHTML(arts,tabIdx){
   let filtered=typeMap[tabIdx]?arts.filter(a=>a.alignment?.type===typeMap[tabIdx]):arts;
   if(!filtered.length){document.getElementById('news-feed').innerHTML=emptyState();return;}
   const free=filtered.slice(0,FREE_LIMIT),locked=filtered.slice(FREE_LIMIT);
-  document.getElementById('news-feed').innerHTML=free.map(a=>artCard(a)).join('')+(locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);">Unlock all · $1.99/mo →</div></div></div>`:'');
+  document.getElementById('news-feed').innerHTML=free.map(a=>artCard(a)).join('')+(locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.38);">Unlock all · $1.99/mo →</div></div></div>`:'');
 }
-function emptyState(){return`<div style="text-align:center;padding:44px 20px;"><div style="font-size:32px;margin-bottom:10px;">📰</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">NO ARTICLES IN THIS CATEGORY</div></div>`;}
-function artCardInner(a){const al=a.alignment||getAlign(a.outlet);return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:6px;height:6px;border-radius:50%;background:${alignDot[al.type]||'rgba(255,255,255,.2)'};flex-shrink:0;"></div><div class="art-outlet">${a.outlet}</div><div class="art-time">${a.time}</div></div><div class="art-headline">${a.headline}</div><div class="art-excerpt">${(a.excerpt||'').substring(0,140)}${(a.excerpt||'').length>140?'…':''}</div><div style="margin-top:5px;">${alignBadge(al)}</div>`;}
+
+function emptyState(){return`<div style="text-align:center;padding:52px 20px;"><div style="font-size:36px;margin-bottom:12px;opacity:.4;">📰</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.12em;text-transform:uppercase;">No articles in this category</div></div>`;}
+function artCardInner(a){
+  const al=a.alignment||getAlign(a.outlet);
+  return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:6px;height:6px;border-radius:50%;background:${alignDot[al.type]||'rgba(255,255,255,.2)'};flex-shrink:0;"></div><div class="art-outlet">${a.outlet}</div><div class="art-time" style="margin-left:auto;">${a.time}</div></div><div class="art-headline">${a.headline}</div><div class="art-excerpt">${(a.excerpt||'').substring(0,140)}${(a.excerpt||'').length>140?'…':''}</div><div style="margin-top:5px;">${alignBadge(al)}</div>`;
+}
 function artCard(a){return`<div class="article-card" onclick='openArticle(${JSON.stringify(a).replace(/'/g,"&#39;")})'>${artCardInner(a)}</div>`;}
+
 function getFallback(){
   const base=[
     {outlet:'Reuters',alignment:{type:'independent',label:'Independent',flag:'🇬🇧'},time:'4m ago',ts:Date.now()-240000,headline:'Diplomatic efforts intensify as international pressure mounts',excerpt:'Foreign ministers convened in emergency session to discuss de-escalation.',url:'#'},
@@ -940,8 +1310,9 @@ function getFallback(){
     {outlet:'Haaretz',alignment:{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},time:'1h ago',ts:Date.now()-3600000,headline:'Critics question strategic rationale as civilian toll mounts',excerpt:'Opposition figures call for an independent inquiry.',url:'#'},
   ];
   const free=base.slice(0,FREE_LIMIT),locked=base.slice(FREE_LIMIT);
-  return free.map(a=>artCard(a)).join('')+(locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);">Unlock all · $1.99/mo →</div></div></div>`:'');
+  return free.map(a=>artCard(a)).join('')+(locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.38);">Unlock all · $1.99/mo →</div></div></div>`:'');
 }
+
 function openArticle(a){
   const al=a.alignment||{type:'unverified',label:'Unverified',flag:'❓'};
   document.getElementById('m-align').innerHTML=alignBadge(al);
@@ -951,37 +1322,60 @@ function openArticle(a){
   document.getElementById('m-url').href=a.url||'#';
   openModal('modal-article');
 }
+
 function renderTimeline(){
   const ev=events.find(e=>e.id===currentEvent);
-  if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML='<div style="text-align:center;padding:32px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">No timeline data</div>';return;}
-  document.getElementById('tl-feed').innerHTML=ev.timeline.map((t,i)=>`<div class="tl-item"><div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:14px;"><div class="tl-dot"></div>${i<ev.timeline.length-1?'<div style="width:1px;flex:1;background:rgba(255,255,255,.08);margin-top:3px;"></div>':''}</div><div style="padding-bottom:3px;"><div class="tl-date">${t.date}</div><div class="tl-event">${t.event}</div><div class="tl-tag" style="background:${t.tc};color:rgba(255,255,255,.8);">${t.tag}</div></div></div>`).join('');
+  if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML='<div style="text-align:center;padding:36px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.2);">No timeline data</div>';return;}
+  // Visual timeline graph
+  const startY=ev.startYear||2022,now=2026;
+  const totalSpan=now-startY;
+  const graphHTML=`<div class="tl-graph">
+    <div class="tl-graph-header">
+      <span>Conflict Timeline</span>
+      <span class="tl-graph-range">${startY} → ${now} · ${Math.round(totalSpan)} years</span>
+    </div>
+    <div class="tl-graph-canvas">
+      <div style="position:relative;height:48px;min-width:400px;">
+        <div style="position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(255,255,255,.08);transform:translateY(-50%);border-radius:1px;"></div>
+        ${ev.timeline.map((t,i)=>{
+          const year=parseFloat(t.date);const pct=isNaN(year)?((i+1)/(ev.timeline.length+1)*100):((year-startY)/totalSpan*100);
+          return`<div style="position:absolute;left:${Math.min(95,Math.max(2,pct))}%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.35);white-space:nowrap;">${t.date}</div>
+            <div style="width:12px;height:12px;border-radius:50%;background:${t.tc.replace(/\.\d+\)/,'.9)')};border:2px solid rgba(255,255,255,.4);flex-shrink:0;cursor:pointer;" title="${t.event}"></div>
+            <div style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:3px;background:${t.tc};color:rgba(255,255,255,.8);white-space:nowrap;">${t.tag}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('tl-feed').innerHTML=graphHTML+ev.timeline.map((t,i)=>`<div class="tl-item"><div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:14px;"><div class="tl-dot"></div>${i<ev.timeline.length-1?'<div style="width:1px;flex:1;background:rgba(255,255,255,.07);margin-top:3px;"></div>':''}</div><div style="padding-bottom:3px;"><div class="tl-date">${t.date}</div><div class="tl-event">${t.event}</div><div class="tl-tag" style="background:${t.tc};color:rgba(255,255,255,.8);">${t.tag}</div></div></div>`).join('');
 }
+
 function renderEconFeed(){
   const ev=events.find(e=>e.id===currentEvent);
   document.getElementById('econ-feed').innerHTML=`
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;">
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:10px;">Economic Context</div>
-      <div style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.6);font-style:italic;">${ev?.econContext||''}</div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:10px;">Economic Context</div>
+      <div style="font-family:var(--display);font-size:15px;line-height:1.8;color:rgba(255,255,255,.55);">${ev?.econContext||''}</div>
     </div>
     ${(ev?.markets||[]).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<div class="econ-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;" onclick="openMarket('${mid}')"><div style="font-size:20px;flex-shrink:0;">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why}</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;}).join('')}`;
 }
+
 function setNTab(el,idx){
   currentTabIdx=idx;stopNewsRefresh();
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
-  document.getElementById('tl-feed').style.display='none';
-  document.getElementById('econ-feed').style.display='none';
-  document.getElementById('news-feed').style.display='none';
+  document.getElementById('tl-feed').style.display='none';document.getElementById('econ-feed').style.display='none';document.getElementById('news-feed').style.display='none';
   if(idx===5){document.getElementById('tl-feed').style.display='block';renderTimeline();}
   else if(idx===6){document.getElementById('econ-feed').style.display='block';renderEconFeed();}
   else{document.getElementById('news-feed').style.display='block';renderNewsFeed(idx);startNewsRefresh();}
 }
 
-// ══════════════════════════════
-// LIVE ALERTS — polls every 60s
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
+// ALERTS
+// ══════════════════════════════════════════════════════════
 const baseAlerts=[
   {id:'a1',icon:'💥',type:'breaking',title:'Ceasefire in Gaza under pressure — both sides allege violations',conflict:'Gaza Conflict',eventId:0,time:'Just now',ts:Date.now()-60000,unread:true},
-  {id:'a2',icon:'₿',type:'market',title:'BTC surges past $84k on geopolitical safe-haven demand',conflict:'MARKET · CRYPTO',eventId:null,time:'4m ago',ts:Date.now()-240000,unread:true},
+  {id:'a2',icon:'₿',type:'market',title:'BTC surges past $83k on geopolitical safe-haven demand',conflict:'MARKET · CRYPTO',eventId:null,time:'4m ago',ts:Date.now()-240000,unread:true},
   {id:'a3',icon:'🔴',type:'breaking',title:'Russia launches large-scale drone strike on Ukrainian energy grid',conflict:'Russia–Ukraine War',eventId:1,time:'18m ago',ts:Date.now()-1080000,unread:true},
   {id:'a4',icon:'✊',type:'breaking',title:'Serbia protesters block key motorway for 12th consecutive day',conflict:'Serbia Protests',eventId:100,time:'1h ago',ts:Date.now()-3600000,unread:false},
   {id:'a5',icon:'📈',type:'market',title:'Lockheed Martin LMT hits 52-week high after NATO spending announcement',conflict:'MARKET · DEFENCE',eventId:null,time:'2h ago',ts:Date.now()-7200000,unread:false},
@@ -992,8 +1386,7 @@ const baseAlerts=[
 alertsData=[...baseAlerts];
 
 function filterAlerts(type,el){
-  document.querySelectorAll('#screen-alerts .scroll-row .pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll('#screen-alerts .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
   const filtered=type==='all'?alertsData:type==='following'?alertsData.filter(a=>a.unread):alertsData.filter(a=>a.type===type);
   renderAlertsList(filtered);
 }
@@ -1001,8 +1394,8 @@ function renderAlerts(){renderAlertsList(alertsData);}
 function renderAlertsList(list){
   document.getElementById('alerts-list').innerHTML=list.length?list.map(a=>{
     const onclick=a.eventId!=null?`openEvent(${a.eventId})`:`openModal('modal-premium')`;
-    return`<div class="alert-item ${a.unread?'unread':''}" onclick="${onclick}"><div style="font-size:20px;flex-shrink:0;">${a.icon}</div><div style="flex:1;"><div class="al-conflict">${a.conflict}</div><div class="al-title">${a.title}</div><div class="al-time">${a.time}</div></div>${a.unread?'<div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:6px;"></div>':''}</div>`;
-  }).join(''):`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">No alerts in this category</div>`;
+    return`<div class="alert-item ${a.unread?'unread':''}" onclick="${onclick}"><div style="font-size:20px;flex-shrink:0;">${a.icon}</div><div style="flex:1;"><div class="al-conflict">${a.conflict}</div><div class="al-title">${a.title}</div><div class="al-time">${a.time}</div></div>${a.unread?'<div style="width:7px;height:7px;border-radius:50%;background:var(--red2);flex-shrink:0;margin-top:6px;"></div>':''}</div>`;
+  }).join(''):`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No alerts in this category</div>`;
   document.getElementById('alerts-ts').textContent=`Last updated: ${new Date().toLocaleTimeString()}`;
 }
 async function pollAlerts(){
@@ -1012,8 +1405,7 @@ async function pollAlerts(){
       const resp=await fetch(`/api/news?q=${encodeURIComponent(ev.query)}&pageSize=3`);
       const data=await resp.json();
       if(data.status==='ok'&&data.articles?.length){
-        const latest=data.articles[0];
-        const latestTs=new Date(latest.publishedAt).getTime();
+        const latest=data.articles[0];const latestTs=new Date(latest.publishedAt).getTime();
         if(latestTs>(alertsData[0]?.ts||0)&&latest.title!==latestAlertHeadline){
           latestAlertHeadline=latest.title;
           alertsData.unshift({id:`live_${Date.now()}`,icon:'🔴',type:'breaking',title:latest.title,conflict:ev.title,eventId:ev.id,time:'Just now',ts:latestTs,unread:true});
@@ -1034,50 +1426,68 @@ function showAlertBanner(text,eventId){
 function handleBannerClick(){if(bannerEventId!=null)openEvent(bannerEventId);dismissBanner();}
 function dismissBanner(){document.getElementById('alert-banner').classList.remove('show');}
 
-// ══════════════════════════════
-// RENDER LISTS
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
+// EVENT CARDS
+// ══════════════════════════════════════════════════════════
 function eventCard(ev){
   const tbClass={military:'tb-military',unrest:'tb-unrest',humanitarian:'tb-humanitarian',terrorism:'tb-terrorism'}[ev.cat]||'tb-military';
   const tbLabel={military:'⚔️ Armed Conflict',unrest:{protest:'✊ Mass Protest',coup:'👁️ Coup',revolution:'🔥 Revolution',election:'🗳️ Election Crisis'}[ev.subtype]||'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crisis',terrorism:'💥 Terrorism'}[ev.cat];
-  const chips=(ev.markets||[]).slice(0,4).map(mid=>{
-    const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';
-    return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;
-  }).join('');
+  const chips=(ev.markets||[]).slice(0,4).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;}).join('');
   return`<div class="event-card" onclick="openEvent(${ev.id})">
-    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;"><div style="font-size:20px;flex-shrink:0;letter-spacing:2px;">${ev.flags}</div><div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div><div class="ec-meta">${ev.parties} · ${ev.region}</div></div></div>
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;">
+      <div style="font-size:22px;flex-shrink:0;letter-spacing:2px;line-height:1;">${ev.flags}</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div>
+        <div class="ec-meta">${ev.parties} · ${ev.region}</div>
+      </div>
+    </div>
     <div class="type-badge ${tbClass}">${tbLabel}</div>
     <div class="ec-summary">${(ev.econContext||'').substring(0,110)}…</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;"><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);">All sides · Live news</div><div style="font-family:var(--mono);font-size:10px;color:var(--red);">READ →</div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;">
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);">All sides · Live news</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--red2);font-weight:500;">READ →</div>
+    </div>
     ${chips?`<div class="mkt-ribbon">${chips}</div>`:''}
   </div>`;
 }
+
 function renderList(cat){
   currentCat=cat;
   const filtered=events.filter(e=>e.cat===cat);
-  document.getElementById('conflict-list').innerHTML=filtered.length?filtered.map(e=>eventCard(e)).join(''):`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">No events in this category</div>`;
+  document.getElementById('conflict-list').innerHTML=filtered.length?filtered.map(e=>eventCard(e)).join('')+`<div style="height:8px;"></div>`:`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events in this category</div>`;
 }
 function renderUnrestList(filter='all'){
   const filtered=events.filter(e=>e.cat==='unrest'&&(filter==='all'||e.subtype===filter));
-  document.getElementById('unrest-list').innerHTML=filtered.length?filtered.map(e=>eventCard(e)).join(''):`<div style="text-align:center;padding:44px 20px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">No events</div>`;
+  document.getElementById('unrest-list').innerHTML=filtered.length?filtered.map(e=>eventCard(e)).join(''):`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events</div>`;
 }
 
-// ══════════════════════════════
+// ══════════════════════════════════════════════════════════
 // FILTERS & NAV
-// ══════════════════════════════
-function setCatTab(el,cat){document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderList(cat);}
-function filterMap(type,el){
-  document.querySelectorAll('#screen-map .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
-  events.forEach((ev,i)=>{const m=mapMarkers[i];if(!m)return;type==='all'||ev.cat===type?m.addTo(leafletMap):leafletMap.removeLayer(m);});
+// ══════════════════════════════════════════════════════════
+function setCatTab(el,cat){
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderList(cat);
 }
-function filterUnrest(type,el){document.querySelectorAll('#screen-unrest .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderUnrestList(type);}
+function filterMap(type,el){
+  document.querySelectorAll('#map-filter-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
+  mapMarkers.forEach((m,i)=>{
+    const ev=events[i];if(!m||!ev)return;
+    let show=false;
+    if(type==='all')show=true;
+    else if(type==='critical')show=ev.sev==='critical';
+    else show=ev.cat===type;
+    show?m.addTo(leafletMap):leafletMap.removeLayer(m);
+  });
+}
+function filterUnrest(type,el){
+  document.querySelectorAll('#screen-unrest .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderUnrestList(type);
+}
 
 function switchTab(tab,el){
   if(tab!=='detail')stopNewsRefresh();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item,.top-nav-btn').forEach(n=>n.classList.remove('active'));
   document.getElementById('screen-'+tab)?.classList.add('active');
-  if(el&&el.classList){el.classList.add('active');}
+  if(el&&el.classList)el.classList.add('active');
   else if(tab!=='detail'){
     const order=['map','unrest','markets','alerts','language','profile'];
     const i=order.indexOf(tab);
@@ -1097,7 +1507,7 @@ function closeModal(id){document.getElementById(id)?.classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
 
 let toastTimer;
-function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
+function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
 function toggleRow(row){const t=row.querySelector('.toggle');if(t){t.classList.toggle('on');showToast(t.classList.contains('on')?'✅ Enabled':'⭕ Disabled');}}
 
 function submitEmail(){
@@ -1109,7 +1519,6 @@ function submitEmail(){
   showToast("✅ You're on the list! First alert coming soon.");
 }
 
-// AI CONFLICT DETECTION
 async function detectNewConflicts(){
   try{
     const r=await fetch('/api/detect-conflicts');const data=await r.json();
@@ -1125,19 +1534,33 @@ async function detectNewConflicts(){
 // EMAIL PROMPT
 setTimeout(()=>{if(!localStorage.getItem('wcl_email_prompted')){localStorage.setItem('wcl_email_prompted','1');openModal('modal-email');}},30000);
 
+// ══════════════════════════════════════════════════════════
 // INIT
+// ══════════════════════════════════════════════════════════
 buildLangGrid();
 renderAlerts();
 renderList('military');
 renderUnrestList();
+renderTop10();
+renderConflictAssets();
 renderMarkets();
 renderMovers();
 initMap();
+initTimelineBar();
 fetchMarketData();
 pollAlerts();
 detectNewConflicts();
 setInterval(detectNewConflicts,4*60*60*1000);
-if(currentLang!=='en')document.getElementById('html-root').setAttribute('dir',LANGUAGES.find(l=>l.code===currentLang)?.rtl?'rtl':'ltr');
+
+// Set count badge
+document.getElementById('see-all-count').textContent=events.length;
+
+// Apply language direction if non-English
+if(currentLang!=='en'){
+  document.getElementById('html-root').setAttribute('dir',LANGUAGES.find(l=>l.code===currentLang)?.rtl?'rtl':'ltr');
+}
+// Apply translations if cached
+if(currentLang!=='en'&&txCache[currentLang]){applyTranslations(txCache[currentLang]);}
 </script>
 </body>
 </html>
