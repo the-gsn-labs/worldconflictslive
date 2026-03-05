@@ -1,12 +1,5 @@
 function evColor(e){if(e.cat==='cyber')return'#67e8f9';if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
-function parseEmoji(el){
-  if(typeof twemoji!=='undefined'){
-    twemoji.parse(el||document.body,{
-      folder:'svg',ext:'.svg',
-      base:'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
-    });
-  }
-}
+function parseEmoji(el){} // Twemoji disabled - causes layout issues
 // ── Input Sanitization (OWASP A03 — Injection Prevention) ──────────
 function sanitizeInput(str, maxLen=200) {
   if (typeof str !== 'string') return '';
@@ -22,6 +15,32 @@ function sanitizeEmail(str) {
   // Basic RFC 5321 format check
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? s : '';
 }
+// Convert flag emoji to styled country code (works on all platforms including Windows)
+function flagsToCode(flagStr) {
+  if (!flagStr) return '';
+  // Extract regional indicator letters: 🇮🇱 = U+1F1EE U+1F1F1 → "IL"
+  const codes = [];
+  const chars = [...flagStr];
+  let i = 0;
+  while (i < chars.length) {
+    const cp = chars[i].codePointAt(0);
+    // Regional indicator symbols: U+1F1E6–U+1F1FF
+    if (cp >= 0x1F1E6 && cp <= 0x1F1FF) {
+      const c1 = String.fromCodePoint(cp - 0x1F1E6 + 65);
+      const cp2 = chars[i+1]?.codePointAt(0);
+      if (cp2 >= 0x1F1E6 && cp2 <= 0x1F1FF) {
+        const c2 = String.fromCodePoint(cp2 - 0x1F1E6 + 65);
+        codes.push(c1 + c2);
+        i += 2;
+      } else { i++; }
+    } else if (cp === 0x1F4BB || cp === 0x1F310 || cp === 0x1F6E1) {
+      // 💻🌐🛡 — cyber/global icons, skip
+      i++;
+    } else { i++; }
+  }
+  return codes.join('·');
+}
+
 
 
 function evEmoji(e){if(e.cat==='cyber')return'💻';if(e.cat==='terrorism')return'💥';if(e.cat==='humanitarian')return'🕊️';if(e.cat==='unrest')return'✊';return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';}
@@ -276,7 +295,7 @@ haptic('light');
 currentEvent=id;stopNewsRefresh();if(leafletMap)leafletMap.closePopup();
 closeBottomSheet();
 const ev=events.find(e=>e.id===id);lastScreen=ev.cat==='unrest'?'unrest':ev.cat==='cyber'?'cyber':'map';
-document.getElementById('d-flags').innerHTML=`<span class="emoji">${ev.flags}</span>`;
+document.getElementById('d-flags').textContent=flagsToCode(ev.flags);
 document.getElementById('d-title').textContent=ev.title;
 document.getElementById('d-summary').textContent=(ev.econContext||'').substring(0,200);
 document.getElementById('d-meta').innerHTML=`
@@ -464,7 +483,7 @@ const tbLabel=T(_tbKeys[ev.cat])||_tbRaw;
 const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;}).join('');
 return`<div class="event-card" onclick="openEvent(${ev.id})">
 <div class="ec-row">
-<div class="ec-flags emoji">${ev.flags}</div>
+<div class="ec-flags">${flagsToCode(ev.flags)}</div>
 <div class="ec-info">
 <div class="ec-title-row"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div>
 <div class="ec-meta">${ev.parties} · ${ev.region}</div>
@@ -1187,7 +1206,7 @@ renderList('military');
 tabRendered['map'] = true;
 initMap();
 initTimelineBar();
-setTimeout(()=>parseEmoji(document.body),500);
+
 
 requestAnimationFrame(() => {
 setTimeout(() => {
