@@ -1,6 +1,6 @@
 function evColor(e){if(e.cat==='cyber')return'#67e8f9';if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
 function evEmoji(e){if(e.cat==='cyber')return'💻';if(e.cat==='terrorism')return'💥';if(e.cat==='humanitarian')return'🕊️';if(e.cat==='unrest')return'✊';return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';}
- 
+
 function initTimelineBar(){
 const track=document.getElementById('mtb-track');
 let dragging=false;
@@ -457,7 +457,11 @@ ${chips?`<div class="mkt-ribbon">${chips}</div>`:''}
 
 function renderList(cat){
 currentCat=cat;
-const filtered=events.filter(e=>e.cat===cat);
+let filtered=events.filter(e=>e.cat===cat);
+if(typeof currentFilter!=='undefined'&&currentFilter&&currentFilter!=='all'){
+if(currentFilter==='critical') filtered=filtered.filter(e=>e.sev==='critical');
+else filtered=filtered.filter(e=>e.cat===currentFilter);
+}
 const el=document.getElementById('conflict-list');
 if(!filtered.length){
 el.innerHTML=`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events in this category</div>`;
@@ -482,6 +486,7 @@ document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));e
 }
 function filterMap(type,el){
 document.querySelectorAll('#map-filter-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
+// Filter map markers
 mapMarkers.forEach((m,i)=>{
 const ev=events[i];if(!m||!ev)return;
 let show=false;
@@ -490,6 +495,9 @@ else if(type==='critical')show=ev.sev==='critical';
 else show=ev.cat===type;
 show?m.addTo(leafletMap):leafletMap.removeLayer(m);
 });
+// Also filter the conflict card list
+currentFilter=type;
+renderList(currentCat);
 }
 function filterUnrest(type,el){
 document.querySelectorAll('#screen-unrest .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderUnrestList(type);
