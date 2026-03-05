@@ -502,6 +502,8 @@ ${chips?`<div class="mkt-ribbon">${chips}</div>`:''}
 function renderList(cat){
 currentCat=cat;
 let filtered=events.filter(e=>e.cat===cat);
+// Sort: most recent start year first, then by severity score
+filtered.sort((a,b)=>(b.startYear||0)-(a.startYear||0)||(b.sevScore||0)-(a.sevScore||0));
 if(typeof currentFilter!=='undefined'&&currentFilter&&currentFilter!=='all'){
 if(currentFilter==='critical') filtered=filtered.filter(e=>e.sev==='critical');
 else filtered=filtered.filter(e=>e.cat===currentFilter);
