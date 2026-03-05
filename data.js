@@ -1,4 +1,4 @@
-const LANGUAGES=[
+const LANGUAGES=[ 
 {code:'am',flag:'🇪🇹',native:'አማርኛ'},
 {code:'ar',flag:'🇸🇦',native:'العربية',rtl:true},
 {code:'bn',flag:'🇧🇩',native:'বাংলা'},
