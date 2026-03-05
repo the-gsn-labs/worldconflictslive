@@ -264,14 +264,16 @@ document.getElementById('html-root').setAttribute('dir',lang?.rtl?'rtl':'ltr');
 if(code==='en'){
 applyTranslations(UI_STRINGS);
 document.getElementById('translate-status').textContent='';
-showToast('🇬🇧 English');return;
+showToast('🇬🇧 English');
+switchTab('map');return;
 }
 document.getElementById('translate-status').textContent='🌐 Translating…';
 showToast('🌐 Translating…');
 if(txCache[code]){
 applyTranslations(txCache[code]);
 document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
-showToast(`✅ ${lang?.native}`);return;
+showToast(`✅ ${lang?.native}`);
+switchTab('map');return;
 }
 try{
 
@@ -296,6 +298,7 @@ const tx={...UI_STRINGS,...translated};
 txCache[code]=tx;applyTranslations(tx);
 document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
 showToast(`✅ ${lang?.native}`);
+switchTab('map');
 }catch(e){
 
 document.getElementById('translate-status').textContent=`⚠️ Translation unavailable`;
@@ -570,4 +573,4 @@ const mktFallback={crude:{price:'$87.42',change:'+3.2%',dir:'up',raw:87.42},gold
 const cryptoData={BTC:'$83,420',ETH:'$2,041',XRP:'$2.21',SOL:'$135.40',BNB:'$598',AVAX:'$22.10',DOGE:'$0.172',ADA:'$0.71'};
 let liveMarkets={};let liveNews={};let currentEvent=0;let lastScreen='map';
 let currentCat='military';let currentTabIdx=0;let leafletMap=null;let mapMarkers=[];
-let newsRefreshTimer=null;let bannerEventId=null;let latestAlertHeadline='';let alertsData=[];
+let newsRefreshTimer=null;let bannerEventId=null;let latestAlertHeadline='';let alertsData=[];let currentFilter='all';
