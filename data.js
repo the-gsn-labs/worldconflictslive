@@ -178,10 +178,23 @@ source_class_label:'Source Classification',
 };
 
 
+
+// Convert a single flag emoji to its ISO 2-letter country code (cross-platform)
+function flagCode(flag) {
+  if (!flag) return '';
+  const chars = [...flag];
+  const cp1 = chars[0]?.codePointAt(0);
+  const cp2 = chars[1]?.codePointAt(0);
+  if (cp1 >= 0x1F1E6 && cp1 <= 0x1F1FF && cp2 >= 0x1F1E6 && cp2 <= 0x1F1FF) {
+    return String.fromCodePoint(cp1 - 0x1F1E6 + 65) +
+           String.fromCodePoint(cp2 - 0x1F1E6 + 65);
+  }
+  return flag; // fallback: return as-is (non-flag emoji)
+}
 function buildLangGrid(){
 document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>
 `<div class="lang-btn ${l.code===currentLang?'active':''}" onclick="selectLanguage('${l.code}')">
-<span class="lang-flag emoji">${l.flag}</span>
+<span class="lang-flag-code">${flagCode(l.flag)}</span>
 <span class="lang-name">${l.native}</span>
 </div>`).join('');
 }
@@ -265,7 +278,7 @@ if(code==='en'){
 applyTranslations(UI_STRINGS);
 document.getElementById('translate-status').textContent='';
 showToast('🇬🇧 English');
-switchTab('map');return;
+setTimeout(()=>{ if(typeof switchTab==='function') switchTab('map'); },50);return;
 }
 document.getElementById('translate-status').textContent='🌐 Translating…';
 showToast('🌐 Translating…');
@@ -273,7 +286,7 @@ if(txCache[code]){
 applyTranslations(txCache[code]);
 document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
 showToast(`✅ ${lang?.native}`);
-switchTab('map');return;
+setTimeout(()=>{ if(typeof switchTab==='function') switchTab('map'); },50);return;
 }
 try{
 // Route through /api/translate — API key stays server-side only (OWASP A02)
@@ -297,7 +310,7 @@ txCache[code]=tx;
 applyTranslations(tx);
 document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
 showToast(`✅ ${lang?.native}`);
-switchTab('map');
+setTimeout(()=>{ if(typeof switchTab==='function') switchTab('map'); },50);
 }catch(e){
 console.error('[translate]',e.message);
 document.getElementById('translate-status').textContent='⚠️ Translation unavailable';
@@ -384,7 +397,7 @@ opposition:'background:rgba(155,77,202,.18);color:#d07ef5;border:1px solid rgba(
 unverified:'background:rgba(255,255,255,.05);color:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.1);',
 };
 const alignDot={state:'#89c4f5',aligned:'#ffd47a',independent:'#6fffa0',opposition:'#d07ef5',unverified:'rgba(255,255,255,.2)'};
-function alignBadge(al){return`<span class="align-badge" style="${alignStyle[al.type]||alignStyle.unverified}"><span class="emoji">${al.flag}</span> ${al.label}</span>`;}
+function alignBadge(al){return`<span class="align-badge" style="${alignStyle[al.type]||alignStyle.unverified}">${al.label}</span>`;}
 
 const events=[
 {id:0,cat:'military',flags:'🇮🇱🇵🇸',title:'Gaza Conflict',region:'Middle East',parties:'Israel · Hamas · Gaza',sev:'critical',sevScore:9,lat:31.5,lng:34.5,query:'Gaza Israel conflict 2025',startYear:2023,casualties:48000,displaced:1900000,econDamage:50,related:[1,2],
@@ -443,8 +456,8 @@ markets:['crude','wheat'],
 timeline:[{date:'Oct 2023',event:'Houthis launch first ship attack in solidarity with Gaza.',tag:'Start',tc:'rgba(200,50,30,.4)'},{date:'Jan 2024',event:'US/UK strikes on Houthi targets in Yemen.',tag:'Escalation',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'Major shipping lines still avoiding Red Sea.',tag:'Ongoing',tc:'rgba(217,140,10,.4)'}]},
 
 {id:100,cat:'unrest',subtype:'protest',flags:'🇷🇸',title:'Serbia Protests',region:'Balkans',parties:'Citizens · Government',sev:'high',sevScore:5,lat:44.8,lng:20.5,query:'Serbia protests opposition 2025',startYear:2024,casualties:5,displaced:0,econDamage:2,related:[],
-econContext:'Investor confidence shaken. Serbia\'s EU accession under scrutiny. Tourism and FDI declining.',
-markets:['gold'],
+econContext:'Investor confidence shaken. Serbia\'s EU accession under scrutiny. Tourism and FDI declining. Serbian Dinar under pressure as EU talks stall.',
+markets:['rsd','eur','gold'],
 timeline:[{date:'Nov 2024',event:'Novi Sad train station canopy collapse kills 15.',tag:'Trigger',tc:'rgba(200,50,30,.4)'},{date:'Feb 2025',event:'Millions march in Belgrade.',tag:'Peak',tc:'rgba(31,163,85,.4)'}]},
 
 {id:101,cat:'unrest',subtype:'election',flags:'🇻🇪',title:'Venezuela Crisis',region:'Latin America',parties:'Maduro · Opposition · People',sev:'high',sevScore:6,lat:8.0,lng:-66.0,query:'Venezuela Maduro political crisis 2025',startYear:2024,casualties:200,displaced:7000000,econDamage:10,related:[],
@@ -554,12 +567,18 @@ const marketDefs=[
 {id:'rub',icon:'💱',name:'USD/Ruble',ticker:'USD/RUB',events:['Russia–Ukraine War'],why:'Western sanctions, SWIFT exclusions and declining oil revenues have structurally weakened the ruble.',history:[76,79,81,82,84,86,87,88,89,91,92,92.4]},
 {id:'ils',icon:'💱',name:'USD/Shekel',ticker:'USD/ILS',events:['Gaza Conflict','Iran–Israel Tensions'],why:'War costs, capital outflows and foreign investor withdrawal have pressured the shekel. Bank of Israel deployed $30bn in currency interventions.',history:[3.58,3.62,3.67,3.70,3.73,3.75,3.77,3.79,3.80,3.82,3.83,3.84]},
 {id:'rtx',icon:'🏭',name:'Raytheon (RTX)',ticker:'NYSE:RTX',events:['Iran–Israel Tensions','Russia–Ukraine War','Taiwan Strait Standoff'],why:'Defence spending at post-Cold War highs. NATO 2%+ GDP commitments. Patriot and Iron Dome demand at record levels. $100bn+ backlog.',history:[90,93,96,98,100,102,101,104,105,106,108,108.4]},
+{id:'eur',icon:'💶',name:'EUR/USD',ticker:'EUR/USD',events:['Serbia Protests','Russia–Ukraine War'],why:'Euro weakens when Eastern European instability rises. Serbian protests affect regional investment flows and EU accession timeline.',history:[1.07,1.08,1.07,1.09,1.08,1.10,1.09,1.08,1.07,1.09,1.08,1.07]},
+{id:'rsd',icon:'💱',name:'Serbian Dinar',ticker:'USD/RSD',events:['Serbia Protests'],why:'Political instability and EU accession uncertainty are weighing on the dinar. Protests risk foreign investment withdrawal and credit downgrades.',history:[108,109,110,111,111,112,113,112,113,114,115,116]},
+{id:'uah',icon:'💱',name:'Ukrainian Hryvnia',ticker:'USD/UAH',events:['Russia–Ukraine War'],why:'War has decimated the hryvnia. NBU burned through $40bn defending the peg. Reconstruction costs estimated at $500bn+.',history:[27,28,29,30,33,36,37,38,39,40,41,41.2]},
+{id:'try',icon:'💱',name:'Turkish Lira',ticker:'USD/TRY',events:['Iran–Israel Tensions','Syria Civil War'],why:'Turkey is deeply exposed to Middle East energy prices and refugee flows. Lira volatility reflects geopolitical and inflation pressures.',history:[19,21,23,25,27,28,29,30,31,32,33,33.5]},
+{id:'copper',icon:'🔩',name:'Copper',ticker:'COMEX',events:['Taiwan Strait Standoff'],why:'Taiwan produces chips that run copper-intensive data centres. A blockade would spike copper demand forecasts and supply chain costs.',history:[3.8,3.9,3.85,4.0,4.1,4.2,4.15,4.3,4.25,4.4,4.5,4.48]},
 {id:'lmt',icon:'🚀',name:'Lockheed Martin',ticker:'NYSE:LMT',events:['Russia–Ukraine War','Taiwan Strait Standoff','Gaza Conflict'],why:'F-35 demand surging. Poland, Germany, Finland placed multi-billion orders. HIMARS and THAAD contracts expanding. $135bn backlog.',history:[435,442,448,454,458,462,464,466,468,469,471,472.5]},
 ];
 const winnerDefs=[{id:'rtx',icon:'🏭',name:'Raytheon',ticker:'RTX'},{id:'lmt',icon:'🚀',name:'Lockheed',ticker:'LMT'},{id:'gold',icon:'🥇',name:'Gold',ticker:'XAU'},{id:'crude',icon:'🛢️',name:'Brent Crude',ticker:'BRT'},{id:'natgas',icon:'🔥',name:'Nat. Gas',ticker:'TTF'}];
 const loserDefs=[{icon:'✈️',name:'Airlines Index',ticker:'XAL',change:'-2.1%',dir:'dn'},{icon:'🏨',name:'Tourism ETF',ticker:'AWAY',change:'-1.4%',dir:'dn'},{icon:'🚢',name:'Dry Bulk Shipping',ticker:'BDIY',change:'-3.2%',dir:'dn'},{icon:'💱',name:'Egyptian Pound',ticker:'EGP',change:'-2.8%',dir:'dn'},{icon:'💊',name:'EM Pharma ETF',ticker:'EMPH',change:'-0.9%',dir:'dn'}];
 const mktFallback={crude:{price:'$87.42',change:'+3.2%',dir:'up',raw:87.42},gold:{price:'$2,381',change:'+1.8%',dir:'up',raw:2381},natgas:{price:'$3.82',change:'+5.1%',dir:'up',raw:3.82},wheat:{price:'$6.42',change:'+4.1%',dir:'up',raw:6.42},rub:{price:'92.40',change:'+0.8%',dir:'dn',raw:92.4},ils:{price:'3.84',change:'+1.2%',dir:'up',raw:3.84},rtx:{price:'$108.40',change:'+2.8%',dir:'up',raw:108.4},lmt:{price:'$472.50',change:'+1.9%',dir:'up',raw:472.5}};
 const cryptoData={BTC:'$83,420',ETH:'$2,041',XRP:'$2.21',SOL:'$135.40',BNB:'$598',AVAX:'$22.10',DOGE:'$0.172',ADA:'$0.71'};
+mktFallback.eur={price:'$1.07',change:'-0.3%',dir:'dn',raw:1.07};mktFallback.rsd={price:'116',change:'+0.8%',dir:'dn',raw:116};mktFallback.uah={price:'41.2',change:'+1.2%',dir:'dn',raw:41.2};mktFallback.try={price:'33.5',change:'+0.5%',dir:'dn',raw:33.5};mktFallback.copper={price:'$4.48',change:'+1.1%',dir:'up',raw:4.48};
 let liveMarkets={};let liveNews={};let currentEvent=0;let lastScreen='map';
 let currentCat='military';let currentTabIdx=0;let leafletMap=null;let mapMarkers=[];
 let newsRefreshTimer=null;let bannerEventId=null;let latestAlertHeadline='';let alertsData=[];let currentFilter='all';
