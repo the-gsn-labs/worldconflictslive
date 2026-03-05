@@ -267,7 +267,7 @@ document.getElementById('econ-panel-wrap').innerHTML=(chips?`<div class="econ-pa
 currentTabIdx=0;
 document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('active',i===0));
 document.getElementById('tl-feed').style.display='none';document.getElementById('econ-feed').style.display='none';document.getElementById('news-feed').style.display='block';
-document.getElementById('news-feed').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">${T('detail_loading')}</div></div>';
+document.getElementById('news-feed').innerHTML=`<div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">${T('detail_loading')}</div></div>`;
 switchTab('detail',null);
 updateFollowBtn();
 
@@ -333,7 +333,7 @@ openModal('modal-article');
 
 function renderTimeline(){
 const ev=events.find(e=>e.id===currentEvent);
-if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML='<div style="text-align:center;padding:36px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.2);">${T('detail_no_timeline')}</div>';return;}
+if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML=`<div style="text-align:center;padding:36px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.2);">${T('detail_no_timeline')}</div>`;return;}
 
 const startY=ev.startYear||2022,now=2026;
 const totalSpan=now-startY;
