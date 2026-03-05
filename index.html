@@ -173,8 +173,9 @@ button{font-family:inherit;cursor:pointer;}
 .leaflet-popup-tip{background:#111416 !important;}
 .leaflet-popup-close-button{color:rgba(255,255,255,.35) !important;top:10px !important;right:12px !important;font-size:18px !important;}
 .conflict-marker{display:flex;flex-direction:column;align-items:center;cursor:pointer;}
-.marker-pin{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid currentColor;background:rgba(7,9,10,.9);backdrop-filter:blur(8px);animation:mpulse 2.8s ease-out infinite;}
-@keyframes mpulse{0%{box-shadow:0 0 0 0 currentColor}60%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.marker-pin{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid currentColor;background:rgba(7,9,10,.92);backdrop-filter:blur(6px);}
+.marker-pin.pulse{animation:mpulse 3s ease-out infinite;will-change:box-shadow;}
+@keyframes mpulse{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .marker-label{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.6);white-space:nowrap;margin-top:2px;letter-spacing:.04em;text-shadow:0 1px 5px #000,0 0 10px #000;}
 .map-hint{text-align:center;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.18);padding:5px 0;letter-spacing:.06em;}
 .map-popup{padding:15px 17px 17px;}
@@ -369,7 +370,9 @@ button{font-family:inherit;cursor:pointer;}
   #screen-map .dw{grid-template-columns:1fr 500px;}
   #conflict-map{height:500px;}
   .lang-grid{grid-template-columns:repeat(6,1fr);}
-/* ══ SKELETON ══ */
+/* ══ PERFORMANCE ══ */
+.screen:not(.active){content-visibility:auto;contain-intrinsic-size:0 600px;}
+.screen{contain:layout style;}
 .skel{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 75%);background-size:400% 100%;animation:skel-shine 1.4s ease infinite;border-radius:6px;}
 @keyframes skel-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
 .skel-card{height:96px;margin:0 18px 10px;border-radius:12px;}
@@ -1468,26 +1471,37 @@ async function fetchMarketData(){
     }catch(e){}
   }
   for(const[id,fb]of Object.entries(mktFallback)){if(!liveMarkets[id])liveMarkets[id]=fb;}
-  updateTicker();renderTop10();renderConflictAssets();renderMarkets();renderMovers();renderList('military');addMapMarkers();
+  updateTicker();
+  addMapMarkers();
+  // Only re-render markets tab if user is on it
+  if(tabRendered['markets']){
+    renderTop10();renderConflictAssets();renderMarkets();renderMovers();
+  }
+  // Invalidate so next visit re-renders with fresh data
+  if(!tabRendered['markets']) tabRendered['markets'] = false;
   setTimeout(fetchMarketData,60000);
 }
 
-function makeSpark(id,dir,tall=false){
-  const def=marketDefs.find(d=>d.id===id);
-  const pts=def?.history||Array.from({length:12},(_,i)=>{const b=liveMarkets[id]?.raw||100;return b+(dir==='up'?1:-1)*(i/11)*b*.04+(Math.random()-.5)*b*.02;});
-  const w=300,h=tall?88:44;
-  const mn=Math.min(...pts),mx=Math.max(...pts);
+const sparkCache = {};
+function makeSpark(id, dir, tall=false){
+  const def = marketDefs.find(d=>d.id===id);
+  const pts = def?.history || (sparkCache[id] = sparkCache[id] || Array.from({length:12},(_,i)=>{const b=liveMarkets[id]?.raw||100;return b+(dir==='up'?1:-1)*(i/11)*b*.04;}));
+  const w=300, h=tall?88:44;
+  const mn=Math.min(...pts), mx=Math.max(...pts);
   const sp=pts.map((v,i)=>`${(i/(pts.length-1))*w},${h-((v-mn)/(mx-mn||1))*(h-6)-3}`).join(' ');
   const col=dir==='up'?'#1fa355':'#c8321e';
   return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;"><defs><linearGradient id="sg${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs><polygon points="${sp} ${w},${h} 0,${h}" fill="url(#sg${id})"/><polyline points="${sp}" fill="none" stroke="${col}" stroke-width="${tall?2:1.8}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
-
-function makeMiniSpark(dir,w=60,h=28){
-  const pts=Array.from({length:10},(_,i)=>50+(dir==='up'?1:-1)*i*2+(Math.random()-.5)*6);
-  const mn=Math.min(...pts),mx=Math.max(...pts);
-  const sp=pts.map((v,i)=>`${(i/9)*w},${h-((v-mn)/(mx-mn||1))*(h-4)-2}`).join(' ');
+const miniSparkCache = {};
+function makeMiniSpark(dir, w=60, h=28){
+  const key = dir+w+h;
+  if (!miniSparkCache[key]) {
+    const pts = Array.from({length:10},(_,i)=>50+(dir==='up'?1:-1)*i*2);
+    const mn=Math.min(...pts), mx=Math.max(...pts);
+    miniSparkCache[key] = pts.map((v,i)=>`${(i/9)*w},${h-((v-mn)/(mx-mn||1))*(h-4)-2}`).join(' ');
+  }
   const col=dir==='up'?'#1fa355':'#c8321e';
-  return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:${w}px;height:${h}px;flex-shrink:0;"><polyline points="${sp}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:${w}px;height:${h}px;flex-shrink:0;"><polyline points="${miniSparkCache[key]}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
 function updateTicker(){
@@ -1999,7 +2013,7 @@ function addMapMarkers(){
   events.forEach(ev=>{
     if(!ev.lat||!ev.lng)return;
     const color=evColor(ev);
-    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin" style="border-color:${color};box-shadow:0 0 10px ${color}44;">${evEmoji(ev)}</div><div class="marker-label"><span class="emoji">${ev.flags}</span> ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
+    const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin${ev.sev==='critical'?' pulse':''}" style="border-color:${color};box-shadow:0 0 8px ${color}33;">${evEmoji(ev)}</div><div class="marker-label"><span class="emoji">${ev.flags}</span> ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
     const marker=L.marker([ev.lat,ev.lng],{icon});
     const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;}).join('');
     marker.bindPopup(`<div class="map-popup"><div class="mpp-flags emoji">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">Read All Sides →</button></div>`,{maxWidth:280,minWidth:230});
@@ -2238,7 +2252,7 @@ async function detectNewConflicts(){
 }
 
 // EMAIL PROMPT
-setTimeout(()=>{if(!localStorage.getItem('wcl_email_prompted')){localStorage.setItem('wcl_email_prompted','1');openModal('modal-email');}},30000);
+// Email modal handled in deferred init above
 
 // ══════════════════════════════════════════════════════════
 // CYBER SCREEN
@@ -2483,38 +2497,67 @@ function generateMultiSideArticles(ev){
 window.fetchNews = fetchNewsReal;
 
 // ══════════════════════════════════════════════════════════
-// INIT
+// INIT — lazy, only render what's needed immediately
 // ══════════════════════════════════════════════════════════
-buildLangGrid();
-renderAlerts();
+
+// Track which tabs have been rendered
+const tabRendered = {};
+
+// Override switchTab to lazy-render tabs on first visit
+const _origSwitchTab = switchTab;
+window.switchTab = function(tab, el) {
+  _origSwitchTab(tab, el);
+  lazyRenderTab(tab);
+};
+
+function lazyRenderTab(tab) {
+  if (tabRendered[tab]) return;
+  tabRendered[tab] = true;
+  switch(tab) {
+    case 'map':      /* map already init below */ break;
+    case 'unrest':   renderUnrestList(); break;
+    case 'markets':  renderTop10(); renderConflictAssets(); renderMarkets(); renderMovers(); break;
+    case 'alerts':   renderAlerts(); break;
+    case 'language': buildLangGrid(); break;
+    case 'viz':      /* handled by renderVizScreen with idle cb */ break;
+  }
+}
+
+// Step 1: Critical path only — map list + map init
 renderList('military');
-renderUnrestList();
-renderTop10();
-renderConflictAssets();
-renderMarkets();
-renderMovers();
+tabRendered['map'] = true;
+loadUser();
+document.getElementById('see-all-count').textContent = events.length;
+
+// Step 2: Map init (needed immediately since it's the first screen)
 initMap();
 initTimelineBar();
-fetchMarketData();
-pollAlerts();
-detectNewConflicts();
-setInterval(detectNewConflicts,4*60*60*1000);
 
-// Set count badge
-document.getElementById('see-all-count').textContent=events.length;
+// Step 3: Defer everything else until after first paint
+requestAnimationFrame(() => {
+  setTimeout(() => {
+    // Market data fetch (no UI yet, just primes the data)
+    fetchMarketData();
+    // Alerts poll — deferred 5s so it doesn't block startup
+    setTimeout(pollAlerts, 5000);
+    setTimeout(detectNewConflicts, 8000);
+    setInterval(detectNewConflicts, 4*60*60*1000);
+    // Email modal — way later
+    setTimeout(() => {
+      if (!localStorage.getItem('wcl_email_prompted')) {
+        localStorage.setItem('wcl_email_prompted','1');
+        openModal('modal-email');
+      }
+    }, 45000);
+  }, 300);
+});
 
-// Load user account
-loadUser();
-
-// Check for shared conflict URL parameter
-checkSharedConflict();
-
-// Apply language direction if non-English
-if(currentLang!=='en'){
-  document.getElementById('html-root').setAttribute('dir',LANGUAGES.find(l=>l.code===currentLang)?.rtl?'rtl':'ltr');
+// Step 4: Language/shared URL — minimal cost
+if (currentLang !== 'en') {
+  document.getElementById('html-root').setAttribute('dir', LANGUAGES.find(l=>l.code===currentLang)?.rtl?'rtl':'ltr');
+  if (txCache[currentLang]) applyTranslations(txCache[currentLang]);
 }
-// Apply translations if cached
-if(currentLang!=='en'&&txCache[currentLang]){applyTranslations(txCache[currentLang]);}
+checkSharedConflict();
 </script>
 </body>
 </html>
