@@ -98,7 +98,7 @@ ai_title:'AI ANALYST',ai_sub:'Ask anything about any conflict · Premium feature
 ai_lock_icon_label:'Premium Feature',
 ai_lock_desc:'AI Analyst gives you instant, sourced answers to any question about active conflicts — from casualty trends to diplomatic context to market impact analysis.',
 ai_feat_1:'"Why did gold spike 3% today?" — gets a conflict-linked analysis',
-ai_feat_2:'"What's the latest in Sudan?" — pulls live articles + summary',
+ai_feat_2:'"What\'s the latest in Sudan?" — pulls live articles + summary',
 ai_feat_3:'"Compare Ukraine and Gaza economic impact" — side-by-side',
 ai_feat_4:'"Explain the Sahel coups in simple terms" — in any language',
 ai_feat_5:'"How is Fox News vs Al Jazeera covering this differently?" — media analysis',
