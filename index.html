@@ -280,7 +280,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="screen active" id="screen-map"><div class="dw">
   <div class="map-col">
     <div class="map-header">
-      <div><div class="wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;">Every source · Every side · No agenda</div></div>
+      <div><div class="wordmark" onclick="switchTab('map')">WORLD<span>CONFLICTS</span>LIVE</div><div class="slogan-text" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;">Every source · Every side · No agenda</div></div>
       <div class="live-row"><div class="live-dot"></div>LIVE</div>
     </div>
     <div id="conflict-map"></div>
@@ -510,25 +510,124 @@ function buildLangGrid(){
     </div>`).join('');
 }
 
+// All UI strings to translate
+const UI_STRINGS={
+  slogan:'Every source · Every side · No agenda',
+  nav_map:'Map',nav_unrest:'Unrest',nav_markets:'Markets',nav_alerts:'Alerts',nav_language:'Language',nav_profile:'Profile',
+  cat_military:'⚔️ Military',cat_unrest:'✊ Unrest',cat_crises:'🕊️ Crises',cat_terror:'💥 Terror',
+  tab_all:'All',tab_state:'🏛️ State',tab_aligned:'🗳️ Aligned',tab_indep:'✊ Indep.',tab_opp:'📢 Opp.',tab_timeline:'📅 Timeline',tab_economic:'💰 Economic',
+  back:'← Back',read_full:'Read Full Article at Source →',close:'Close',
+  all_sides:'All sides · Live news',read:'READ →',
+  live_news:'Fetching live news…',loading:'Loading…',
+  source_class:'Source Classification',state_label:'State-funded',aligned_label:'Politically aligned',indep_label:'Independent',opp_label:'Opposition',
+  price_impact:'Price Impact & Economic Fallout',economic_context:'Economic Context',why_moving:'Why this is moving',related:'Related conflicts',history:'12-Month Price History',
+  breaking_news:'Breaking developments · Updated every 60 seconds',
+  markets_sub:'Conflict-driven price movements · Tap any asset for chart + context',
+  unrest_title:'CIVIL UNREST',unrest_sub:'Protests · Coups · Revolutions · Election Crises',
+  alerts_title:'ALERTS',markets_title:'MARKETS',language_title:'🌐 LANGUAGE',
+  language_sub:'AI-powered translation · 45+ languages',
+  top_winning:'Top 5 Benefiting',top_losing:'Top 5 Declining',
+  go_premium:'GO PREMIUM',upgrade:'UPGRADE NOW',per_month:'MONTH',cancel:'CANCEL ANYTIME',
+  prem_1:'All articles — every source, no limits',prem_2:'Live market data 60s refresh',
+  prem_3:'Full historical timelines',prem_4:'AI translations — 45+ languages',
+  prem_5:'Push + email alerts',prem_6:'Zero ads. Ever.',
+  start_trial:'START FREE TRIAL →',not_now:'Not now',
+  stay_informed:'STAY INFORMED',email_desc:'Get breaking conflict alerts and weekly market impact digests. Free forever.',
+  get_alerts:'GET FREE ALERTS →',maybe_later:'Maybe later',privacy:'No spam. Unsubscribe anytime. Your data is never sold.',
+  unlock_title:'UNLOCK FULL SPECTRUM',unlock_desc:'Free users get 3 articles per source category. Upgrade to read every perspective without limits.',
+  upgrade_cta:'UPGRADE FOR $1.99/MO →',stay_free:'Stay on free plan',
+  world_analyst:'WORLD ANALYST',free_plan:'Free Plan · Member since Mar 2025',settings:'Settings',
+  s_breaking:'Breaking conflict alerts',s_market:'Market impact alerts',s_digest:'Daily digest email',s_labels:'Source classification labels',s_security:'Security alerts',s_language:'🌐 Change language',
+  sponsored:'Sponsored',ad_text:'Track conflict-driven market moves in real time',learn:'Learn →',
+  map_hint:'🤏 Pinch to zoom · Tap pins for details',
+  read_all:'Read All Sides →',current:'CURRENT',change:'CHANGE',trend:'TREND',
+  no_articles:'NO ARTICLES IN THIS CATEGORY',no_events:'No events in this category',
+  unlock_more:'more articles',unlock_sub:'Unlock all · $1.99/mo →',
+  free_label:'free',premium_label:'premium',
+};
+
+// Map of selector -> string key
+const I18N_MAP=[
+  ['.wordmark-slogan','slogan'],['.nav-map-lbl','nav_map'],['.nav-unrest-lbl','nav_unrest'],
+  ['.nav-markets-lbl','nav_markets'],['.nav-alerts-lbl','nav_alerts'],['.nav-language-lbl','nav_language'],['.nav-profile-lbl','nav_profile'],
+];
+
+function applyTranslations(tx){
+  // Nav items
+  const navLabels=document.querySelectorAll('.nav-label');
+  const navKeys=['nav_map','nav_unrest','nav_markets','nav_alerts','nav_language','nav_profile'];
+  navLabels.forEach((el,i)=>{if(tx[navKeys[i]])el.textContent=tx[navKeys[i]];});
+  // Top nav buttons
+  const topBtns=document.querySelectorAll('.top-nav-btn');
+  const topKeys=['nav_map','nav_unrest','nav_markets','nav_alerts','nav_language','nav_profile'];
+  topBtns.forEach((el,i)=>{
+    if(tx[topKeys[i]]){const emoji=el.textContent.match(/^\S+\s/)?.[0]||'';el.textContent=emoji+tx[topKeys[i]];}
+  });
+  // Page titles and subs
+  const ps=document.querySelector('#screen-unrest .page-title');if(ps&&tx.unrest_title)ps.textContent=tx.unrest_title;
+  const pss=document.querySelector('#screen-unrest .page-sub');if(pss&&tx.unrest_sub)pss.textContent=tx.unrest_sub;
+  const pm=document.querySelector('#screen-markets .page-title');if(pm&&tx.markets_title)pm.textContent=tx.markets_title;
+  const pms=document.querySelector('#screen-markets .page-sub');if(pms&&tx.markets_sub)pms.textContent=tx.markets_sub;
+  const pa=document.querySelector('#screen-alerts .page-title');if(pa&&tx.alerts_title)pa.textContent=tx.alerts_title;
+  const pas=document.querySelector('#screen-alerts .page-sub');if(pas&&tx.breaking_news)pas.textContent=tx.breaking_news;
+  const pl=document.querySelector('#screen-language .page-title');if(pl&&tx.language_title)pl.textContent=tx.language_title;
+  const pls=document.querySelector('#screen-language .page-sub');if(pls&&tx.language_sub)pls.textContent=tx.language_sub;
+  // Slogan
+  document.querySelectorAll('.slogan-text').forEach(el=>{if(tx.slogan)el.textContent=tx.slogan;});
+  // Map hint
+  const mh=document.querySelector('.map-hint');if(mh&&tx.map_hint)mh.textContent=tx.map_hint;
+  // Cat tabs
+  const catTabs=document.querySelectorAll('.cat-tab');
+  const catKeys=['cat_military','cat_unrest','cat_crises','cat_terror'];
+  catTabs.forEach((el,i)=>{if(tx[catKeys[i]])el.textContent=tx[catKeys[i]];});
+  // Back button
+  document.querySelectorAll('.back-btn').forEach(el=>{if(tx.back)el.textContent=tx.back;});
+  // Movers headers
+  const wh=document.querySelector('#screen-markets .movers-section');
+  if(wh){
+    const spans=wh.querySelectorAll('span:not(.nav-label)');
+    if(spans[0]&&tx.top_winning)spans[0].textContent=tx.top_winning;
+    if(spans[1]&&tx.top_losing)spans[1].textContent=tx.top_losing;
+  }
+}
+
 async function selectLanguage(code){
   currentLang=code;
   localStorage.setItem('wcl_lang',code);
   buildLangGrid();
   const lang=LANGUAGES.find(l=>l.code===code);
   document.getElementById('html-root').setAttribute('dir',lang?.rtl?'rtl':'ltr');
-  if(code==='en'){document.getElementById('translate-status').textContent='✅ English';showToast('🇬🇧 English');return;}
-  document.getElementById('translate-status').textContent='🌐 Translating UI…';
+  if(code==='en'){
+    applyTranslations(UI_STRINGS);
+    document.getElementById('translate-status').textContent='✅ English';
+    showToast('🇬🇧 English');
+    return;
+  }
+  document.getElementById('translate-status').textContent='🌐 Translating…';
   showToast('🌐 Translating…');
-  // Translation happens when articles are loaded — UI strings translated via API
+  if(txCache[code]){
+    applyTranslations(txCache[code]);
+    document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
+    showToast(`✅ ${lang?.native}`);
+    return;
+  }
   try{
-    const resp=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lang:code,strings:{slogan:'Every source · Every side · No agenda',markets:'Markets',alerts:'Alerts',map:'Map',back:'Back',read_more:'Read more →'}})});
+    const resp=await fetch('/api/translate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({lang:code,strings:UI_STRINGS}),
+    });
+    if(!resp.ok)throw new Error(`HTTP ${resp.status}`);
     const data=await resp.json();
+    const tx={...UI_STRINGS,...(data.translated||{})};
+    txCache[code]=tx;
+    applyTranslations(tx);
     document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
     showToast(`✅ ${lang?.native}`);
   }catch(e){
-    document.getElementById('translate-status').textContent=`✅ ${lang?.native} (cached)`;
-    showToast(`✅ ${lang?.native}`);
+    console.error('Translation error:',e);
+    document.getElementById('translate-status').textContent=`⚠️ Translation unavailable`;
+    showToast(`⚠️ Could not translate`);
   }
 }
 
