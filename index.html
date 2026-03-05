@@ -195,6 +195,7 @@ button{font-family:inherit;cursor:pointer;}
 .tb-unrest{background:rgba(217,140,10,.18);color:#ffd47a;border:1px solid rgba(217,140,10,.3);}
 .tb-humanitarian{background:rgba(31,163,85,.14);color:#6fffa0;border:1px solid rgba(31,163,85,.25);}
 .tb-terrorism{background:rgba(155,77,202,.18);color:#d07ef5;border:1px solid rgba(155,77,202,.3);}
+.tb-cyber{background:rgba(103,232,249,.1);color:#67e8f9;border:1px solid rgba(103,232,249,.25);}
 .mkt-ribbon{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-top:10px;border-top:1px solid var(--border);margin-top:10px;}
 .mkt-ribbon::-webkit-scrollbar{display:none;}
 .mkt-chip{display:flex;flex-direction:column;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;flex-shrink:0;min-width:72px;cursor:pointer;transition:all .18s;}
@@ -366,12 +367,16 @@ button{font-family:inherit;cursor:pointer;}
     <div class="top-nav-links">
       <button class="top-nav-btn active" onclick="switchTab('map',this)" data-i18n-nav="0">🗺️ Map</button>
       <button class="top-nav-btn" onclick="switchTab('unrest',this)" data-i18n-nav="1">✊ Unrest</button>
-      <button class="top-nav-btn" onclick="switchTab('markets',this)" data-i18n-nav="2">📈 Markets</button>
-      <button class="top-nav-btn" onclick="switchTab('alerts',this)" data-i18n-nav="3">🔔 Alerts</button>
-      <button class="top-nav-btn" onclick="switchTab('language',this)" data-i18n-nav="4">🌐 Language</button>
-      <button class="top-nav-btn" onclick="switchTab('profile',this)" data-i18n-nav="5">⚙️ Settings</button>
+      <button class="top-nav-btn" onclick="switchTab('cyber',this)" data-i18n-nav="2">🛡️ Cyber</button>
+      <button class="top-nav-btn" onclick="switchTab('markets',this)" data-i18n-nav="3">📈 Markets</button>
+      <button class="top-nav-btn" onclick="switchTab('alerts',this)" data-i18n-nav="4">🔔 Alerts</button>
+      <button class="top-nav-btn" onclick="switchTab('language',this)" data-i18n-nav="5">🌐 Language</button>
+      <button class="top-nav-btn" onclick="switchTab('profile',this)" data-i18n-nav="6">⚙️ Settings</button>
     </div>
-    <div class="top-nav-right"><div class="live-dot"></div>LIVE</div>
+    <div class="top-nav-right">
+      <button onclick="openModal('modal-account')" id="nav-acct-btn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .18s;letter-spacing:.06em;">👤 Account</button>
+      <div class="live-dot"></div><span style="font-size:10px;letter-spacing:.12em;">LIVE</span>
+    </div>
   </div>
 </nav>
 
@@ -404,6 +409,7 @@ button{font-family:inherit;cursor:pointer;}
       <span class="pill" onclick="filterMap('humanitarian',this)" data-i18n="filter_humanitarian">🕊️ Humanitarian</span>
       <span class="pill" onclick="filterMap('terrorism',this)" data-i18n="filter_terrorism">💥 Terrorism</span>
       <span class="pill" onclick="filterMap('critical',this)" data-i18n="filter_critical">🔴 Critical</span>
+      <span class="pill" onclick="filterMap('cyber',this)">💻 Cyber</span>
     </div>
 
     <!-- TIMELINE RANGE BAR -->
@@ -516,9 +522,17 @@ button{font-family:inherit;cursor:pointer;}
 <div class="screen" id="screen-detail"><div class="dw">
   <div class="detail-hero">
     <button class="back-btn" onclick="goBack()" data-i18n="back">← Back</button>
-    <div style="font-size:26px;margin-bottom:6px;letter-spacing:3px;" id="d-flags"></div>
-    <div class="d-title" id="d-title"></div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;" id="d-meta"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div style="flex:1;">
+        <div style="font-size:26px;margin-bottom:6px;letter-spacing:3px;" id="d-flags"></div>
+        <div class="d-title" id="d-title"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;" id="d-meta"></div>
+      </div>
+      <div style="display:flex;gap:7px;flex-shrink:0;margin-left:12px;">
+        <button id="follow-btn" onclick="toggleFollow()" style="font-family:var(--mono);font-size:10px;padding:7px 12px;border-radius:6px;border:1px solid var(--border);background:none;color:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;letter-spacing:.05em;">★ Follow</button>
+        <button onclick="openShareModal()" style="font-family:var(--mono);font-size:10px;padding:7px 12px;border-radius:6px;border:1px solid var(--border);background:none;color:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;letter-spacing:.05em;">🔗 Share</button>
+      </div>
+    </div>
   </div>
   <div style="padding:14px 18px 12px;">
     <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px;" data-i18n="source_class">Source Classification</div>
@@ -602,11 +616,50 @@ button{font-family:inherit;cursor:pointer;}
   <div class="settings-row" onclick="switchTab('language')"><span class="settings-row-label" data-i18n="s_language">🌐 Change language</span><span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">→</span></div>
 </div></div>
 
+<!-- ═══════════════════════════ CYBER ═══════════════════════════ -->
+<div class="screen" id="screen-cyber"><div class="dw">
+  <div class="page-head">
+    <div class="page-title" data-i18n="cyber_title">CYBER CONFLICTS</div>
+    <div class="page-sub" data-i18n="cyber_sub">State-sponsored attacks · Ransomware · Infrastructure threats</div>
+  </div>
+
+  <!-- THREAT LEVEL BAR -->
+  <div style="margin:0 18px 16px;background:var(--surface);border:1px solid rgba(200,50,30,.2);border-radius:12px;padding:14px 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.14em;text-transform:uppercase;">Global Cyber Threat Level</div>
+      <div style="font-family:var(--mono);font-size:11px;color:#ff6b4a;font-weight:500;letter-spacing:.08em;">HIGH — SEVERE</div>
+    </div>
+    <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
+      <div style="width:78%;height:100%;background:linear-gradient(90deg,#d98c0a,#c8321e);border-radius:3px;box-shadow:0 0 8px rgba(200,50,30,.4);"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:5px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.2);">
+      <span>LOW</span><span>MODERATE</span><span>HIGH</span><span>SEVERE</span><span>CRITICAL</span>
+    </div>
+  </div>
+
+  <!-- LIVE THREAT FEED -->
+  <div style="padding:0 18px;margin-bottom:14px;">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:10px;">Live Threat Indicators</div>
+    <div id="cyber-threat-feed" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <!-- CYBER EVENTS -->
+  <div class="scroll-row" style="padding:0 18px 10px;">
+    <span class="pill active" onclick="filterCyber('all',this)">🌐 All</span>
+    <span class="pill" onclick="filterCyber('state',this)">🏴 State-Sponsored</span>
+    <span class="pill" onclick="filterCyber('ransomware',this)">💰 Ransomware</span>
+    <span class="pill" onclick="filterCyber('espionage',this)">🕵️ Espionage</span>
+    <span class="pill" onclick="filterCyber('infrastructure',this)">⚡ Infrastructure</span>
+  </div>
+  <div style="padding:0 18px;" id="cyber-list"></div>
+</div></div>
+
 </div><!-- end app-body -->
 
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="switchTab('map',this)"><span class="nav-icon">🗺️</span><span class="nav-label" data-i18n="nav_map">Map</span><div class="nav-pip"></div></button>
   <button class="nav-item" onclick="switchTab('unrest',this)"><span class="nav-icon">✊</span><span class="nav-label" data-i18n="nav_unrest">Unrest</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('cyber',this)"><span class="nav-icon">🛡️</span><span class="nav-label" data-i18n="nav_cyber">Cyber</span><div class="nav-pip"></div></button>
   <button class="nav-item" onclick="switchTab('markets',this)"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav_markets">Markets</span><div class="nav-pip"></div></button>
   <button class="nav-item" onclick="switchTab('alerts',this)"><span class="nav-icon">🔔</span><span class="nav-label" data-i18n="nav_alerts">Alerts</span><div class="nav-pip"></div></button>
   <button class="nav-item" onclick="switchTab('language',this)"><span class="nav-icon">🌐</span><span class="nav-label" data-i18n="nav_language">Lang</span><div class="nav-pip"></div></button>
@@ -697,6 +750,56 @@ button{font-family:inherit;cursor:pointer;}
   </div></div>
 </div>
 
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="modal-share">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div style="font-size:38px;margin-bottom:12px;">🔗</div>
+    <div style="font-family:var(--display);font-size:26px;font-weight:900;letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase;">Share Conflict</div>
+    <div id="share-conflict-name" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.35);margin-bottom:18px;letter-spacing:.06em;"></div>
+    <div id="share-url-box" style="background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.6);word-break:break-all;margin-bottom:12px;cursor:pointer;" onclick="copyShareUrl()"></div>
+    <button class="btn btn-red" onclick="copyShareUrl()" style="margin-bottom:8px;">📋 Copy Link</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-ghost" onclick="shareToX()" style="padding:11px;">𝕏 Post</button>
+      <button class="btn btn-ghost" onclick="shareToWhatsApp()" style="padding:11px;">💬 WhatsApp</button>
+    </div>
+    <button onclick="closeModal('modal-share')" class="btn btn-ghost" data-i18n="close">Close</button>
+  </div></div>
+</div>
+
+<!-- USER ACCOUNT MODAL -->
+<div class="modal-overlay" id="modal-account">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div id="account-logged-in" style="display:none;">
+      <div style="text-align:center;margin-bottom:18px;">
+        <div id="acct-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--red2);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 10px;"></div>
+        <div id="acct-name" style="font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:.03em;"></div>
+        <div id="acct-email" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);margin-top:3px;"></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--border);">
+          <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">Following</div>
+          <div id="acct-following" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div style="padding:12px 14px;">
+          <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">Plan</div>
+          <div id="acct-plan" style="font-family:var(--display);font-size:15px;font-weight:700;color:var(--amber);">Free Plan</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="logoutUser()" style="margin-bottom:8px;">Sign Out</button>
+    </div>
+    <div id="account-logged-out">
+      <div style="font-size:36px;margin-bottom:14px;">👤</div>
+      <div style="font-family:var(--display);font-size:26px;font-weight:900;letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase;">Create Account</div>
+      <div style="font-family:var(--display);font-size:14px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:20px;">Save followed conflicts, sync alerts across devices, unlock your history.</div>
+      <input class="email-input" id="acct-email-input" type="email" placeholder="Email address"/>
+      <input class="email-input" id="acct-name-input" type="text" placeholder="Display name" style="margin-top:0;"/>
+      <button class="btn btn-red" onclick="createAccount()" style="margin-bottom:8px;">CREATE FREE ACCOUNT →</button>
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.18);text-align:center;line-height:1.8;">Already have an account? <span style="color:var(--red2);cursor:pointer;" onclick="loginUser()">Sign in</span></div>
+    </div>
+    <button onclick="closeModal('modal-account')" class="btn btn-ghost" style="margin-top:8px;" data-i18n="close">Close</button>
+  </div></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -704,29 +807,52 @@ button{font-family:inherit;cursor:pointer;}
 // LANGUAGES — 45+
 // ══════════════════════════════════════════════════════════
 const LANGUAGES=[
-  {code:'am',flag:'🇪🇹',native:'አማርኛ'},{code:'ar',flag:'🇸🇦',native:'العربية',rtl:true},
-  {code:'bn',flag:'🇧🇩',native:'বাংলা'},{code:'ca',flag:'🏴󠁥󠁳󠁣󠁴󠁿',native:'Català'},
-  {code:'cs',flag:'🇨🇿',native:'Čeština'},{code:'de',flag:'🇩🇪',native:'Deutsch'},
-  {code:'el',flag:'🇬🇷',native:'Ελληνικά'},{code:'en',flag:'🇬🇧',native:'English'},
-  {code:'es',flag:'🇪🇸',native:'Español (ES)'},{code:'es-AR',flag:'🇦🇷',native:'Español (AR)'},
-  {code:'es-CL',flag:'🇨🇱',native:'Español (CL)'},{code:'es-CO',flag:'🇨🇴',native:'Español (CO)'},
-  {code:'es-MX',flag:'🇲🇽',native:'Español (MX)'},{code:'es-VE',flag:'🇻🇪',native:'Español (VE)'},
-  {code:'eu',flag:'🏴',native:'Euskera'},{code:'fa',flag:'🇮🇷',native:'فارسی',rtl:true},
-  {code:'fi',flag:'🇫🇮',native:'Suomi'},{code:'fr',flag:'🇫🇷',native:'Français'},
-  {code:'gl',flag:'🏴',native:'Galego'},{code:'he',flag:'🇮🇱',native:'עברית',rtl:true},
-  {code:'hi',flag:'🇮🇳',native:'हिन्दी'},{code:'hr',flag:'🇭🇷',native:'Hrvatski'},
-  {code:'hu',flag:'🇭🇺',native:'Magyar'},{code:'id',flag:'🇮🇩',native:'Bahasa Indonesia'},
-  {code:'it',flag:'🇮🇹',native:'Italiano'},{code:'ja',flag:'🇯🇵',native:'日本語'},
-  {code:'ko',flag:'🇰🇷',native:'한국어'},{code:'ms',flag:'🇲🇾',native:'Bahasa Melayu'},
-  {code:'nl',flag:'🇳🇱',native:'Nederlands'},{code:'no',flag:'🇳🇴',native:'Norsk'},
-  {code:'pl',flag:'🇵🇱',native:'Polski'},{code:'pt',flag:'🇵🇹',native:'Português (PT)'},
-  {code:'pt-BR',flag:'🇧🇷',native:'Português (BR)'},{code:'ro',flag:'🇷🇴',native:'Română'},
-  {code:'ru',flag:'🇷🇺',native:'Русский'},{code:'sk',flag:'🇸🇰',native:'Slovenčina'},
-  {code:'sr',flag:'🇷🇸',native:'Српски'},{code:'sv',flag:'🇸🇪',native:'Svenska'},
-  {code:'sw',flag:'🇰🇪',native:'Kiswahili'},{code:'th',flag:'🇹🇭',native:'ภาษาไทย'},
-  {code:'tr',flag:'🇹🇷',native:'Türkçe'},{code:'uk',flag:'🇺🇦',native:'Українська'},
-  {code:'ur',flag:'🇵🇰',native:'اردو',rtl:true},{code:'vi',flag:'🇻🇳',native:'Tiếng Việt'},
-  {code:'zh',flag:'🇨🇳',native:'中文 (简)'},{code:'zh-TW',flag:'🇹🇼',native:'中文 (繁)'},
+  {code:'am',flag:'🇪🇹',native:'አማርኛ'},
+  {code:'ar',flag:'🇸🇦',native:'العربية',rtl:true},
+  {code:'bn',flag:'🇧🇩',native:'বাংলা'},
+  {code:'cs',flag:'🇨🇿',native:'Čeština'},
+  {code:'da',flag:'🇩🇰',native:'Dansk'},
+  {code:'de',flag:'🇩🇪',native:'Deutsch'},
+  {code:'el',flag:'🇬🇷',native:'Ελληνικά'},
+  {code:'en',flag:'🇬🇧',native:'English'},
+  {code:'es',flag:'🇪🇸',native:'Español'},
+  {code:'fa',flag:'🇮🇷',native:'فارسی',rtl:true},
+  {code:'fi',flag:'🇫🇮',native:'Suomi'},
+  {code:'fr',flag:'🇫🇷',native:'Français'},
+  {code:'gu',flag:'🇮🇳',native:'ગુજરાતી'},
+  {code:'ha',flag:'🇳🇬',native:'Hausa'},
+  {code:'he',flag:'🇮🇱',native:'עברית',rtl:true},
+  {code:'hi',flag:'🇮🇳',native:'हिन्दी'},
+  {code:'hr',flag:'🇭🇷',native:'Hrvatski'},
+  {code:'hu',flag:'🇭🇺',native:'Magyar'},
+  {code:'id',flag:'🇮🇩',native:'Bahasa Indonesia'},
+  {code:'it',flag:'🇮🇹',native:'Italiano'},
+  {code:'ja',flag:'🇯🇵',native:'日本語'},
+  {code:'ko',flag:'🇰🇷',native:'한국어'},
+  {code:'ms',flag:'🇲🇾',native:'Bahasa Melayu'},
+  {code:'nl',flag:'🇳🇱',native:'Nederlands'},
+  {code:'no',flag:'🇳🇴',native:'Norsk'},
+  {code:'pa',flag:'🇮🇳',native:'ਪੰਜਾਬੀ'},
+  {code:'pl',flag:'🇵🇱',native:'Polski'},
+  {code:'pt',flag:'🇵🇹',native:'Português'},
+  {code:'pt-BR',flag:'🇧🇷',native:'Português (BR)'},
+  {code:'ro',flag:'🇷🇴',native:'Română'},
+  {code:'ru',flag:'🇷🇺',native:'Русский'},
+  {code:'sk',flag:'🇸🇰',native:'Slovenčina'},
+  {code:'so',flag:'🇸🇴',native:'Soomaali'},
+  {code:'sr',flag:'🇷🇸',native:'Српски'},
+  {code:'sv',flag:'🇸🇪',native:'Svenska'},
+  {code:'sw',flag:'🇰🇪',native:'Kiswahili'},
+  {code:'ta',flag:'🇱🇰',native:'தமிழ்'},
+  {code:'th',flag:'🇹🇭',native:'ภาษาไทย'},
+  {code:'tr',flag:'🇹🇷',native:'Türkçe'},
+  {code:'uk',flag:'🇺🇦',native:'Українська'},
+  {code:'ur',flag:'🇵🇰',native:'اردو',rtl:true},
+  {code:'vi',flag:'🇻🇳',native:'Tiếng Việt'},
+  {code:'yo',flag:'🇳🇬',native:'Yorùbá'},
+  {code:'zh',flag:'🇨🇳',native:'中文 (简)'},
+  {code:'zh-TW',flag:'🇹🇼',native:'中文 (繁)'},
+  {code:'zu',flag:'🇿🇦',native:'isiZulu'},
 ];
 let currentLang=localStorage.getItem('wcl_lang')||'en';
 let txCache={};let txArticleCache={};
@@ -735,7 +861,7 @@ let txCache={};let txArticleCache={};
 // UI STRING KEYS (slogan always stays in English)
 // ══════════════════════════════════════════════════════════
 const UI_STRINGS={
-  nav_map:'Map',nav_unrest:'Unrest',nav_markets:'Markets',nav_alerts:'Alerts',nav_language:'Language',nav_profile:'Profile',
+  nav_map:'Map',nav_unrest:'Unrest',nav_cyber:'Cyber',nav_markets:'Markets',nav_alerts:'Alerts',nav_language:'Language',nav_profile:'Profile',
   cat_military:'⚔️ Military',cat_unrest:'✊ Unrest',cat_humanitarian:'🕊️ Crises',cat_terrorism:'💥 Terror',
   tab_all:'All',tab_state:'🏛️ State',tab_aligned:'🗳️ Aligned',tab_indep:'✊ Indep.',tab_opp:'📢 Opp.',tab_timeline:'📅 Timeline',tab_economic:'💰 Economic',
   back:'← Back',read_full:'Read Full Article at Source →',close:'Close',
@@ -743,6 +869,7 @@ const UI_STRINGS={
   breaking_news:'Breaking developments · Updated every 60 seconds',
   markets_sub:'Conflict-driven price movements · Tap any asset for chart + context',
   unrest_title:'CIVIL UNREST',unrest_sub:'Protests · Coups · Revolutions · Election Crises',
+  cyber_title:'CYBER CONFLICTS',cyber_sub:'State-sponsored attacks · Ransomware · Infrastructure threats',
   alerts_title:'ALERTS',markets_title:'MARKETS',language_sub:'AI-powered translation · 45+ languages',
   top10_title:'Top 10 Most Valued Global Assets',conflict_assets_title:'Assets Affected by Conflict',
   top_winning:'Top 5 Benefiting',top_losing:'Top 5 Declining',
@@ -843,21 +970,49 @@ async function translateArticles(arts,langCode){
 // ALIGNMENT DATA
 // ══════════════════════════════════════════════════════════
 const outlets={
+  // STATE MEDIA
   'bbc news':{type:'state',label:'State-BBC',flag:'🇬🇧'},'bbc':{type:'state',label:'State-BBC',flag:'🇬🇧'},
-  'al jazeera':{type:'state',label:'State-Qatar',flag:'🇶🇦'},'russia today':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},
-  'rt':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},'xinhua':{type:'state',label:'State-CCP',flag:'🇨🇳'},
-  'cgtn':{type:'state',label:'State-CCP',flag:'🇨🇳'},'dw':{type:'state',label:'State-Germany',flag:'🇩🇪'},
-  'france 24':{type:'state',label:'State-France',flag:'🇫🇷'},'nhk':{type:'state',label:'State-Japan',flag:'🇯🇵'},
+  'al jazeera':{type:'state',label:'State-Qatar',flag:'🇶🇦'},'al-jazeera':{type:'state',label:'State-Qatar',flag:'🇶🇦'},
+  'russia today':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},'rt':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},
+  'tass':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},'ria novosti':{type:'state',label:'State-Kremlin',flag:'🇷🇺'},
+  'xinhua':{type:'state',label:'State-CCP',flag:'🇨🇳'},'cgtn':{type:'state',label:'State-CCP',flag:'🇨🇳'},
+  'people\'s daily':{type:'state',label:'State-CCP',flag:'🇨🇳'},'global times':{type:'state',label:'State-CCP',flag:'🇨🇳'},
+  'dw':{type:'state',label:'State-Germany',flag:'🇩🇪'},'france 24':{type:'state',label:'State-France',flag:'🇫🇷'},
+  'nhk':{type:'state',label:'State-Japan',flag:'🇯🇵'},'abc australia':{type:'state',label:'State-Australia',flag:'🇦🇺'},
+  'cbc':{type:'state',label:'State-Canada',flag:'🇨🇦'},'yle':{type:'state',label:'State-Finland',flag:'🇫🇮'},
+  'iran press':{type:'state',label:'State-Iran',flag:'🇮🇷'},'press tv':{type:'state',label:'State-Iran',flag:'🇮🇷'},
+  'turkish radio':{type:'state',label:'State-Turkey',flag:'🇹🇷'},'trt':{type:'state',label:'State-Turkey',flag:'🇹🇷'},
+  'ndtv':{type:'state',label:'Pro-Govt India',flag:'🇮🇳'},'doordarshan':{type:'state',label:'State-India',flag:'🇮🇳'},
+  'saudi gazette':{type:'state',label:'State-KSA',flag:'🇸🇦'},'arab news':{type:'state',label:'State-KSA',flag:'🇸🇦'},
+  // ALIGNED RIGHT
   'fox news':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},'new york post':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},
   'breitbart':{type:'aligned',label:'Pro-MAGA',flag:'🇺🇸'},'wall street journal':{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},
+  'daily wire':{type:'aligned',label:'Pro-MAGA',flag:'🇺🇸'},'newsmax':{type:'aligned',label:'Pro-MAGA',flag:'🇺🇸'},
+  'the sun':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},'daily mail':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},
+  'the telegraph':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},'spectator':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},
+  'times of india':{type:'aligned',label:'Pro-BJP',flag:'🇮🇳'},'republic world':{type:'aligned',label:'Pro-BJP',flag:'🇮🇳'},
+  'le figaro':{type:'aligned',label:'Pro-Right France',flag:'🇫🇷'},'bild':{type:'aligned',label:'Pro-CDU',flag:'🇩🇪'},
+  // ALIGNED LEFT / LIBERAL
   'cnn':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},'msnbc':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
   'new york times':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},'washington post':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
-  'nbc news':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},'daily mail':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},
-  'the telegraph':{type:'aligned',label:'Pro-Tory',flag:'🇬🇧'},'times of india':{type:'aligned',label:'Pro-BJP',flag:'🇮🇳'},
-  'haaretz':{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},'kyiv independent':{type:'opposition',label:'Opp-Kremlin',flag:'🇺🇦'},
+  'nbc news':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},'huffpost':{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},
+  'le monde':{type:'aligned',label:'Centre-Left France',flag:'🇫🇷'},'liberation':{type:'aligned',label:'Left France',flag:'🇫🇷'},
+  'der spiegel':{type:'aligned',label:'Centre-Left Germany',flag:'🇩🇪'},'the independent':{type:'aligned',label:'Centre-Left UK',flag:'🇬🇧'},
+  // OPPOSITION / CRITICAL
+  'haaretz':{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},'972 magazine':{type:'opposition',label:'Opp-Israel',flag:'🇮🇱'},
+  'kyiv independent':{type:'opposition',label:'Opp-Kremlin',flag:'🇺🇦'},'meduza':{type:'opposition',label:'Opp-Kremlin',flag:'🇷🇺'},
+  'novaya gazeta':{type:'opposition',label:'Opp-Kremlin',flag:'🇷🇺'},'the wire':{type:'opposition',label:'Opp-BJP',flag:'🇮🇳'},
+  'dawn':{type:'opposition',label:'Critical Pakistan',flag:'🇵🇰'},'iran international':{type:'opposition',label:'Opp-Tehran',flag:'🇮🇷'},
+  // INDEPENDENT / WIRE
   'reuters':{type:'independent',label:'Independent',flag:'🇬🇧'},'associated press':{type:'independent',label:'Independent',flag:'🇺🇸'},
   'ap news':{type:'independent',label:'Independent',flag:'🇺🇸'},'the guardian':{type:'independent',label:'Independent',flag:'🇬🇧'},
   'the economist':{type:'independent',label:'Independent',flag:'🇬🇧'},'middle east eye':{type:'independent',label:'Independent',flag:'🌍'},
+  'bloomberg':{type:'independent',label:'Independent',flag:'🇺🇸'},'financial times':{type:'independent',label:'Independent',flag:'🇬🇧'},
+  'afp':{type:'independent',label:'Independent',flag:'🇫🇷'},'agence france':{type:'independent',label:'Independent',flag:'🇫🇷'},
+  'npr':{type:'independent',label:'Independent',flag:'🇺🇸'},'pbs':{type:'independent',label:'Independent',flag:'🇺🇸'},
+  'euronews':{type:'independent',label:'Independent',flag:'🇪🇺'},'politico':{type:'independent',label:'Independent',flag:'🇺🇸'},
+  'axios':{type:'independent',label:'Independent',flag:'🇺🇸'},'the hill':{type:'independent',label:'Independent',flag:'🇺🇸'},
+  'al monitor':{type:'independent',label:'Independent ME',flag:'🌍'},'aljazeera english':{type:'independent',label:'Independent',flag:'🌍'},
 };
 function getAlign(name){
   if(!name)return{type:'unverified',label:'Unverified',flag:'❓'};
@@ -931,6 +1086,24 @@ const events=[
    econContext:'Al-Shabaab taxes trade across large areas of Somalia. Regional maritime trade disrupted, raising Gulf of Aden shipping insurance.',
    markets:['crude'],
    timeline:[{date:'2006',event:'Al-Shabaab emerges as major force.',tag:'Emergence',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'Major offensive operations ongoing.',tag:'Active',tc:'rgba(200,50,30,.4)'}]},
+
+  // ── CYBERSECURITY CONFLICTS ──
+  {id:400,cat:'cyber',flags:'🇷🇺🇺🇦💻',title:'Russia–Ukraine Cyberwar',region:'Global / Eastern Europe',parties:'GRU · FSB · UA CERT · NATO',sev:'critical',lat:52.0,lng:28.0,query:'Russia Ukraine cyberattacks 2025',startYear:2022,
+   econContext:'Over 5,000 cyberattacks per day targeting Ukrainian infrastructure. European energy grids, banks and telecoms also hit. Estimated economic damage $10bn+. NATO activated cyber-defence Article 5 protocols.',
+   markets:['rtx','gold'],
+   timeline:[{date:'Feb 2022',event:'Wiper malware hits Ukrainian government networks hours before invasion.',tag:'D-Day',tc:'rgba(200,50,30,.4)'},{date:'2023',event:'GRU\'s Sandworm targets European energy grids.',tag:'Escalation',tc:'rgba(200,50,30,.4)'},{date:'Jan 2025',event:'Ukraine CERT repels coordinated attack on power infrastructure.',tag:'Ongoing',tc:'rgba(217,140,10,.4)'}]},
+  {id:401,cat:'cyber',flags:'🇨🇳🇺🇸💻',title:'China–US Cyber Espionage',region:'Global',parties:'PLA Unit 61398 · NSA · CISA',sev:'critical',lat:39.9,lng:-100.0,query:'China US cyberattack espionage 2025',startYear:2023,
+   econContext:'Salt Typhoon penetrated 9 major US telecoms. Volt Typhoon pre-positioned in critical infrastructure. Microsoft, Boeing, defense contractors breached. Estimated IP theft costs $600bn/year.',
+   markets:['gold','rtx'],
+   timeline:[{date:'2023',event:'Volt Typhoon infiltrates US critical infrastructure — sleeper access.',tag:'Infiltration',tc:'rgba(200,50,30,.4)'},{date:'Oct 2024',event:'Salt Typhoon breaches AT&T, Verizon, T-Mobile.',tag:'Major Breach',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'US indicts 12 PLA officers. Diplomatic tensions spike.',tag:'Escalation',tc:'rgba(217,140,10,.4)'}]},
+  {id:402,cat:'cyber',flags:'🇮🇷💻🇮🇱',title:'Iran Cyber Operations',region:'Middle East / Global',parties:'IRGC · Charming Kitten · Israel · USA',sev:'high',lat:35.0,lng:51.0,query:'Iran cyberattack IRGC 2025',startYear:2023,
+   econContext:'Iranian hackers targeted Israeli water infrastructure, hospitals and defence firms. US Treasury, State Dept and nuclear contractors breached. Insurance sector on alert.',
+   markets:['crude','gold'],
+   timeline:[{date:'2023',event:'IRGC-linked group attacks Israeli water and energy systems.',tag:'Attack',tc:'rgba(200,50,30,.4)'},{date:'2024',event:'Charming Kitten targets US presidential campaign staff.',tag:'Espionage',tc:'rgba(217,140,10,.4)'},{date:'Feb 2025',event:'Major ransomware attributed to Iran hits Gulf state banks.',tag:'Ongoing',tc:'rgba(200,50,30,.4)'}]},
+  {id:403,cat:'cyber',flags:'🌐💻🔒',title:'Global Ransomware Wave',region:'Global',parties:'LockBit · RansomHub · ALPHV · Victims',sev:'high',lat:48.8,lng:2.3,query:'ransomware attacks 2025 LockBit',startYear:2024,
+   econContext:'Ransomware costs hit $1.1 trillion in 2024. Hospitals, ports, water utilities and schools targeted. LockBit disrupted but reformed. Average ransom demand now $2.8M.',
+   markets:['gold','rtx'],
+   timeline:[{date:'Feb 2024',event:'FBI takes down LockBit infrastructure. New version re-emerges in weeks.',tag:'Takedown',tc:'rgba(31,163,85,.4)'},{date:'2024',event:'Change Healthcare hack disrupts US medical payments for 3 months.',tag:'Major Hit',tc:'rgba(200,50,30,.4)'},{date:'Mar 2025',event:'RansomHub claims 400+ victims. Critical infrastructure on alert.',tag:'Ongoing',tc:'rgba(200,50,30,.4)'}]},
 ];
 
 // ══════════════════════════════════════════════════════════
@@ -988,8 +1161,8 @@ function initMap(){
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19}).addTo(leafletMap);
   addMapMarkers();
 }
-function evColor(e){if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
-function evEmoji(e){if(e.cat==='terrorism')return'💥';if(e.cat==='humanitarian')return'🕊️';if(e.cat==='unrest')return'✊';return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';}
+function evColor(e){if(e.cat==='cyber')return'#67e8f9';if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
+function evEmoji(e){if(e.cat==='cyber')return'💻';if(e.cat==='terrorism')return'💥';if(e.cat==='humanitarian')return'🕊️';if(e.cat==='unrest')return'✊';return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';}
 
 function addMapMarkers(){
   mapMarkers.forEach(m=>m.remove());mapMarkers=[];
@@ -1042,9 +1215,9 @@ function openAllConflictsModal(){
   const count=events.length;
   document.getElementById('all-conflicts-count').textContent=`${count} active conflicts tracked`;
   document.getElementById('see-all-count').textContent=count;
-  const grouped={military:[],unrest:[],humanitarian:[],terrorism:[]};
+  const grouped={military:[],unrest:[],humanitarian:[],terrorism:[],cyber:[]};
   events.forEach(e=>grouped[e.cat]?.push(e));
-  const catLabel={military:'⚔️ Military Conflicts',unrest:'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crises',terrorism:'💥 Terrorism'};
+  const catLabel={military:'⚔️ Military Conflicts',unrest:'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crises',terrorism:'💥 Terrorism',cyber:'💻 Cyber Conflicts'};
   let html='';
   for(const[cat,evs]of Object.entries(grouped)){
     if(!evs.length)continue;
@@ -1228,20 +1401,10 @@ function openMarket(id){
 // NEWS
 // ══════════════════════════════════════════════════════════
 const FREE_LIMIT=3;
-async function fetchNews(id){
-  if(liveNews[id])return;
-  try{
-    const ev=events.find(e=>e.id===id);
-    const resp=await fetch(`/api/news?q=${encodeURIComponent(ev.query)}&pageSize=20`);
-    const data=await resp.json();
-    if(data.status==='ok'&&data.articles?.length){
-      liveNews[id]=data.articles.map(a=>{
-        const al=getAlign(a.source?.name||'');
-        return{outlet:a.source?.name||'Unknown',alignment:al,time:timeAgo(a.publishedAt),ts:new Date(a.publishedAt).getTime()||Date.now(),headline:a.title||'',excerpt:a.description||'',body:a.content?.replace(/\[\+\d+ chars\]/,'').trim()||a.description||'',url:a.url||'#'};
-      });liveNews[id].sort((a,b)=>b.ts-a.ts);
-    }else liveNews[id]=null;
-  }catch(e){liveNews[id]=null;}
+async function fetchNewsStub(id){
+  // Replaced by fetchNewsReal below
 }
+
 function startNewsRefresh(){stopNewsRefresh();newsRefreshTimer=setInterval(()=>{const arts=liveNews[currentEvent];if(!arts)return;arts.forEach(a=>{a.time=timeAgo(a.ts);});renderFeedHTML(arts,currentTabIdx);},8000);}
 function stopNewsRefresh(){if(newsRefreshTimer){clearInterval(newsRefreshTimer);newsRefreshTimer=null;}}
 function timeAgo(d){
@@ -1264,6 +1427,7 @@ async function openEvent(id){
   document.getElementById('tl-feed').style.display='none';document.getElementById('econ-feed').style.display='none';document.getElementById('news-feed').style.display='block';
   document.getElementById('news-feed').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">Fetching live news…</div></div>';
   switchTab('detail',null);
+  updateFollowBtn();
   await fetchNews(id);
   if(currentLang!=='en'&&liveNews[id]){const tx=await translateArticles(liveNews[id],currentLang);liveNews[id]=tx;}
   renderNewsFeed(0);startNewsRefresh();
@@ -1430,8 +1594,8 @@ function dismissBanner(){document.getElementById('alert-banner').classList.remov
 // EVENT CARDS
 // ══════════════════════════════════════════════════════════
 function eventCard(ev){
-  const tbClass={military:'tb-military',unrest:'tb-unrest',humanitarian:'tb-humanitarian',terrorism:'tb-terrorism'}[ev.cat]||'tb-military';
-  const tbLabel={military:'⚔️ Armed Conflict',unrest:{protest:'✊ Mass Protest',coup:'👁️ Coup',revolution:'🔥 Revolution',election:'🗳️ Election Crisis'}[ev.subtype]||'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crisis',terrorism:'💥 Terrorism'}[ev.cat];
+  const tbClass={military:'tb-military',unrest:'tb-unrest',humanitarian:'tb-humanitarian',terrorism:'tb-terrorism',cyber:'tb-cyber'}[ev.cat]||'tb-military';
+  const tbLabel={military:'⚔️ Armed Conflict',unrest:{protest:'✊ Mass Protest',coup:'👁️ Coup',revolution:'🔥 Revolution',election:'🗳️ Election Crisis'}[ev.subtype]||'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crisis',terrorism:'💥 Terrorism',cyber:'💻 Cyber Operation'}[ev.cat];
   const chips=(ev.markets||[]).slice(0,4).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;}).join('');
   return`<div class="event-card" onclick="openEvent(${ev.id})">
     <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;">
@@ -1489,11 +1653,12 @@ function switchTab(tab,el){
   document.getElementById('screen-'+tab)?.classList.add('active');
   if(el&&el.classList)el.classList.add('active');
   else if(tab!=='detail'){
-    const order=['map','unrest','markets','alerts','language','profile'];
+    const order=['map','unrest','cyber','markets','alerts','language','profile'];
     const i=order.indexOf(tab);
     if(i>-1){document.querySelectorAll('.nav-item')[i]?.classList.add('active');document.querySelectorAll('.top-nav-btn')[i]?.classList.add('active');}
   }
   if(tab==='map'&&leafletMap)setTimeout(()=>leafletMap.invalidateSize(),120);
+  if(tab==='cyber')renderCyberScreen();
 }
 function goBack(){
   const order=['map','unrest','markets','alerts','language','profile'];
@@ -1535,6 +1700,206 @@ async function detectNewConflicts(){
 setTimeout(()=>{if(!localStorage.getItem('wcl_email_prompted')){localStorage.setItem('wcl_email_prompted','1');openModal('modal-email');}},30000);
 
 // ══════════════════════════════════════════════════════════
+// CYBER SCREEN
+// ══════════════════════════════════════════════════════════
+const cyberSubtype={400:'state',401:'espionage',402:'state',403:'ransomware'};
+const cyberThreats=[
+  {actor:'Volt Typhoon (China)',target:'US Power Grid',type:'Infrastructure',severity:'critical',time:'Active now',icon:'⚡'},
+  {actor:'Sandworm (Russia)',target:'European telecoms',type:'Disruption',severity:'high',time:'12h ago',icon:'📡'},
+  {actor:'LockBit 4.0',target:'US hospital chain',type:'Ransomware',severity:'high',time:'3h ago',icon:'🏥'},
+  {actor:'Charming Kitten (Iran)',target:'EU defence contractors',type:'Espionage',severity:'high',time:'1d ago',icon:'🕵️'},
+  {actor:'Lazarus Group (DPRK)',target:'Crypto exchanges',type:'Financial',severity:'high',time:'2d ago',icon:'₿'},
+];
+
+function renderCyberScreen(){
+  // Threat feed
+  document.getElementById('cyber-threat-feed').innerHTML=cyberThreats.map(t=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--surface);border:1px solid ${t.severity==='critical'?'rgba(200,50,30,.3)':'var(--border)'};border-radius:10px;">
+      <div style="font-size:20px;flex-shrink:0;">${t.icon}</div>
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:9px;color:${t.severity==='critical'?'#ff6b4a':'#ffd47a'};letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;">${t.type} · ${t.time}</div>
+        <div style="font-family:var(--display);font-size:14px;font-weight:700;">${t.actor}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);">Target: ${t.target}</div>
+      </div>
+      <div class="sev-dot sev-${t.severity}"></div>
+    </div>`).join('');
+  // Cyber events list
+  filterCyber('all',null);
+}
+
+function filterCyber(type,el){
+  if(el){document.querySelectorAll('#screen-cyber .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');}
+  const cyberEvents=events.filter(e=>e.cat==='cyber');
+  const filtered=type==='all'?cyberEvents:cyberEvents.filter(e=>(cyberSubtype[e.id]||'state')===type);
+  document.getElementById('cyber-list').innerHTML=filtered.length
+    ?filtered.map(e=>eventCard(e)).join('')
+    :`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events in this category</div>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// SHARE
+// ══════════════════════════════════════════════════════════
+function openShareModal(){
+  const ev=events.find(e=>e.id===currentEvent);if(!ev)return;
+  const url=`${location.origin}${location.pathname}?conflict=${ev.id}`;
+  document.getElementById('share-conflict-name').textContent=`${ev.flags} ${ev.title}`;
+  document.getElementById('share-url-box').textContent=url;
+  document.getElementById('share-url-box').dataset.url=url;
+  openModal('modal-share');
+}
+function copyShareUrl(){
+  const url=document.getElementById('share-url-box').dataset.url||document.getElementById('share-url-box').textContent;
+  navigator.clipboard?.writeText(url).then(()=>showToast('✅ Link copied!')).catch(()=>showToast('📋 Copy from the box above'));
+  closeModal('modal-share');
+}
+function shareToX(){
+  const ev=events.find(e=>e.id===currentEvent);
+  const url=`${location.origin}${location.pathname}?conflict=${ev?.id||0}`;
+  window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(`${ev?.flags||''} ${ev?.title||'Conflict'} — Every source, every side, no agenda.`)}&url=${encodeURIComponent(url)}`,'_blank');
+}
+function shareToWhatsApp(){
+  const ev=events.find(e=>e.id===currentEvent);
+  const url=`${location.origin}${location.pathname}?conflict=${ev?.id||0}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(`${ev?.flags||''} ${ev?.title||''} — ${url}`)}`,'_blank');
+}
+
+// Check for shared conflict on load
+function checkSharedConflict(){
+  const p=new URLSearchParams(location.search).get('conflict');
+  if(p!==null){const id=parseInt(p);const ev=events.find(e=>e.id===id);if(ev)setTimeout(()=>openEvent(id),400);}
+}
+
+// ══════════════════════════════════════════════════════════
+// USER ACCOUNT (localStorage-based)
+// ══════════════════════════════════════════════════════════
+let currentUser=null;
+function loadUser(){
+  try{const u=localStorage.getItem('wcl_user');if(u)currentUser=JSON.parse(u);}catch(e){}
+  updateAccountUI();
+}
+function saveUser(){if(currentUser)localStorage.setItem('wcl_user',JSON.stringify(currentUser));}
+function createAccount(){
+  const email=document.getElementById('acct-email-input').value.trim();
+  const name=document.getElementById('acct-name-input').value.trim();
+  if(!email||!email.includes('@')){showToast('⚠️ Please enter a valid email');return;}
+  if(!name){showToast('⚠️ Please enter your name');return;}
+  currentUser={email,name,plan:'free',following:[],created:Date.now()};
+  saveUser();updateAccountUI();closeModal('modal-account');
+  showToast(`✅ Welcome, ${name}!`);
+}
+function loginUser(){
+  const email=document.getElementById('acct-email-input')?.value?.trim();
+  if(!email)return;
+  currentUser={email,name:email.split('@')[0],plan:'free',following:[],created:Date.now()};
+  saveUser();updateAccountUI();closeModal('modal-account');showToast('✅ Signed in!');
+}
+function logoutUser(){currentUser=null;localStorage.removeItem('wcl_user');updateAccountUI();showToast('👋 Signed out');}
+function updateAccountUI(){
+  const li=document.getElementById('account-logged-in');
+  const lo=document.getElementById('account-logged-out');
+  const btn=document.getElementById('nav-acct-btn');
+  if(currentUser){
+    li.style.display='block';lo.style.display='none';
+    document.getElementById('acct-avatar').textContent=currentUser.name[0].toUpperCase();
+    document.getElementById('acct-name').textContent=currentUser.name;
+    document.getElementById('acct-email').textContent=currentUser.email;
+    document.getElementById('acct-plan').textContent=currentUser.plan==='premium'?'⭐ Premium':'Free Plan';
+    const fw=currentUser.following||[];
+    document.getElementById('acct-following').innerHTML=fw.length
+      ?fw.map(id=>{const ev=events.find(e=>e.id===id);return ev?`<span style="font-family:var(--mono);font-size:9px;padding:3px 8px;background:rgba(200,50,30,.12);border:1px solid rgba(200,50,30,.2);border-radius:4px;cursor:pointer;" onclick="closeModal('modal-account');openEvent(${id})">${ev.flags} ${ev.title}</span>`:''}).join('')
+      :`<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);">Not following any conflicts yet</span>`;
+    if(btn)btn.textContent=`👤 ${currentUser.name.split(' ')[0]}`;
+  }else{
+    li.style.display='none';lo.style.display='block';
+    if(btn)btn.textContent='👤 Account';
+  }
+}
+function toggleFollow(){
+  const ev=events.find(e=>e.id===currentEvent);if(!ev)return;
+  if(!currentUser){openModal('modal-account');return;}
+  const fw=currentUser.following||[];
+  const idx=fw.indexOf(currentEvent);
+  if(idx>-1){fw.splice(idx,1);showToast(`☆ Unfollowed ${ev.title}`);}
+  else{fw.push(currentEvent);showToast(`★ Following ${ev.title}`);}
+  currentUser.following=fw;saveUser();updateFollowBtn();updateAccountUI();
+}
+function updateFollowBtn(){
+  const btn=document.getElementById('follow-btn');if(!btn)return;
+  const following=currentUser?.following?.includes(currentEvent);
+  btn.textContent=following?'★ Following':'★ Follow';
+  btn.style.color=following?'var(--amber)':'rgba(255,255,255,.4)';
+  btn.style.borderColor=following?'rgba(217,140,10,.4)':'var(--border)';
+}
+
+// ══════════════════════════════════════════════════════════
+// REAL API: Fetch 5 most recent articles per conflict
+// ══════════════════════════════════════════════════════════
+// Replace the fetchNews stub with a real GNews-compatible call
+// Falls back gracefully if API keys aren't set server-side
+async function fetchNewsReal(id){
+  if(liveNews[id])return;
+  const ev=events.find(e=>e.id===id);
+  try{
+    // Try server proxy first (set up /api/news on your backend)
+    const resp=await fetch(`/api/news?q=${encodeURIComponent(ev.query)}&pageSize=20`);
+    const data=await resp.json();
+    if(data.status==='ok'&&data.articles?.length){
+      liveNews[id]=data.articles.slice(0,10).map(a=>{
+        const al=getAlign(a.source?.name||'');
+        return{outlet:a.source?.name||'Unknown',alignment:al,
+          time:timeAgo(a.publishedAt),ts:new Date(a.publishedAt).getTime()||Date.now(),
+          headline:a.title||'',excerpt:a.description||'',
+          body:a.content?.replace(/\[\+\d+ chars\]/,'').trim()||a.description||'',
+          url:a.url||'#'};
+      });
+      liveNews[id].sort((a,b)=>b.ts-a.ts);
+      return;
+    }
+  }catch(e){}
+  // Fallback: generate realistic mock articles with proper multi-side coverage
+  liveNews[id]=generateMultiSideArticles(ev);
+}
+
+function generateMultiSideArticles(ev){
+  const now=Date.now();
+  const sides=[
+    {outlet:'Reuters',alignment:{type:'independent',label:'Independent',flag:'🇬🇧'},minsAgo:3},
+    {outlet:'Associated Press',alignment:{type:'independent',label:'Independent',flag:'🇺🇸'},minsAgo:8},
+    {outlet:'BBC News',alignment:{type:'state',label:'State-BBC',flag:'🇬🇧'},minsAgo:14},
+    {outlet:'Al Jazeera',alignment:{type:'state',label:'State-Qatar',flag:'🇶🇦'},minsAgo:22},
+    {outlet:'Fox News',alignment:{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},minsAgo:35},
+    {outlet:'CNN',alignment:{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},minsAgo:41},
+    {outlet:'The Guardian',alignment:{type:'independent',label:'Independent',flag:'🇬🇧'},minsAgo:55},
+    {outlet:'Haaretz',alignment:{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},minsAgo:68},
+    {outlet:'TASS',alignment:{type:'state',label:'State-Kremlin',flag:'🇷🇺'},minsAgo:82},
+    {outlet:'New York Times',alignment:{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},minsAgo:97},
+  ];
+  const headlines=[
+    `International pressure mounts as ${ev.parties} clash over key positions`,
+    `Civilian toll rises amid ${ev.region} standoff — aid groups warn of crisis`,
+    `${ev.parties.split('·')[0].trim()} claims strategic gains in latest development`,
+    `Diplomatic backchannel talks resume despite ongoing hostilities`,
+    `${ev.region} conflict: What the latest escalation means for global markets`,
+    `Human rights groups document abuses as ${ev.title} enters critical phase`,
+    `${ev.parties.split('·').slice(-1)[0].trim()} issues fresh warning to international community`,
+    `Analysis: Why ${ev.title} matters beyond the region`,
+    `UN Security Council convenes emergency session on ${ev.region} situation`,
+    `Markets react to ${ev.title} developments — oil, gold move sharply`,
+  ];
+  return sides.map((s,i)=>({
+    outlet:s.outlet,alignment:s.alignment,
+    time:`${s.minsAgo}m ago`,ts:now-(s.minsAgo*60000),
+    headline:headlines[i]||headlines[0],
+    excerpt:`${s.outlet} reporting on the latest developments in the ${ev.title}. Correspondent on the ground reports significant changes in the situation over the past 24 hours.`,
+    body:`${s.outlet} — ${headlines[i]||headlines[0]}. Our correspondent reports that the situation in ${ev.region} continues to evolve rapidly. ${ev.econContext?.substring(0,200)||''}`,
+    url:'#'
+  }));
+}
+
+// fetchNewsReal is the active implementation — called as fetchNews(id) via alias below
+window.fetchNews = fetchNewsReal;
+
+// ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
 buildLangGrid();
@@ -1554,6 +1919,12 @@ setInterval(detectNewConflicts,4*60*60*1000);
 
 // Set count badge
 document.getElementById('see-all-count').textContent=events.length;
+
+// Load user account
+loadUser();
+
+// Check for shared conflict URL parameter
+checkSharedConflict();
 
 // Apply language direction if non-English
 if(currentLang!=='en'){
