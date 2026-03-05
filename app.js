@@ -1,4 +1,29 @@
 function evColor(e){if(e.cat==='cyber')return'#67e8f9';if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
+function parseEmoji(el){
+  if(typeof twemoji!=='undefined'){
+    twemoji.parse(el||document.body,{
+      folder:'svg',ext:'.svg',
+      base:'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
+    });
+  }
+}
+// ── Input Sanitization (OWASP A03 — Injection Prevention) ──────────
+function sanitizeInput(str, maxLen=200) {
+  if (typeof str !== 'string') return '';
+  return str
+    .slice(0, maxLen)
+    .replace(/[<>]/g, '')           // strip HTML brackets
+    .replace(/javascript:/gi, '')   // strip JS protocol
+    .replace(/on\w+\s*=/gi, '')     // strip event handlers
+    .trim();
+}
+function sanitizeEmail(str) {
+  const s = sanitizeInput(str, 254);
+  // Basic RFC 5321 format check
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? s : '';
+}
+
+
 function evEmoji(e){if(e.cat==='cyber')return'💻';if(e.cat==='terrorism')return'💥';if(e.cat==='humanitarian')return'🕊️';if(e.cat==='unrest')return'✊';return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';}
 
 function initTimelineBar(){
@@ -822,7 +847,7 @@ function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg
 function toggleRow(row){const t=row.querySelector('.toggle');if(t){t.classList.toggle('on');showToast(t.classList.contains('on')?T('toast_enabled'):T('toast_disabled'));}}
 
 function submitEmail(){
-const email=document.getElementById('email-input').value.trim();
+const email=sanitizeEmail(document.getElementById('email-input').value);
 if(!email||!email.includes('@')||!email.includes('.')){showToast('⚠️ Please enter a valid email');return;}
 const safe=email.replace(/[<>'"]/g,'').substring(0,254);
 try{const s=JSON.parse(localStorage.getItem('wcl_emails')||'[]');if(!s.includes(safe)){s.push(safe);localStorage.setItem('wcl_emails',JSON.stringify(s));}}catch(e){}
@@ -912,8 +937,8 @@ updateAccountUI();
 }
 function saveUser(){if(currentUser)localStorage.setItem('wcl_user',JSON.stringify(currentUser));}
 function createAccount(){
-const email=document.getElementById('acct-email-input').value.trim();
-const name=document.getElementById('acct-name-input').value.trim();
+const email=sanitizeEmail(document.getElementById('acct-email-input').value);
+const name=sanitizeInput(document.getElementById('acct-name-input').value, 80);
 if(!email||!email.includes('@')){showToast('⚠️ Please enter a valid email');return;}
 if(!name){showToast('⚠️ Please enter your name');return;}
 currentUser={email,name,plan:'free',following:[],created:Date.now()};
@@ -1162,6 +1187,7 @@ renderList('military');
 tabRendered['map'] = true;
 initMap();
 initTimelineBar();
+setTimeout(()=>parseEmoji(document.body),500);
 
 requestAnimationFrame(() => {
 setTimeout(() => {
