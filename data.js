@@ -276,33 +276,32 @@ showToast(`✅ ${lang?.native}`);
 switchTab('map');return;
 }
 try{
-
-const langName=lang?.name||code;
+// Route through /api/translate — API key stays server-side only (OWASP A02)
 const stringsToTranslate=Object.entries(UI_STRINGS).map(([k,v])=>k+': '+v).join('\n');
-const resp=await fetch('https://api.anthropic.com/v1/messages',{
+const resp=await fetch('/api/translate',{
 method:'POST',
 headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-model:'claude-sonnet-4-20250514',
-max_tokens:4000,
-messages:[{role:'user',content:`Translate these UI strings to ${langName}. Return ONLY a JSON object with the same keys, values translated. Keep emojis, symbols like →←★✓·, and placeholder variables unchanged. Keep very short strings concise. Be natural, not literal.\n\n${stringsToTranslate}`}]
-})
+body:JSON.stringify({type:'ui',lang:code,payload:stringsToTranslate})
 });
-if(!resp.ok)throw new Error('API error');
-const data=await resp.json();
-const raw=data.content?.[0]?.text||'';
-const jsonMatch=raw.match(/\{[\s\S]+\}/);
-if(!jsonMatch)throw new Error('No JSON');
-const translated=JSON.parse(jsonMatch[0]);
-const tx={...UI_STRINGS,...translated};
-txCache[code]=tx;applyTranslations(tx);
+if(resp.status===429){
+const err=await resp.json().catch(()=>({}));
+showToast(`⏱ Rate limited — try again in ${err.retryAfter||60}s`);
+document.getElementById('translate-status').textContent='⏱ Rate limited';
+return;
+}
+if(!resp.ok)throw new Error('API '+resp.status);
+const json=await resp.json();
+if(!json.result)throw new Error('No result');
+const tx={...UI_STRINGS,...json.result};
+txCache[code]=tx;
+applyTranslations(tx);
 document.getElementById('translate-status').textContent=`✅ ${lang?.native}`;
 showToast(`✅ ${lang?.native}`);
 switchTab('map');
 }catch(e){
-
-document.getElementById('translate-status').textContent=`⚠️ Translation unavailable`;
-showToast(`⚠️ Could not translate`);
+console.error('[translate]',e.message);
+document.getElementById('translate-status').textContent='⚠️ Translation unavailable';
+showToast('⚠️ Could not translate');
 }
 }
 
@@ -311,26 +310,16 @@ if(langCode==='en'||!arts.length)return arts;
 const key=`${langCode}_${currentEvent}`;
 if(txArticleCache[key])return txArticleCache[key];
 try{
-const lang=LANGUAGES.find(l=>l.code===langCode);
-const langName=lang?.name||langCode;
+// Route through secure server proxy — no API key client-side
 const payload=arts.slice(0,9).map(a=>({h:a.headline,e:(a.excerpt||'').substring(0,120)}));
-const resp=await fetch('https://api.anthropic.com/v1/messages',{
+const resp=await fetch('/api/translate',{
 method:'POST',
 headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-model:'claude-sonnet-4-20250514',
-max_tokens:2000,
-messages:[{role:'user',content:`Translate these news article headlines and excerpts to ${langName}. Return ONLY a JSON array with same structure. Keep proper nouns (place names, person names) unchanged.
-
-${JSON.stringify(payload)}`}]
-})
+body:JSON.stringify({type:'articles',lang:langCode,payload})
 });
-if(!resp.ok)throw new Error('API error');
-const data=await resp.json();
-const raw=data.content?.[0]?.text||'';
-const match=raw.match(/\[[\s\S]+\]/);
-if(!match)throw new Error('No JSON array');
-const txArts=JSON.parse(match[0]);
+if(!resp.ok)return arts;
+const json=await resp.json();
+const txArts=Array.isArray(json.result)?json.result:[];
 const result=arts.map((a,i)=>({...a,headline:txArts[i]?.h||a.headline,excerpt:txArts[i]?.e||a.excerpt}));
 txArticleCache[key]=result;return result;
 }catch(e){return arts;}
