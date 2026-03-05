@@ -15,6 +15,116 @@ function sanitizeEmail(str) {
   // Basic RFC 5321 format check
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? s : '';
 }
+
+// ── Referral system ────────────────────────────────────────────
+function getReferralCode() {
+  let code = localStorage.getItem('wcl_ref_code');
+  if (!code) {
+    // Generate short unique code from timestamp + random
+    code = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    localStorage.setItem('wcl_ref_code', code);
+  }
+  return code;
+}
+
+function buildReferralLink() {
+  const base = window.location.origin || 'https://worldconflictslive.vercel.app';
+  return base + '/?ref=' + getReferralCode();
+}
+
+function copyReferralLink() {
+  const link = buildReferralLink();
+  // Update the displayed link
+  const el = document.getElementById('referral-link');
+  if (el) el.textContent = link;
+  // Copy to clipboard
+  navigator.clipboard?.writeText(link).then(() => {
+    const msg = document.getElementById('referral-copied');
+    if (msg) { msg.textContent = '✅ Link copied!'; setTimeout(() => msg.textContent = '', 2500); }
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = link; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    const msg = document.getElementById('referral-copied');
+    if (msg) { msg.textContent = '✅ Link copied!'; setTimeout(() => msg.textContent = '', 2500); }
+  });
+}
+
+// Track incoming referral codes
+function trackReferral() {
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  if (ref && /^r[a-z0-9]{6,16}$/.test(ref)) {
+    localStorage.setItem('wcl_referred_by', ref);
+  }
+}
+
+// Update referral link display when thanks is shown
+function updateReferralDisplay() {
+  const el = document.getElementById('referral-link');
+  if (el) el.textContent = buildReferralLink();
+}
+// ── Waitlist signup ────────────────────────────────────────────
+async function submitWaitlist() {
+  const emailEl = document.getElementById('prem-email');
+  const msgEl   = document.getElementById('prem-msg');
+  const formEl  = document.getElementById('prem-form');
+  const thanksEl= document.getElementById('prem-thanks');
+
+  const email = sanitizeEmail(emailEl.value);
+  if (!email) {
+    msgEl.style.color = '#e03d27';
+    msgEl.textContent = 'Please enter a valid email address.';
+    return;
+  }
+
+  const btn = formEl.querySelector('button');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  msgEl.style.color = 'rgba(217,140,10,.7)';
+  msgEl.textContent = '';
+
+  try {
+    const res = await fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, ref: localStorage.getItem('wcl_ref_code') || null })
+    });
+    const json = await res.json();
+
+    if (res.ok) {
+      formEl.style.display = 'none';
+      thanksEl.style.display = 'block';
+      updateReferralDisplay();
+      // Save locally so we don't prompt again
+      localStorage.setItem('wcl_waitlist', email);
+    } else {
+      msgEl.style.color = '#e03d27';
+      msgEl.textContent = json.error || 'Something went wrong. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'GET EARLY ACCESS →';
+    }
+  } catch (e) {
+    msgEl.style.color = '#e03d27';
+    msgEl.textContent = 'Network error. Please try again.';
+    btn.disabled = false;
+    btn.textContent = 'GET EARLY ACCESS →';
+  }
+}
+
+// Auto-show thanks state if already signed up
+function checkWaitlistState() {
+  if (localStorage.getItem('wcl_waitlist')) {
+    const f = document.getElementById('prem-form');
+    const t = document.getElementById('prem-thanks');
+    if (f) f.style.display = 'none';
+    if (t) t.style.display = 'block';
+    updateReferralDisplay();
+  }
+}
+
 // Convert flag emoji to styled country code (works on all platforms including Windows)
 function flagsToCode(flagStr) {
   if (!flagStr) return '';
@@ -555,6 +665,8 @@ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
 document.querySelectorAll('.nav-item,.top-nav-btn').forEach(n=>n.classList.remove('active'));
 const scr=document.getElementById('screen-'+tab);
 if(scr)scr.classList.add('active');
+// Force Leaflet to recalculate map size when map tab becomes visible
+if(tab==='map'&&leafletMap){setTimeout(()=>leafletMap.invalidateSize(),50);}
 if(el&&el.classList){el.classList.add('active');}
 else{
 const order=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
@@ -659,10 +771,10 @@ mapMarkers=[];
 events.forEach(ev=>{
 if(!ev.lat||!ev.lng)return;
 const color=evColor(ev);
-const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin${ev.sev==='critical'?' pulse':''}" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label"><span class="emoji">${ev.flags}</span> ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
+const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin${ev.sev==='critical'?' pulse':''}" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label">${flagsToCode(ev.flags)} ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
 const marker=L.marker([ev.lat,ev.lng],{icon});
 const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;}).join('');
-marker.bindPopup(`<div class="map-popup"><div class="mpp-flags emoji">${ev.flags}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">${T('detail_read')}</button></div>`,{maxWidth:280,minWidth:230});
+marker.bindPopup(`<div class="map-popup"><div class="mpp-flags">${flagsToCode(ev.flags)}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">${T('detail_read')}</button></div>`,{maxWidth:280,minWidth:230});
 
 marker.on('click',()=>{if(window.innerWidth<768)openConflictSheet(ev.id);});
 if(clusterEnabled&&clusterGroup){clusterGroup.addLayer(marker);}else{marker.addTo(leafletMap);}
@@ -674,7 +786,7 @@ function openConflictSheet(id){
 const ev=events.find(e=>e.id===id);if(!ev)return;
 document.getElementById('bs-conflict-body').innerHTML=`
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-<div style="font-size:28px;" class="emoji">${ev.flags}</div>
+<div class="ec-flags" style="font-size:13px;">${flagsToCode(ev.flags)}</div>
 <div><div style="font-family:var(--display);font-size:22px;font-weight:900;letter-spacing:.04em;">${ev.title}</div>
 <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);">${ev.region} · ${ev.parties}</div></div>
 </div>
@@ -750,7 +862,7 @@ const maxCas=topCas[0]?.casualties||1;
 document.getElementById('casualty-bars').innerHTML=topCas.map(ev=>`
 <div class="casualty-bar-item">
 <div class="cb-label">
-<span class="cb-name"><span class="emoji">${ev.flags}</span> ${ev.title}</span>
+<span class="cb-name">${flagsToCode(ev.flags)} ${ev.title}</span>
 <span class="cb-val" style="color:var(--red2);">${fmtNum(ev.casualties)}</span>
 </div>
 <div class="cb-track"><div class="cb-fill" style="width:0%;background:var(--red2);" data-pct="${(ev.casualties/maxCas*100).toFixed(1)}"></div></div>
@@ -763,7 +875,7 @@ const maxDis=topDis[0]?.displaced||1;
 document.getElementById('displaced-bars').innerHTML=topDis.map(ev=>`
 <div class="casualty-bar-item">
 <div class="cb-label">
-<span class="cb-name"><span class="emoji">${ev.flags}</span> ${ev.title}</span>
+<span class="cb-name">${flagsToCode(ev.flags)} ${ev.title}</span>
 <span class="cb-val" style="color:var(--amber);">${fmtNum(ev.displaced)}</span>
 </div>
 <div class="cb-track"><div class="cb-fill" style="width:0%;background:var(--amber);" data-pct="${(ev.displaced/maxDis*100).toFixed(1)}"></div></div>
@@ -776,7 +888,7 @@ const maxEcon=topEcon[0]?.econDamage||1;
 document.getElementById('econ-damage-bars').innerHTML=topEcon.map(ev=>`
 <div class="casualty-bar-item">
 <div class="cb-label">
-<span class="cb-name"><span class="emoji">${ev.flags}</span> ${ev.title}</span>
+<span class="cb-name">${flagsToCode(ev.flags)} ${ev.title}</span>
 <span class="cb-val" style="color:var(--green);">${fmtBn(ev.econDamage)}</span>
 </div>
 <div class="cb-track"><div class="cb-fill" style="width:0%;background:var(--green);" data-pct="${(ev.econDamage/maxEcon*100).toFixed(1)}"></div></div>
@@ -827,7 +939,7 @@ const x1=toX(ev.startYear),x2=toX(now),y=12+i*18;
 const col=evColor(ev);
 html+=`<line x1="${x1}" y1="${y+5}" x2="${x2}" y2="${y+5}" stroke="${col}" stroke-width="8" opacity="0.35" stroke-linecap="round"/>
 <circle cx="${x1}" cy="${y+5}" r="4" fill="${col}" opacity="0.9"/>
-<text x="${Math.max(x1-4,40)}" y="${y}" font-size="8" fill="rgba(255,255,255,.45)">${ev.flags} ${ev.title.substring(0,22)}</text>`;
+<text x="${Math.max(x1-4,40)}" y="${y}" font-size="8" fill="rgba(255,255,255,.45)">${flagsToCode(ev.flags)} ${ev.title.substring(0,22)}</text>`;
 });
 svg.innerHTML=html;
 }
@@ -859,7 +971,7 @@ switchTab(lastScreen,document.querySelectorAll('.nav-item')[Math.max(0,i)]);
 }
 function openEventByName(name){const ev=events.find(e=>e.title===name);if(ev)openEvent(ev.id);}
 
-function openModal(id){document.getElementById(id)?.classList.add('open');}
+function openModal(id){document.getElementById(id)?.classList.add('open');if(id==='modal-premium')checkWaitlistState();}
 function closeModal(id){document.getElementById(id)?.classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
 
@@ -925,7 +1037,7 @@ document.getElementById('cyber-list').innerHTML=filtered.length
 function openShareModal(){
 const ev=events.find(e=>e.id===currentEvent);if(!ev)return;
 const url=`${location.origin}${location.pathname}?conflict=${ev.id}`;
-document.getElementById('share-conflict-name').textContent=`${ev.flags} ${ev.title}`;
+document.getElementById('share-conflict-name').textContent=`${flagsToCode(ev.flags)} ${ev.title}`;
 document.getElementById('share-url-box').textContent=url;
 document.getElementById('share-url-box').dataset.url=url;
 openModal('modal-share');
@@ -985,7 +1097,7 @@ document.getElementById('acct-email').textContent=currentUser.email;
 document.getElementById('acct-plan').textContent=currentUser.plan==='premium'?'⭐ Premium':'Free Plan';
 const fw=currentUser.following||[];
 document.getElementById('acct-following').innerHTML=fw.length
-?fw.map(id=>{const ev=events.find(e=>e.id===id);return ev?`<span style="font-family:var(--mono);font-size:9px;padding:3px 8px;background:rgba(200,50,30,.12);border:1px solid rgba(200,50,30,.2);border-radius:4px;cursor:pointer;" onclick="closeModal('modal-account');openEvent(${id})">${ev.flags} ${ev.title}</span>`:''}).join('')
+?fw.map(id=>{const ev=events.find(e=>e.id===id);return ev?`<span style="font-family:var(--mono);font-size:9px;padding:3px 8px;background:rgba(200,50,30,.12);border:1px solid rgba(200,50,30,.2);border-radius:4px;cursor:pointer;" onclick="closeModal('modal-account');openEvent(${id})">${flagsToCode(ev.flags)} ${ev.title}</span>`:''}).join('')
 :`<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);">Not following any conflicts yet</span>`;
 if(btn)btn.textContent=`👤 ${currentUser.name.split(' ')[0]}`;
 }else{
@@ -1208,6 +1320,9 @@ renderList('military');
 tabRendered['map'] = true;
 initMap();
 initTimelineBar();
+trackReferral();
+// Ensure map renders correctly on first load (fixes Safari/Chrome mobile)
+setTimeout(()=>{if(leafletMap)leafletMap.invalidateSize();},300);
 
 
 requestAnimationFrame(() => {
