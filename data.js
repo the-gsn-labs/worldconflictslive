@@ -46,7 +46,15 @@ const LANGUAGES=[
 {code:'zh-TW',flag:'🇹🇼',native:'中文 (繁)'},
 {code:'zu',flag:'🇿🇦',native:'isiZulu'},
 ];
-let currentLang=localStorage.getItem('wcl_lang')||'en';
+// Safe localStorage shim — survives Edge Tracking Prevention & Safari ITP
+var safeStorage = (() => {
+  try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return localStorage; }
+  catch(e) {
+    const m = {};
+    return { getItem: k=>m[k]??null, setItem:(k,v)=>{m[k]=String(v);}, removeItem: k=>{delete m[k];}, clear:()=>{for(const k in m)delete m[k];} };
+  }
+})();
+let currentLang=safeStorage.getItem('wcl_lang')||'en';
 let txCache={};let txArticleCache={};
 
 const UI_STRINGS={
@@ -379,7 +387,7 @@ if(tx[key]) el.textContent=tx[key];
 
 async function selectLanguage(code){
 currentLang=code;
-localStorage.setItem('wcl_lang',code);
+safeStorage.setItem('wcl_lang',code);
 buildLangGrid();
 const lang=LANGUAGES.find(l=>l.code===code);
 document.getElementById('html-root').setAttribute('dir',lang?.rtl?'rtl':'ltr');
