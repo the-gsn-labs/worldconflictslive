@@ -195,7 +195,7 @@ for(const[cat,evs]of Object.entries(grouped)){
 if(!evs.length)continue;
 html+=`<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;padding:10px 0 6px;">${catLabel[cat]}</div>`;
 html+=evs.map(ev=>`<div onclick="closeModal('modal-all-conflicts');openEvent(${ev.id});" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .18s;" onmouseover="this.style.borderColor='rgba(255,255,255,.14)'" onmouseout="this.style.borderColor='var(--border)'">
-<div style="font-size:18px;letter-spacing:2px;flex-shrink:0;" class="emoji">${ev.flags}</div>
+<div class="ec-flags" style="font-size:11px;flex-shrink:0;">${flagsToCode(ev.flags)}</div>
 <div style="flex:1;"><div style="font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.02em;">${ev.title}</div><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);">${ev.region} · ${ev.parties}</div></div>
 <div style="display:flex;align-items:center;gap:6px;"><div class="sev-dot sev-${ev.sev}"></div><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);text-transform:uppercase;">${ev.sev}</span></div>
 </div>`).join('');
