@@ -1,4 +1,5 @@
 function evColor(e){if(e.cat==='cyber')return'#67e8f9';if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
+const tabRendered = {};
 function parseEmoji(el){} // Twemoji disabled - causes layout issues
 // ── Input Sanitization (OWASP A03 — Injection Prevention) ──────────
 function sanitizeInput(str, maxLen=200) {
@@ -744,22 +745,26 @@ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
 document.querySelectorAll('.nav-item,.top-nav-btn').forEach(n=>n.classList.remove('active'));
 const scr=document.getElementById('screen-'+tab);
 if(scr)scr.classList.add('active');
-// Force Leaflet to recalculate map size when map tab becomes visible
 if(tab==='map'&&leafletMap){
-  // Multiple invalidations handle Safari's rendering pipeline
   leafletMap.invalidateSize(true);
   setTimeout(()=>leafletMap.invalidateSize(true),100);
   setTimeout(()=>leafletMap.invalidateSize(true),400);
 }
 if(el&&el.classList){el.classList.add('active');}
 else{
-const order=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
-const i=order.indexOf(tab);
-if(i>-1){document.querySelectorAll('.nav-item')[i]?.classList.add('active');document.querySelectorAll('.top-nav-btn')[i]?.classList.add('active');}
+  const order=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
+  const i=order.indexOf(tab);
+  if(i>-1){document.querySelectorAll('.nav-item')[i]?.classList.add('active');document.querySelectorAll('.top-nav-btn')[i]?.classList.add('active');}
 }
-if(tab==='map'&&leafletMap)setTimeout(()=>leafletMap.invalidateSize(),120);
-if(tab==='cyber')renderCyberScreen();
-if(tab==='viz'){requestIdleCallback?requestIdleCallback(renderVizScreen):setTimeout(renderVizScreen,50);}
+if(!tabRendered[tab]){
+  tabRendered[tab]=true;
+  if(tab==='unrest')renderUnrestList();
+  else if(tab==='markets'){renderTop10();renderConflictAssets();renderMarkets();renderMovers();}
+  else if(tab==='alerts')renderAlerts();
+  else if(tab==='language')buildLangGrid();
+  else if(tab==='cyber')renderCyberScreen();
+  else if(tab==='viz'){requestIdleCallback?requestIdleCallback(renderVizScreen):setTimeout(renderVizScreen,50);}
+}
 }
 
 function showSkeletons(containerId,n=3){
@@ -1203,4 +1208,281 @@ function loginUser(){
 const email=document.getElementById('acct-email-input')?.value?.trim();
 if(!email)return;
 currentUser={email,name:email.split('@')[0],plan:'free',following:[],created:Date.now()};
-saveUser();updateAccoun
+saveUser();updateAccountUI();closeModal('modal-account');showToast('✅ Signed in!');
+}
+function logoutUser(){currentUser=null;localStorage.removeItem('wcl_user');updateAccountUI();showToast('👋 Signed out');}
+function updateAccountUI(){
+const li=document.getElementById('account-logged-in');
+const lo=document.getElementById('account-logged-out');
+const btn=document.getElementById('nav-acct-btn');
+if(currentUser){
+li.style.display='block';lo.style.display='none';
+document.getElementById('acct-avatar').textContent=currentUser.name[0].toUpperCase();
+document.getElementById('acct-name').textContent=currentUser.name;
+document.getElementById('acct-email').textContent=currentUser.email;
+document.getElementById('acct-plan').textContent=currentUser.plan==='premium'?'⭐ Premium':'Free Plan';
+const fw=currentUser.following||[];
+document.getElementById('acct-following').innerHTML=fw.length
+?fw.map(id=>{const ev=events.find(e=>e.id===id);return ev?`<span style="font-family:var(--mono);font-size:9px;padding:3px 8px;background:rgba(200,50,30,.12);border:1px solid rgba(200,50,30,.2);border-radius:4px;cursor:pointer;" onclick="closeModal('modal-account');openEvent(${id})">${flagsToCode(ev.flags)} ${ev.title}</span>`:''}).join('')
+:`<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);">Not following any conflicts yet</span>`;
+if(btn)btn.textContent=`👤 ${currentUser.name.split(' ')[0]}`;
+}else{
+li.style.display='none';lo.style.display='block';
+if(btn)btn.textContent='👤 Account';
+}
+}
+function toggleFollow(){
+const ev=events.find(e=>e.id===currentEvent);if(!ev)return;
+if(!currentUser){openModal('modal-account');return;}
+const fw=currentUser.following||[];
+const idx=fw.indexOf(currentEvent);
+if(idx>-1){fw.splice(idx,1);showToast(`☆ Unfollowed ${ev.title}`);}
+else{fw.push(currentEvent);showToast(`★ Following ${ev.title}`);}
+currentUser.following=fw;saveUser();updateFollowBtn();updateAccountUI();
+}
+function updateFollowBtn(){
+const btn=document.getElementById('follow-btn');if(!btn)return;
+const following=currentUser?.following?.includes(currentEvent);
+btn.textContent=following?T('detail_following'):T('detail_follow');
+btn.style.color=following?'var(--amber)':'rgba(255,255,255,.4)';
+btn.style.borderColor=following?'rgba(217,140,10,.4)':'var(--border)';
+}
+
+const NEWS_CACHE_TTL = 180000; // 3 min
+const newsCacheTimes = {};
+
+function getRssFeeds(ev) {
+const qEnc = encodeURIComponent(ev.query);
+return [
+{ url:`https://news.google.com/rss/search?q=${qEnc}&hl=en-US&gl=US&ceid=US:en`, outlet:'Google News', al:{type:'independent',label:'Aggregator',flag:'🌐'} },
+{ url:`https://feeds.reuters.com/reuters/search/news?q=${encodeURIComponent(ev.query.replace(/\s+/g,'+'))}`, outlet:'Reuters', al:{type:'independent',label:'Independent',flag:'🇬🇧'} },
+{ url:'https://feeds.bbci.co.uk/news/world/rss.xml', outlet:'BBC News', al:{type:'state',label:'State-BBC',flag:'🇬🇧'} },
+{ url:'https://www.aljazeera.com/xml/rss/all.xml', outlet:'Al Jazeera', al:{type:'state',label:'State-Qatar',flag:'🇶🇦'} },
+{ url:'https://www.theguardian.com/world/rss', outlet:'The Guardian', al:{type:'independent',label:'Independent',flag:'🇬🇧'} },
+{ url:'https://feeds.apnews.com/rss/apf-topnews', outlet:'Associated Press', al:{type:'independent',label:'Independent',flag:'🇺🇸'} },
+];
+}
+
+const CORS_PROXIES = [
+url => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=15`,
+url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+];
+
+async function fetchRssFeed(feed, proxyIdx=0) {
+if(proxyIdx >= CORS_PROXIES.length) return [];
+try {
+const r = await fetch(CORS_PROXIES[proxyIdx](feed.url), {signal:AbortSignal.timeout(5000)});
+if(!r.ok) throw new Error();
+const data = await r.json();
+
+if(data.items?.length) {
+return data.items.map(item => {
+const ts = item.pubDate ? new Date(item.pubDate).getTime() : 0;
+return {outlet:feed.outlet, alignment:feed.al,
+headline:stripHtml(item.title||''),
+excerpt:stripHtml(item.description||item.content||'').substring(0,220),
+url:item.link||item.guid||'#', ts, time:timeAgo(ts)};
+}).filter(a=>a.headline && a.ts>0);
+}
+
+const xml = data.contents || (typeof data==='string'?data:'');
+if(xml) return parseRssXml(xml, feed);
+} catch(e) {
+return fetchRssFeed(feed, proxyIdx+1);
+}
+return [];
+}
+
+function parseRssXml(xml, feed) {
+try {
+const doc = new DOMParser().parseFromString(xml,'text/xml');
+return [...doc.querySelectorAll('item')].slice(0,15).map(item=>{
+const title = stripHtml(item.querySelector('title')?.textContent||'');
+const desc  = stripHtml(item.querySelector('description')?.textContent||'').substring(0,220);
+const link  = item.querySelector('link')?.textContent?.trim() || item.querySelector('guid')?.textContent || '#';
+const ts    = new Date(item.querySelector('pubDate')?.textContent||0).getTime();
+if(!title||!ts) return null;
+return {outlet:feed.outlet, alignment:feed.al, headline:title, excerpt:desc, url:link, ts, time:timeAgo(ts)};
+}).filter(Boolean);
+} catch(e){return[];}
+}
+
+function stripHtml(s){
+return s.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&nbsp;/g,' ').trim();
+}
+
+function isRelevant(article, ev) {
+const text = (article.headline+' '+article.excerpt).toLowerCase();
+const keywords = [
+...ev.title.toLowerCase().split(/[\s\-–·,\/]+/),
+...ev.region.toLowerCase().split(/[\s,\/]+/),
+...(ev.query||'').toLowerCase().split(/\s+/),
+].filter(w=>w.length>3);
+const unique = [...new Set(keywords)];
+return unique.filter(k=>text.includes(k)).length >= 2;
+}
+
+async function fetchNewsReal(id) {
+const now = Date.now();
+if(liveNews[id] && newsCacheTimes[id] && (now-newsCacheTimes[id]) < NEWS_CACHE_TTL) return;
+
+const ev = events.find(e=>e.id===id);
+
+
+const feeds = getRssFeeds(ev);
+const [googleResults, reutersResults, bbcResults] = await Promise.all([
+fetchRssFeed(feeds[0]),
+fetchRssFeed(feeds[1]),
+fetchRssFeed(feeds[2]),
+]);
+
+
+const extraPromise = Promise.all([
+fetchRssFeed(feeds[3]),
+fetchRssFeed(feeds[4]),
+fetchRssFeed(feeds[5]),
+]);
+
+let all = [...googleResults, ...reutersResults, ...bbcResults];
+
+
+if(all.length >= 3) {
+const quick = processArticles(all, ev);
+liveNews[id] = quick;
+newsCacheTimes[id] = now;
+renderNewsFeed(0);
+}
+
+
+const extras = await extraPromise;
+all = [...all, ...extras.flat()];
+const final = processArticles(all, ev);
+
+if(final.length >= 3) {
+liveNews[id] = final;
+newsCacheTimes[id] = now;
+if(currentEvent === id) renderNewsFeed(currentTabIdx);
+} else if(!liveNews[id]?.length) {
+liveNews[id] = generateMultiSideArticles(ev);
+newsCacheTimes[id] = now;
+if(currentEvent === id) renderNewsFeed(currentTabIdx);
+}
+}
+
+function processArticles(all, ev) {
+
+const relevant = all.filter(a=>isRelevant(a,ev));
+const pool = relevant.length >= 4 ? relevant : all;
+const seen = new Set();
+return pool
+.filter(a=>{
+const key = a.headline.substring(0,45).toLowerCase().replace(/[^a-z]/g,'');
+if(seen.has(key)) return false;
+seen.add(key); return true;
+})
+.sort((a,b)=>b.ts-a.ts)
+.slice(0,15);
+}
+
+function generateMultiSideArticles(ev) {
+const now = Date.now();
+const sides = [
+{outlet:'Reuters',          al:{type:'independent',label:'Independent',flag:'🇬🇧'}, m:2+Math.floor(Math.random()*10)},
+{outlet:'Associated Press', al:{type:'independent',label:'Independent',flag:'🇺🇸'}, m:15+Math.floor(Math.random()*20)},
+{outlet:'BBC News',         al:{type:'state',label:'State-BBC',flag:'🇬🇧'},         m:30+Math.floor(Math.random()*30)},
+{outlet:'Al Jazeera',       al:{type:'state',label:'State-Qatar',flag:'🇶🇦'},       m:55+Math.floor(Math.random()*40)},
+{outlet:'The Guardian',     al:{type:'independent',label:'Independent',flag:'🇬🇧'}, m:80+Math.floor(Math.random()*50)},
+{outlet:'Fox News',         al:{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},         m:110+Math.floor(Math.random()*50)},
+{outlet:'CNN',              al:{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},    m:140+Math.floor(Math.random()*60)},
+{outlet:'New York Times',   al:{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},    m:180+Math.floor(Math.random()*60)},
+];
+const p1 = ev.parties.split('·')[0]?.trim()||'Forces';
+const hlines = [
+`BREAKING: ${p1} reports major developments in ${ev.region}`,
+`Civilian toll rises in ${ev.title} — aid groups demand access`,
+`Diplomatic pressure mounts as ${ev.region} situation worsens`,
+`Markets react to ${ev.title}: oil, gold move on escalation fears`,
+`${ev.region}: UN emergency session called as crisis deepens`,
+`Analysis — What the latest ${ev.title} developments mean`,
+`${ev.title}: Key parties exchange accusations amid stalled talks`,
+`How ${ev.region} could reshape global alliances this year`,
+];
+return [...sides].sort((a,b)=>a.m-b.m).map((s,i)=>{
+const ts = now-(s.m*60000);
+return{outlet:s.outlet, alignment:s.al, time:timeAgo(ts), ts,
+headline:hlines[i]||hlines[0],
+excerpt:`${s.outlet} reporting on ${ev.title}. ${ev.econContext?.substring(0,120)||''}`,
+url:'#'};
+});
+}
+
+window.fetchNews = fetchNewsReal;
+
+document.getElementById('see-all-count').textContent = events.length;
+loadUser();
+renderList('military');
+tabRendered['map'] = true;
+
+// ── Visibility API — pause timers when tab is hidden ───────────
+let _refreshPaused = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    _refreshPaused = true;
+  } else {
+    _refreshPaused = false;
+    // Immediate refresh on return: markets, alerts, news timestamps
+    fetchMarketData();
+    fetchCryptoPrices();
+    if(currentEvent != null) fetchNewsStub(currentEvent);
+    const arts = liveNews[currentEvent];
+    if(arts){ arts.forEach(a=>{a.time=timeAgo(a.ts);}); renderFeedHTML(arts,currentTabIdx); }
+  }
+});
+
+// Refresh on window focus (user switches back from another window)
+window.addEventListener('focus', () => {
+  if(!_refreshPaused){
+    fetchMarketData();
+    updateTicker();
+  }
+});
+
+
+// Browser back/forward button support
+window.addEventListener('popstate', (e) => {
+  if(e.state?.conflict != null){
+    openEvent(e.state.conflict);
+  } else {
+    goBack();
+  }
+});
+initMap();
+initTimelineBar();
+fetchCryptoPrices();
+trackReferral();
+loadSettings();
+// Ensure map renders correctly on first load (fixes Safari/Chrome mobile)
+setTimeout(()=>{if(leafletMap)leafletMap.invalidateSize();},300);
+
+
+requestAnimationFrame(() => {
+  setTimeout(() => {
+    fetchMarketData();
+    setTimeout(pollAlerts, 5000);
+    setTimeout(detectNewConflicts, 8000);
+    setInterval(detectNewConflicts, 4*60*60*1000);
+    setTimeout(() => {
+      if (!localStorage.getItem('wcl_email_prompted')) {
+        localStorage.setItem('wcl_email_prompted','1');
+        openModal('modal-email');
+      }
+    }, 45000);
+  }, 300);
+});
+
+if (currentLang !== 'en') {
+document.getElementById('html-root').setAttribute('dir', LANGUAGES.find(l=>l.code===currentLang)?.rtl?'rtl':'ltr');
+if (txCache[currentLang]) applyTranslations(txCache[currentLang]);
+}
+checkSharedConflict();
