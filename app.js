@@ -794,7 +794,12 @@ function initMap(){
 if(typeof L === 'undefined'){
   setTimeout(initMap, 150); return;
 }
-leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:false,scrollWheelZoom:false,minZoom:1,maxZoom:10});
+// Ensure container has height before Leaflet init (fixes iOS Safari)
+const mapEl = document.getElementById('conflict-map');
+if(mapEl && mapEl.offsetHeight === 0){
+  mapEl.style.height = '300px';
+}
+leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:false,scrollWheelZoom:false,minZoom:1,maxZoom:10,tap:false});
 L.control.zoom({position:'bottomright'}).addTo(leafletMap);
 
 
@@ -1463,7 +1468,10 @@ fetchCryptoPrices();
 trackReferral();
 loadSettings();
 // Ensure map renders correctly on first load (fixes Safari/Chrome mobile)
-setTimeout(()=>{if(leafletMap)leafletMap.invalidateSize();},300);
+// Multiple invalidateSize calls handle iOS Safari's delayed rendering
+setTimeout(()=>{if(leafletMap){leafletMap.invalidateSize(true);}},300);
+setTimeout(()=>{if(leafletMap){leafletMap.invalidateSize(true);}},800);
+setTimeout(()=>{if(leafletMap){leafletMap.invalidateSize(true);}},1500);
 
 
 requestAnimationFrame(() => {
