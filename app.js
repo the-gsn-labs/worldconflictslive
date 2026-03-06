@@ -126,29 +126,45 @@ function checkWaitlistState() {
 }
 
 // Convert flag emoji to styled country code (works on all platforms including Windows)
-function flagsToCode(flagStr) {
-  if (!flagStr) return '';
-  // Extract regional indicator letters: 🇮🇱 = U+1F1EE U+1F1F1 → "IL"
+// Detect Windows — no native flag emoji support
+const _isWindows = /Win/i.test(navigator.platform || navigator.userAgentData?.platform || '');
+
+function _extractCodes(flagStr) {
+  // Extract ISO country codes from flag emoji regional indicators
   const codes = [];
   const chars = [...flagStr];
   let i = 0;
   while (i < chars.length) {
     const cp = chars[i].codePointAt(0);
-    // Regional indicator symbols: U+1F1E6–U+1F1FF
     if (cp >= 0x1F1E6 && cp <= 0x1F1FF) {
       const c1 = String.fromCodePoint(cp - 0x1F1E6 + 65);
       const cp2 = chars[i+1]?.codePointAt(0);
       if (cp2 >= 0x1F1E6 && cp2 <= 0x1F1FF) {
-        const c2 = String.fromCodePoint(cp2 - 0x1F1E6 + 65);
-        codes.push(c1 + c2);
+        codes.push(c1 + String.fromCodePoint(cp2 - 0x1F1E6 + 65));
         i += 2;
       } else { i++; }
-    } else if (cp === 0x1F4BB || cp === 0x1F310 || cp === 0x1F6E1) {
-      // 💻🌐🛡 — cyber/global icons, skip
-      i++;
     } else { i++; }
   }
-  return codes.join('·');
+  return codes;
+}
+
+function flagsToCode(flagStr) {
+  if (!flagStr) return '';
+  if (!_isWindows) {
+    // iOS, Android, macOS — show native emoji (best visual experience)
+    // Filter out non-flag emoji like 💻🌐🛡
+    return [...flagStr].filter(c => {
+      const cp = c.codePointAt(0);
+      return cp >= 0x1F1E6 && cp <= 0x1F1FF;
+    }).reduce((acc, c, i, arr) => {
+      // Pair consecutive regional indicators into flag emoji
+      if (i % 2 === 0 && arr[i+1]) return acc + c + arr[i+1] + ' ';
+      if (i % 2 === 0) return acc + c;
+      return acc;
+    }, '').trim() || _extractCodes(flagStr).join('·');
+  }
+  // Windows: styled text badge
+  return _extractCodes(flagStr).join('·');
 }
 
 
@@ -205,7 +221,7 @@ openModal('modal-all-conflicts');
 }
 
 async function fetchMarketData(){
-for(const s of [{id:'rtx',sym:'RTX'},{id:'lmt',sym:'LMT'}]){
+for(const s of [{id:'rtx',sym:'RTX'},{id:'lmt',sym:'LMT'},{id:'gold',sym:'GLD'},{id:'crude',sym:'USO'}]){
 try{
 const r=await fetch(`/api/markets?symbol=${s.sym}&fn=GLOBAL_QUOTE`);
 const d=await r.json();const q=d['Global Quote'];
@@ -226,6 +242,20 @@ renderTop10();renderConflictAssets();renderMarkets();renderMovers();
 
 if(!tabRendered['markets']) tabRendered['markets'] = false;
 setTimeout(fetchMarketData,60000);
+}
+
+// Crypto prices — refresh every 90s via free CoinGecko API (no key needed)
+async function fetchCryptoPrices(){
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true',{signal:AbortSignal.timeout(5000)});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d.bitcoin) cryptoData.BTC='$'+d.bitcoin.usd.toLocaleString()+(d.bitcoin.usd_24h_change>0?` <span class="t-up">+${d.bitcoin.usd_24h_change.toFixed(1)}%</span>`:`<span class="t-dn">${d.bitcoin.usd_24h_change.toFixed(1)}%</span>`);
+    if(d.ethereum) cryptoData.ETH='$'+d.ethereum.usd.toLocaleString()+(d.ethereum.usd_24h_change>0?` <span class="t-up">+${d.ethereum.usd_24h_change.toFixed(1)}%</span>`:`<span class="t-dn">${d.ethereum.usd_24h_change.toFixed(1)}%</span>`);
+    if(d.solana) cryptoData.SOL='$'+d.solana.usd.toFixed(0)+(d.solana.usd_24h_change>0?` <span class="t-up">+${d.solana.usd_24h_change.toFixed(1)}%</span>`:`<span class="t-dn">${d.solana.usd_24h_change.toFixed(1)}%</span>`);
+    updateTicker();
+  }catch(e){}
+  setTimeout(fetchCryptoPrices,90000);
 }
 
 const sparkCache = {};
@@ -264,7 +294,12 @@ const mkts=[
 `◆ RTX <span class="${liveMarkets.rtx?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.rtx?.price||'—'} ${liveMarkets.rtx?.change||''}</span>`,
 `◆ LMT <span class="${liveMarkets.lmt?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.lmt?.price||'—'} ${liveMarkets.lmt?.change||''}</span>`,
 ].join('  ');
-document.getElementById('ticker-all').innerHTML=crypto+'  &nbsp;  '+mkts;
+document.const tickerAll = document.getElementById('ticker-all');
+tickerAll.innerHTML=crypto+'  &nbsp;  '+mkts;
+// Dynamic speed: scale duration to content length so text never bunches or rushes
+const textLen = tickerAll.textContent.length;
+const dur = Math.max(40, Math.min(130, textLen * 0.38));
+tickerAll.style.animationDuration = dur + 's';
 }
 
 function renderTop10(){
@@ -379,21 +414,62 @@ openModal('modal-market');
 
 const FREE_LIMIT=3;
 async function fetchNewsStub(id){
-
+  // Wire to real RSS fetch for the conflict's query
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  const now = Date.now();
+  if (liveNews[id] && newsCacheTimes[id] && (now - newsCacheTimes[id]) < NEWS_CACHE_TTL) return;
+  // Show quick placeholder while loading
+  const quick = getFallbackArticles(ev);
+  liveNews[id] = quick;
+  renderFeedHTML(quick, currentTabIdx);
+  // Fetch real articles
+  try {
+    const feeds = getNewsFeeds(ev);
+    const results = await Promise.allSettled(
+      feeds.slice(0,3).map(f => fetchRssFeed(f))
+    );
+    let articles = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+    if (articles.length === 0) articles = quick;
+    articles.sort((a,b) => b.ts - a.ts);
+    liveNews[id] = articles;
+    newsCacheTimes[id] = now;
+    if (currentEvent === id) {
+      if (currentLang !== 'en') {
+        const tx = await translateArticles(articles, currentLang);
+        liveNews[id] = tx;
+      }
+      renderFeedHTML(liveNews[id], currentTabIdx);
+    }
+  } catch(e) {
+    console.warn('[news] fetch failed:', e.message);
+    renderFeedHTML(quick, currentTabIdx);
+  }
 }
 
 function startNewsRefresh(){
 stopNewsRefresh();
+// Every 8s: update timestamps (e.g. "3m ago" → "4m ago")
 newsRefreshTimer=setInterval(()=>{
-const arts=liveNews[currentEvent];
-if(!arts)return;
-
-arts.forEach(a=>{a.time=timeAgo(a.ts);});
-arts.sort((a,b)=>b.ts-a.ts);
-renderFeedHTML(arts,currentTabIdx);
+  const arts=liveNews[currentEvent];
+  if(!arts)return;
+  arts.forEach(a=>{a.time=timeAgo(a.ts);});
+  arts.sort((a,b)=>b.ts-a.ts);
+  renderFeedHTML(arts,currentTabIdx);
 },8000);
+// Every 3 min: re-fetch fresh articles for current conflict
+newsRefetchTimer=setInterval(()=>{
+  if(currentEvent!=null){
+    delete newsCacheTimes[currentEvent]; // bust cache
+    fetchNewsStub(currentEvent);
+  }
+},180000);
 }
-function stopNewsRefresh(){if(newsRefreshTimer){clearInterval(newsRefreshTimer);newsRefreshTimer=null;}}
+function stopNewsRefresh(){
+if(newsRefreshTimer){clearInterval(newsRefreshTimer);newsRefreshTimer=null;}
+if(newsRefetchTimer){clearInterval(newsRefetchTimer);newsRefetchTimer=null;}
+}
+
 function timeAgo(d){
 if(!d)return'';const diff=(Date.now()-(typeof d==='number'?d:new Date(d)))/1000;
 if(diff<60)return`${Math.floor(diff)}s ago`;if(diff<3600)return`${Math.floor(diff/60)}m ago`;
@@ -404,7 +480,19 @@ async function openEvent(id){
 haptic('light');
 currentEvent=id;stopNewsRefresh();if(leafletMap)leafletMap.closePopup();
 closeBottomSheet();
-const ev=events.find(e=>e.id===id);lastScreen=ev.cat==='unrest'?'unrest':ev.cat==='cyber'?'cyber':'map';
+const ev=events.find(e=>e.id===id);
+if(!ev){console.warn('[openEvent] event not found:',id);return;}
+// Update meta tags for social sharing / browser tab
+const desc=`${ev.title} — Live tracking: casualties, market impact, news sources on World Conflicts Live`;
+document.title=`${ev.title} | World Conflicts Live`;
+document.querySelector('meta[name="description"]')?.setAttribute('content',desc);
+document.querySelector('meta[property="og:title"]')?.setAttribute('content',`${ev.title} | World Conflicts Live`);
+document.querySelector('meta[property="og:description"]')?.setAttribute('content',desc);
+document.querySelector('meta[property="og:url"]')?.setAttribute('content',`${location.origin}/?conflict=${id}`);
+document.querySelector('meta[name="twitter:title"]')?.setAttribute('content',`${ev.title} | World Conflicts Live`);
+document.querySelector('meta[name="twitter:description"]')?.setAttribute('content',desc);
+// Update URL without reload (enables back button + sharing)
+history.pushState({conflict:id},ev.title,`?conflict=${id}`);lastScreen=ev.cat==='unrest'?'unrest':ev.cat==='cyber'?'cyber':'map';
 document.getElementById('d-flags').textContent=flagsToCode(ev.flags);
 document.getElementById('d-title').textContent=ev.title;
 document.getElementById('d-summary').textContent=(ev.econContext||'').substring(0,200);
@@ -561,10 +649,12 @@ async function pollAlerts(){
 try{
 const criticalEvents=events.filter(e=>e.sev==='critical').slice(0,2);
 for(const ev of criticalEvents){
-const resp=await fetch(`/api/news?q=${encodeURIComponent(ev.query)}&pageSize=3`);
-const data=await resp.json();
-if(data.status==='ok'&&data.articles?.length){
-const latest=data.articles[0];const latestTs=new Date(latest.publishedAt).getTime();
+// Use RSS feed instead of missing /api/news endpoint
+const feeds=getNewsFeeds(ev);
+if(!feeds.length) continue;
+const articles=await fetchRssFeed(feeds[0]);
+if(articles.length){
+const latest=articles[0];const latestTs=new Date(latest.ts||Date.now());ishedAt).getTime();
 if(latestTs>(alertsData[0]?.ts||0)&&latest.title!==latestAlertHeadline){
 latestAlertHeadline=latest.title;
 alertsData.unshift({id:`live_${Date.now()}`,icon:'🔴',type:'breaking',title:latest.title,conflict:ev.title,eventId:ev.id,time:'Just now',ts:latestTs,unread:true});
@@ -666,7 +756,12 @@ document.querySelectorAll('.nav-item,.top-nav-btn').forEach(n=>n.classList.remov
 const scr=document.getElementById('screen-'+tab);
 if(scr)scr.classList.add('active');
 // Force Leaflet to recalculate map size when map tab becomes visible
-if(tab==='map'&&leafletMap){setTimeout(()=>leafletMap.invalidateSize(),50);}
+if(tab==='map'&&leafletMap){
+  // Multiple invalidations handle Safari's rendering pipeline
+  leafletMap.invalidateSize(true);
+  setTimeout(()=>leafletMap.invalidateSize(true),100);
+  setTimeout(()=>leafletMap.invalidateSize(true),400);
+}
 if(el&&el.classList){el.classList.add('active');}
 else{
 const order=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
@@ -703,8 +798,12 @@ renderBatch();
 let mapMode='default';let clusterGroup=null;let tileLayers={};
 function initMap(){
 if(typeof L === 'undefined'){
-
-setTimeout(initMap, 100); return;
+  setTimeout(initMap, 150); return;
+}
+// Ensure the map container has dimensions before init
+const mapEl = document.getElementById('conflict-map');
+if(!mapEl || mapEl.offsetWidth === 0){
+  setTimeout(initMap, 150); return;
 }
 leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:false,scrollWheelZoom:false,minZoom:1,maxZoom:10});
 L.control.zoom({position:'bottomright'}).addTo(leafletMap);
@@ -771,7 +870,7 @@ mapMarkers=[];
 events.forEach(ev=>{
 if(!ev.lat||!ev.lng)return;
 const color=evColor(ev);
-const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin${ev.sev==='critical'?' pulse':''}" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label">${flagsToCode(ev.flags)} ${ev.parties}</div></div>`,iconSize:[220,56],iconAnchor:[110,22],popupAnchor:[0,-24]});
+const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin${ev.sev==='critical'?' pulse':''}" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label">${flagsToCode(ev.flags)} ${ev.parties}</div></div>`,iconSize:[180,46],iconAnchor:[90,18],popupAnchor:[0,-24]});
 const marker=L.marker([ev.lat,ev.lng],{icon});
 const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;}).join('');
 marker.bindPopup(`<div class="map-popup"><div class="mpp-flags">${flagsToCode(ev.flags)}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">${T('detail_read')}</button></div>`,{maxWidth:280,minWidth:230});
@@ -780,6 +879,8 @@ marker.on('click',()=>{if(window.innerWidth<768)openConflictSheet(ev.id);});
 if(clusterEnabled&&clusterGroup){clusterGroup.addLayer(marker);}else{marker.addTo(leafletMap);}
 mapMarkers.push(marker);
 });
+// Ensure map redraws correctly on all browsers
+setTimeout(()=>{if(leafletMap)leafletMap.invalidateSize(true);},100);
 }
 
 function openConflictSheet(id){
@@ -965,6 +1066,12 @@ document.getElementById('screen-map')?.scrollTo(0,0);
 window.scrollTo(0,0);
 }
 function goBack(){
+// Reset meta tags to default
+document.title='World Conflicts Live — Every Source · Every Side · No Agenda';
+document.querySelector('meta[name="description"]')?.setAttribute('content','Real-time conflict tracking across 27+ active conflicts. Live market impact, AI analysis, every source, every side. No agenda.');
+document.querySelector('meta[property="og:title"]')?.setAttribute('content','World Conflicts Live — Every Source · Every Side · No Agenda');
+document.querySelector('meta[property="og:url"]')?.setAttribute('content','https://worldconflictslive.vercel.app/');
+history.pushState({},'','/');
 const order=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
 const i=order.indexOf(lastScreen);
 switchTab(lastScreen,document.querySelectorAll('.nav-item')[Math.max(0,i)]);
@@ -977,7 +1084,30 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('clic
 
 let toastTimer;
 function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
-function toggleRow(row){const t=row.querySelector('.toggle');if(t){t.classList.toggle('on');showToast(t.classList.contains('on')?T('toast_enabled'):T('toast_disabled'));}}
+function toggleRow(row){
+  const t=row.querySelector('.toggle');
+  if(!t)return;
+  t.classList.toggle('on');
+  showToast(t.classList.contains('on')?T('toast_enabled'):T('toast_disabled'));
+  // Persist all toggle states to localStorage
+  const states={};
+  document.querySelectorAll('.settings-row').forEach((r,i)=>{
+    const tog=r.querySelector('.toggle');
+    if(tog) states['toggle_'+i]=tog.classList.contains('on');
+  });
+  try{localStorage.setItem('wcl_settings',JSON.stringify(states));}catch(e){}
+}
+function loadSettings(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('wcl_settings')||'{}');
+    document.querySelectorAll('.settings-row').forEach((r,i)=>{
+      const tog=r.querySelector('.toggle');
+      if(tog&&saved['toggle_'+i]!==undefined){
+        tog.classList.toggle('on',saved['toggle_'+i]);
+      }
+    });
+  }catch(e){}
+}
 
 function submitEmail(){
 const email=sanitizeEmail(document.getElementById('email-input').value);
@@ -1037,6 +1167,13 @@ document.getElementById('cyber-list').innerHTML=filtered.length
 function openShareModal(){
 const ev=events.find(e=>e.id===currentEvent);if(!ev)return;
 const url=`${location.origin}${location.pathname}?conflict=${ev.id}`;
+const shareText=`${flagsToCode(ev.flags)} ${ev.title} — Live conflict tracking on World Conflicts Live`;
+// Use native share sheet on mobile if available
+if(navigator.share){
+  navigator.share({title:ev.title,text:shareText,url}).catch(()=>{});
+  return;
+}
+// Fallback: show share modal with copy link
 document.getElementById('share-conflict-name').textContent=`${flagsToCode(ev.flags)} ${ev.title}`;
 document.getElementById('share-url-box').textContent=url;
 document.getElementById('share-url-box').dataset.url=url;
@@ -1122,7 +1259,7 @@ btn.style.color=following?'var(--amber)':'rgba(255,255,255,.4)';
 btn.style.borderColor=following?'rgba(217,140,10,.4)':'var(--border)';
 }
 
-const NEWS_CACHE_TTL = 120000;
+const NEWS_CACHE_TTL = 180000; // 3 min
 const newsCacheTimes = {};
 
 function getRssFeeds(ev) {
@@ -1318,29 +1455,62 @@ document.getElementById('see-all-count').textContent = events.length;
 loadUser();
 renderList('military');
 tabRendered['map'] = true;
+
+// ── Visibility API — pause timers when tab is hidden ───────────
+let _refreshPaused = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    _refreshPaused = true;
+  } else {
+    _refreshPaused = false;
+    // Immediate refresh on return: markets, alerts, news timestamps
+    fetchMarketData();
+    fetchCryptoPrices();
+    if(currentEvent != null) fetchNewsStub(currentEvent);
+    const arts = liveNews[currentEvent];
+    if(arts){ arts.forEach(a=>{a.time=timeAgo(a.ts);}); renderFeedHTML(arts,currentTabIdx); }
+  }
+});
+
+// Refresh on window focus (user switches back from another window)
+window.addEventListener('focus', () => {
+  if(!_refreshPaused){
+    fetchMarketData();
+    updateTicker();
+  }
+});
+
+
+// Browser back/forward button support
+window.addEventListener('popstate', (e) => {
+  if(e.state?.conflict != null){
+    openEvent(e.state.conflict);
+  } else {
+    goBack();
+  }
+});
 initMap();
 initTimelineBar();
+fetchCryptoPrices();
 trackReferral();
+loadSettings();
 // Ensure map renders correctly on first load (fixes Safari/Chrome mobile)
 setTimeout(()=>{if(leafletMap)leafletMap.invalidateSize();},300);
 
 
 requestAnimationFrame(() => {
-setTimeout(() => {
-
-fetchMarketData();
-
-setTimeout(pollAlerts, 5000);
-setTimeout(detectNewConflicts, 8000);
-setInterval(detectNewConflicts, 4*60*60*1000);
-
-setTimeout(() => {
-if (!localStorage.getItem('wcl_email_prompted')) {
-localStorage.setItem('wcl_email_prompted','1');
-openModal('modal-email');
-}
-}, 45000);
-}, 300);
+  setTimeout(() => {
+    fetchMarketData();
+    setTimeout(pollAlerts, 5000);
+    setTimeout(detectNewConflicts, 8000);
+    setInterval(detectNewConflicts, 4*60*60*1000);
+    setTimeout(() => {
+      if (!localStorage.getItem('wcl_email_prompted')) {
+        localStorage.setItem('wcl_email_prompted','1');
+        openModal('modal-email');
+      }
+    }, 45000);
+  }, 300);
 });
 
 if (currentLang !== 'en') {
