@@ -682,8 +682,7 @@ return`<div class="event-card" onclick="openEvent(${ev.id})">
 <div class="type-badge ${tbClass}">${tbLabel}</div>
 <div class="ec-summary">${(ev.econContext||'').substring(0,100)}…</div>
 <div class="ec-footer">
-<span class="ec-footer-label"
-<span class="ec-cta">${T('detail_read')}</span>
+<span class="ec-footer-label">${ev.startYear||''} · ${ev.casualties?(ev.casualties>999?Math.round(ev.casualties/1000)+'k cas.':ev.casualties+' cas.'):ev.region}</span> <span class="ec-cta">${T('detail_read')}</span>
 </div>
 ${chips?`<div class="mkt-ribbon">${chips}</div>`:''}
 </div>`;
@@ -1499,7 +1498,4 @@ requestAnimationFrame(() => {
 });
 
 if (currentLang !== 'en') {
-document.getElementById('html-root').setAttribute('dir', LANGUAGES.find(l=>l.code===currentLang)?.rtl?'rtl':'ltr');
-if (txCache[currentLang]) applyTranslations(txCache[currentLang]);
-}
-checkSharedConflict();
+document.getElementById('html-root').setAttribute('dir', LANGUAGES.fin
