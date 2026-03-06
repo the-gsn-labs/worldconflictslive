@@ -175,6 +175,115 @@ source_class_label:'Source Classification',
   // Generic
   read_more:'READ →',all_sides:'All sides · Live news',
   see_all:'See all',mark_read:'Mark all read',
+  'nav_profile':'Profile',
+  'map_wordmark_sub':'Live Conflict Intelligence',
+  'map_legend_critical':'Critical',
+  'map_legend_high':'High',
+  'map_legend_terrorism':'Terrorism',
+  'map_legend_unrest':'Unrest',
+  'map_legend_humanitarian':'Humanitarian',
+  'filter_all':'All',
+  'filter_military':'Military',
+  'filter_unrest':'Unrest',
+  'filter_humanitarian':'Aid',
+  'filter_terrorism':'Terror',
+  'filter_critical':'Critical',
+  'timeline_showing':'Timeline',
+  'see_all_conflicts':'See All Conflicts',
+  'cat_military':'Military',
+  'cat_unrest':'Unrest',
+  'cat_humanitarian':'Humanitarian',
+  'cat_terrorism':'Terrorism',
+  'loading':'Loading…',
+  'unrest_title':'Civil Unrest',
+  'unrest_sub':'PROTESTS · COUPS · ELECTIONS',
+  'filter_protest':'Protests',
+  'filter_coup':'Coups',
+  'filter_revolution':'Revolutions',
+  'filter_election':'Elections',
+  'markets_title':'Markets',
+  'markets_sub':'CONFLICT-DRIVEN MARKET INTELLIGENCE',
+  'top10_title':'Top Movers',
+  'conflict_assets_title':'Conflict Assets',
+  'top_winning':'Gaining',
+  'top_losing':'Losing',
+  'loading_markets':'Loading markets…',
+  'back':'← Back',
+  'source_class':'Source Classification',
+  'tab_all':'All',
+  'tab_state':'State',
+  'tab_aligned':'Aligned',
+  'tab_indep':'Independent',
+  'tab_opp':'Opposition',
+  'tab_timeline':'Timeline',
+  'tab_economic':'Economic',
+  'alerts_title':'Alerts',
+  'breaking_news':'Breaking',
+  'filter_breaking':'Breaking',
+  'filter_market':'Markets',
+  'filter_following':'Following',
+  'language_sub':'SELECT LANGUAGE',
+  'world_analyst':'World Analyst',
+  'free_plan':'Free Plan',
+  'go_premium':'Go Premium',
+  'prem_price':'$6.99 / MONTH · CANCEL ANYTIME',
+  'prem_1':'✓ AI Analyst — instant conflict intelligence',
+  'prem_2':'✓ Escalation alerts — email + push',
+  'prem_3':'✓ Portfolio impact tracker',
+  'prem_4':'✓ Daily briefing email',
+  'prem_5':'✓ No ads. Ever.',
+  'prem_6':'✓ 14-day free trial',
+  'settings':'Settings',
+  's_breaking':'Breaking conflict alerts',
+  's_market':'Market impact alerts',
+  's_digest':'Daily digest email',
+  's_labels':'Source classification labels',
+  's_security':'Security alerts',
+  's_language':'Language',
+  'viz_conflicts':'Active Conflicts',
+  'viz_displaced':'Displaced',
+  'viz_casualties':'Casualties',
+  'viz_deaths_note':'Estimated deaths',
+  'viz_cost':'Economic Cost',
+  'viz_cas_title':'Casualties by Conflict',
+  'viz_dis_title':'Displacement',
+  'viz_flow_title':'Refugee Flows',
+  'viz_econ_title':'Economic Impact',
+  'viz_timeline_title':'Conflict Timeline',
+  'ai_sub':'ASK ANYTHING · PREMIUM FEATURE',
+  'ai_lock_icon_label':'Premium Feature',
+  'ai_lock_desc':'AI Analyst gives instant sourced answers on any conflict.',
+  'cyber_title':'Cyber Ops',
+  'cyber_sub':'STATE-SPONSORED CYBER OPERATIONS',
+  'cyber_threat_title':'Active Threat',
+  'cyber_threats_title':'Cyber Threats',
+  'nav_map':'Map',
+  'nav_unrest':'Unrest',
+  'nav_cyber':'Cyber',
+  'nav_viz':'Data',
+  'nav_markets':'Markets',
+  'nav_alerts':'Alerts',
+  'nav_ai':'AI',
+  'nav_language':'Language',
+  'all_conflicts_title':'All Conflicts',
+  'close':'Close',
+  'read_full':'Read Full Article',
+  'why_moving':'Why It's Moving',
+  'related':'Related Conflicts',
+  'stay_informed':'Stay Informed',
+  'email_desc':'Get breaking conflict alerts and market impact updates.',
+  'get_alerts':'Get Alerts',
+  'maybe_later':'Maybe Later',
+  'privacy':'We never spam. Unsubscribe anytime.',
+  'unlock_title':'Unlock Full Spectrum',
+  'unlock_desc':'Upgrade to access all articles and sources.',
+  'upgrade_cta':'Upgrade to Premium',
+  'stay_free':'Stay on Free',
+  'modal_share_title':'Share Conflict',
+  'profile_create':'Create Account',
+  'upgrade':'Get Early Access',
+  'not_now':'Not now',
+  'start_trial':'Get Early Access →',
 };
 
 
@@ -182,6 +291,9 @@ source_class_label:'Source Classification',
 // Convert a single flag emoji to its ISO 2-letter country code (cross-platform)
 function flagCode(flag) {
   if (!flag) return '';
+  // On non-Windows: return emoji directly for native rendering
+  if (typeof _isWindows !== 'undefined' && !_isWindows) return flag;
+  // On Windows: convert to 2-letter ISO code
   const chars = [...flag];
   const cp1 = chars[0]?.codePointAt(0);
   const cp2 = chars[1]?.codePointAt(0);
@@ -189,7 +301,7 @@ function flagCode(flag) {
     return String.fromCodePoint(cp1 - 0x1F1E6 + 65) +
            String.fromCodePoint(cp2 - 0x1F1E6 + 65);
   }
-  return flag; // fallback: return as-is (non-flag emoji)
+  return flag;
 }
 function buildLangGrid(){
 document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>
@@ -576,7 +688,7 @@ const marketDefs=[
 ];
 const winnerDefs=[{id:'rtx',icon:'🏭',name:'Raytheon',ticker:'RTX'},{id:'lmt',icon:'🚀',name:'Lockheed',ticker:'LMT'},{id:'gold',icon:'🥇',name:'Gold',ticker:'XAU'},{id:'crude',icon:'🛢️',name:'Brent Crude',ticker:'BRT'},{id:'natgas',icon:'🔥',name:'Nat. Gas',ticker:'TTF'}];
 const loserDefs=[{icon:'✈️',name:'Airlines Index',ticker:'XAL',change:'-2.1%',dir:'dn'},{icon:'🏨',name:'Tourism ETF',ticker:'AWAY',change:'-1.4%',dir:'dn'},{icon:'🚢',name:'Dry Bulk Shipping',ticker:'BDIY',change:'-3.2%',dir:'dn'},{icon:'💱',name:'Egyptian Pound',ticker:'EGP',change:'-2.8%',dir:'dn'},{icon:'💊',name:'EM Pharma ETF',ticker:'EMPH',change:'-0.9%',dir:'dn'}];
-const mktFallback={crude:{price:'$87.42',change:'+3.2%',dir:'up',raw:87.42},gold:{price:'$2,381',change:'+1.8%',dir:'up',raw:2381},natgas:{price:'$3.82',change:'+5.1%',dir:'up',raw:3.82},wheat:{price:'$6.42',change:'+4.1%',dir:'up',raw:6.42},rub:{price:'92.40',change:'+0.8%',dir:'dn',raw:92.4},ils:{price:'3.84',change:'+1.2%',dir:'up',raw:3.84},rtx:{price:'$108.40',change:'+2.8%',dir:'up',raw:108.4},lmt:{price:'$472.50',change:'+1.9%',dir:'up',raw:472.5}};
+const mktFallback={crude:{price:'$71.20',change:'+0.8%',dir:'up',raw:71.2},gold:{price:'$3,085',change:'+1.2%',dir:'up',raw:3085},natgas:{price:'$4.10',change:'+2.1%',dir:'up',raw:4.1},wheat:{price:'$5.48',change:'-0.9%',dir:'dn',raw:5.48},rub:{price:'89.50',change:'+0.4%',dir:'dn',raw:89.5},ils:{price:'3.71',change:'-0.6%',dir:'dn',raw:3.71},rtx:{price:'$135.80',change:'+1.4%',dir:'up',raw:135.8},lmt:{price:'$489.20',change:'+0.9%',dir:'up',raw:489.2}};
 const cryptoData={BTC:'$83,420',ETH:'$2,041',XRP:'$2.21',SOL:'$135.40',BNB:'$598',AVAX:'$22.10',DOGE:'$0.172',ADA:'$0.71'};
 mktFallback.eur={price:'$1.07',change:'-0.3%',dir:'dn',raw:1.07};mktFallback.rsd={price:'116',change:'+0.8%',dir:'dn',raw:116};mktFallback.uah={price:'41.2',change:'+1.2%',dir:'dn',raw:41.2};mktFallback.try={price:'33.5',change:'+0.5%',dir:'dn',raw:33.5};mktFallback.copper={price:'$4.48',change:'+1.1%',dir:'up',raw:4.48};
 let liveMarkets={};let liveNews={};let currentEvent=0;let lastScreen='map';
