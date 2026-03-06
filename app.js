@@ -1,5 +1,6 @@
 function evColor(e){if(e.cat==='cyber')return'#67e8f9';if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
 const tabRendered = {};
+var newsRefetchTimer;
 function parseEmoji(el){} // Twemoji disabled - causes layout issues
 // ── Input Sanitization (OWASP A03 — Injection Prevention) ──────────
 function sanitizeInput(str, maxLen=200) {
