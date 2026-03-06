@@ -126,45 +126,35 @@ function checkWaitlistState() {
 }
 
 // Convert flag emoji to styled country code (works on all platforms including Windows)
-// Detect Windows — no native flag emoji support
-const _isWindows = /Win/i.test(navigator.platform || navigator.userAgentData?.platform || '');
-
-function _extractCodes(flagStr) {
-  // Extract ISO country codes from flag emoji regional indicators
+function _emojiToISO(flagStr) {
+  if (!flagStr) return [];
   const codes = [];
   const chars = [...flagStr];
   let i = 0;
   while (i < chars.length) {
     const cp = chars[i].codePointAt(0);
-    if (cp >= 0x1F1E6 && cp <= 0x1F1FF) {
-      const c1 = String.fromCodePoint(cp - 0x1F1E6 + 65);
-      const cp2 = chars[i+1]?.codePointAt(0);
+    if (cp >= 0x1F1E6 && cp <= 0x1F1FF && chars[i+1]) {
+      const cp2 = chars[i+1].codePointAt(0);
       if (cp2 >= 0x1F1E6 && cp2 <= 0x1F1FF) {
-        codes.push(c1 + String.fromCodePoint(cp2 - 0x1F1E6 + 65));
-        i += 2;
-      } else { i++; }
-    } else { i++; }
+        const a = String.fromCodePoint(cp  - 0x1F1E6 + 65);
+        const b = String.fromCodePoint(cp2 - 0x1F1E6 + 65);
+        codes.push(a + b);
+        i += 2; continue;
+      }
+    }
+    i++;
   }
   return codes;
 }
-
+// Returns HTML using flag-icons CSS — works on ALL platforms including Windows
 function flagsToCode(flagStr) {
-  if (!flagStr) return '';
-  if (!_isWindows) {
-    // iOS, Android, macOS — show native emoji (best visual experience)
-    // Filter out non-flag emoji like 💻🌐🛡
-    return [...flagStr].filter(c => {
-      const cp = c.codePointAt(0);
-      return cp >= 0x1F1E6 && cp <= 0x1F1FF;
-    }).reduce((acc, c, i, arr) => {
-      // Pair consecutive regional indicators into flag emoji
-      if (i % 2 === 0 && arr[i+1]) return acc + c + arr[i+1] + ' ';
-      if (i % 2 === 0) return acc + c;
-      return acc;
-    }, '').trim() || _extractCodes(flagStr).join('·');
-  }
-  // Windows: styled text badge
-  return _extractCodes(flagStr).join('·');
+  const codes = _emojiToISO(flagStr);
+  if (!codes.length) return '';
+  return codes.map(c => '<span class="fi fi-' + c.toLowerCase() + '" title="' + c + '"></span>').join(' ');
+}
+// Plain text — for SVG elements, window.title, navigator.share text
+function flagsToText(flagStr) {
+  return _emojiToISO(flagStr).join('·');
 }
 
 
@@ -493,7 +483,7 @@ document.querySelector('meta[name="twitter:title"]')?.setAttribute('content',`${
 document.querySelector('meta[name="twitter:description"]')?.setAttribute('content',desc);
 // Update URL without reload (enables back button + sharing)
 history.pushState({conflict:id},ev.title,`?conflict=${id}`);lastScreen=ev.cat==='unrest'?'unrest':ev.cat==='cyber'?'cyber':'map';
-document.getElementById('d-flags').textContent=flagsToCode(ev.flags);
+document.getElementById('d-flags').innerHTML=flagsToCode(ev.flags);
 document.getElementById('d-title').textContent=ev.title;
 document.getElementById('d-summary').textContent=(ev.econContext||'').substring(0,200);
 document.getElementById('d-meta').innerHTML=`
@@ -800,11 +790,6 @@ function initMap(){
 if(typeof L === 'undefined'){
   setTimeout(initMap, 150); return;
 }
-// Ensure the map container has dimensions before init
-const mapEl = document.getElementById('conflict-map');
-if(!mapEl || mapEl.offsetWidth === 0){
-  setTimeout(initMap, 150); return;
-}
 leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:false,scrollWheelZoom:false,minZoom:1,maxZoom:10});
 L.control.zoom({position:'bottomright'}).addTo(leafletMap);
 
@@ -1040,7 +1025,7 @@ const x1=toX(ev.startYear),x2=toX(now),y=12+i*18;
 const col=evColor(ev);
 html+=`<line x1="${x1}" y1="${y+5}" x2="${x2}" y2="${y+5}" stroke="${col}" stroke-width="8" opacity="0.35" stroke-linecap="round"/>
 <circle cx="${x1}" cy="${y+5}" r="4" fill="${col}" opacity="0.9"/>
-<text x="${Math.max(x1-4,40)}" y="${y}" font-size="8" fill="rgba(255,255,255,.45)">${flagsToCode(ev.flags)} ${ev.title.substring(0,22)}</text>`;
+<text x="${Math.max(x1-4,40)}" y="${y}" font-size="8" fill="rgba(255,255,255,.45)">${flagsToText(ev.flags)} ${ev.title.substring(0,22)}</text>`;
 });
 svg.innerHTML=html;
 }
@@ -1167,14 +1152,14 @@ document.getElementById('cyber-list').innerHTML=filtered.length
 function openShareModal(){
 const ev=events.find(e=>e.id===currentEvent);if(!ev)return;
 const url=`${location.origin}${location.pathname}?conflict=${ev.id}`;
-const shareText=`${flagsToCode(ev.flags)} ${ev.title} — Live conflict tracking on World Conflicts Live`;
+const shareText=`${flagsToText(ev.flags)} ${ev.title} — Live conflict tracking on World Conflicts Live`;
 // Use native share sheet on mobile if available
 if(navigator.share){
   navigator.share({title:ev.title,text:shareText,url}).catch(()=>{});
   return;
 }
 // Fallback: show share modal with copy link
-document.getElementById('share-conflict-name').textContent=`${flagsToCode(ev.flags)} ${ev.title}`;
+document.getElementById('share-conflict-name').innerHTML=flagsToCode(ev.flags)+' <span style="font-weight:600">'+ev.title+'</span>';
 document.getElementById('share-url-box').textContent=url;
 document.getElementById('share-url-box').dataset.url=url;
 openModal('modal-share');
