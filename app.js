@@ -469,22 +469,6 @@ if(diff<86400)return`${Math.floor(diff/3600)}h ago`;return`${Math.floor(diff/864
 }
 
 
-// Translation stub - returns articles as-is (full translation via /api/translate)
-async function translateArticles(articles, lang){
-  try {
-    const res = await fetch('/api/translate', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({articles, lang})
-    });
-    if(!res.ok) return articles;
-    const data = await res.json();
-    return data.articles || articles;
-  } catch(e) {
-    return articles;
-  }
-}
-
 async function openEvent(id){
 haptic('light');
 currentEvent=id;stopNewsRefresh();if(leafletMap)leafletMap.closePopup();
@@ -647,21 +631,6 @@ const filtered=type==='all'?alertsData:type==='following'?alertsData.filter(a=>a
 renderAlertsList(filtered);
 }
 function renderAlerts(){renderAlertsList(alertsData);}
-
-function buildLangGrid(){
-  var el=document.getElementById('lang-grid');
-  if(!el||el.children.length>0)return;
-  var html='';
-  LANGUAGES.forEach(function(l){
-    var active=l.code===currentLang?' lang-active':'';
-    var fc=flagCode(l.flag);
-    html+='<div class="lang-tile'+active+'" data-lang="'+l.code+'" onclick="setLang(this.dataset.lang)">'
-      +'<span class="fi fi-'+fc+'" style="width:20px;height:15px;display:inline-block;margin-bottom:4px;"></span>'
-      +'<div style="font-family:var(--mono);font-size:10px;letter-spacing:.04em;">'+l.native+'</div>'
-      +'</div>';
-  });
-  el.innerHTML=html;
-}
 
 function renderAlertsList(list){
 document.getElementById('alerts-list').innerHTML=list.length?list.map(a=>{
