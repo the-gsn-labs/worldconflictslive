@@ -1,1496 +1,664 @@
-function evColor(e){if(e.cat==='cyber')return'#67e8f9';if(e.cat==='terrorism')return'#d07ef5';if(e.cat==='humanitarian')return'#6fffa0';if(e.cat==='unrest')return'#ffd47a';return{critical:'#c8321e',high:'#d98c0a',medium:'#c8b800'}[e.sev]||'#aaa';}
-const tabRendered = {};
-function parseEmoji(el){} // Twemoji disabled - causes layout issues
-// ── Input Sanitization (OWASP A03 — Injection Prevention) ──────────
-function sanitizeInput(str, maxLen=200) {
-  if (typeof str !== 'string') return '';
-  return str
-    .slice(0, maxLen)
-    .replace(/[<>]/g, '')           // strip HTML brackets
-    .replace(/javascript:/gi, '')   // strip JS protocol
-    .replace(/on\w+\s*=/gi, '')     // strip event handlers
-    .trim();
-}
-function sanitizeEmail(str) {
-  const s = sanitizeInput(str, 254);
-  // Basic RFC 5321 format check
-  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? s : '';
-}
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+<style id="x">body{margin:0;background:#07090a;color:#f0ede8;font-family:Impact,"Arial Narrow",system-ui,sans-serif}.skel-card{height:116px;margin:0 18px 12px;border-radius:14px;background:linear-gradient(90deg,#111416 25%,#181c20 50%,#111416 75%);background-size:200% 100%;animation:sk 1.2s ease infinite}@keyframes sk{0%{background-position:200%}100%{background-position:-200%}}</style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>World Conflicts Live — Every Source · Every Side · No Agenda</title>
+<meta name="description" content="Real-time conflict tracking across 27+ active conflicts. Live market impact, AI analysis, every source, every side. No agenda."/>
+<meta name="keywords" content="world conflicts live, conflict tracker, war map, geopolitical risk, live conflict news, military conflicts 2025, Gaza war, Ukraine war, global conflicts map"/>
+<meta name="author" content="World Conflicts Live"/>
+<meta name="robots" content="index, follow"/>
+<meta name="theme-color" content="#07090a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="canonical" href="https://worldconflictslive.vercel.app/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="World Conflicts Live"/>
+<meta property="og:title" content="World Conflicts Live — Every Source · Every Side · No Agenda"/>
+<meta property="og:description" content="Real-time tracking of 27+ active conflicts. Live market impact, AI analysis, breaking alerts. The world's most complete conflict intelligence platform."/>
+<meta property="og:url" content="https://worldconflictslive.vercel.app/"/>
+<meta property="og:image" content="https://worldconflictslive.vercel.app/og-image.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:locale" content="en_US"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@worldconflictslive"/>
+<meta name="twitter:title" content="World Conflicts Live — Every Source · Every Side · No Agenda"/>
+<meta name="twitter:description" content="Real-time tracking of 27+ active conflicts. Live market impact, AI analysis, breaking alerts."/>
+<meta name="twitter:image" content="https://worldconflictslive.vercel.app/og-image.png"/>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"World Conflicts Live","url":"https://worldconflictslive.vercel.app","description":"Real-time conflict tracking across 27+ active global conflicts with live market impact analysis, AI-powered intelligence, and multi-source news aggregation.","applicationCategory":"NewsApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"NewsMediaOrganization","name":"World Conflicts Live","url":"https://worldconflictslive.vercel.app","description":"Conflict intelligence platform aggregating global news sources across active military conflicts, civil unrest, terrorism, and humanitarian crises."},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How many conflicts does World Conflicts Live track?","acceptedAnswer":{"@type":"Answer","text":"World Conflicts Live tracks 27+ active global conflicts across military, civil unrest, terrorism, cyber, and humanitarian categories in real time."}},{"@type":"Question","name":"Is World Conflicts Live free?","acceptedAnswer":{"@type":"Answer","text":"Yes. The core conflict tracker, map, market data, and news feed are free. Premium features including AI Analyst, escalation alerts, and no ads are coming soon."}},{"@type":"Question","name":"How often does the data update?","acceptedAnswer":{"@type":"Answer","text":"Market prices update every 60 seconds. News articles refresh every 3 minutes. Breaking alerts are checked every 60 seconds."}}]}]}
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/7.2.3/css/flag-icons.min.css'"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://api.coingecko.com"/>
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>
+<link rel="dns-prefetch" href="https://api.rss2json.com"/>
+<link rel="dns-prefetch" href="https://news.google.com"/>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" onerror="this.onerror=null;this.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<style>@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');:root{--ink:#0c0e12;--surface:#13161b;--surface2:#181c22;--surface3:#1e2229;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);--paper:#e8e4d8;--red:#c8321e;--red2:#e03d27;--amber:#d98c0a;--green:#1fa355;--blue:#2c7be5;--purple:#9b4dca;--mono:'IBM Plex Mono','Fira Code','Roboto Mono',ui-monospace,monospace;--display:'Barlow Condensed','Arial Narrow',ui-sans-serif,system-ui,sans-serif;--body:'Barlow','Inter',ui-sans-serif,system-ui,sans-serif;--serif:Georgia,'Times New Roman',serif;--emoji:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;--nav-h:54px;--ticker-h:24px;--glow-red:0 0 16px rgba(200,50,30,0.2)}*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}html{font-size:16px}body{background:var(--ink);color:var(--paper);font-family:var(--body);overflow-x:hidden;font-weight:400;letter-spacing:.01em;font-size:14px}body::before{display:none}.emoji,.lang-flag,.nav-icon,.mpp-flags,#d-flags,.event-flags,.ticker-flag,.ec-flags{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;white-space:nowrap;line-height:1}.lang-flag{font-size:26px;font-family:"Noto Color Emoji",var(--emoji),sans-serif;display:block;margin-bottom:6px;line-height:1.2;text-align:center}.mpp-flags{font-size:24px;margin-bottom:5px;letter-spacing:2px}a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer}[dir="rtl"]{direction:rtl;text-align:right}.ticker-wrap{position:fixed;top:0;left:0;right:0;z-index:700;background:var(--red);height:var(--ticker-h);display:flex;align-items:center;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.08)}.ticker-lbl{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.7);padding:0 12px;flex-shrink:0;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.28);letter-spacing:.12em;text-transform:uppercase;height:100%;border-right:1px solid rgba(255,255,255,.12)}.live-pulse{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s ease-in-out infinite}.ticker-inner{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:#fff;white-space:nowrap;animation:ticker 100s linear infinite}@keyframes ticker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}.t-up{color:#a0ffb8;font-weight:500}.t-dn{color:#ffb3a8;font-weight:500}.alert-banner{display:none;position:fixed;top:var(--ticker-h);left:0;right:0;z-index:690;background:linear-gradient(90deg,rgba(180,30,10,.98),rgba(200,50,30,.95));padding:10px 18px;font-family:var(--mono);font-size:11px;color:#fff;cursor:pointer;animation:slideDown .35s cubic-bezier(.16,1,.3,1);border-bottom:1px solid rgba(255,255,255,.1)}.alert-banner.show{display:flex;align-items:center;gap:10px}@keyframes slideDown{from{transform:translateY(-100%)}to{transform:none}}.ab-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1s infinite;flex-shrink:0}.ab-close{margin-left:auto;opacity:.5;font-size:18px;padding:2px 6px;background:none;border:none;color:#fff;cursor:pointer;line-height:1}@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}.top-nav{display:none;position:fixed;left:0;right:0;z-index:600;background:rgba(7,9,10,0.96);border-bottom:1px solid var(--border);height:var(--nav-h)}.top-nav-inner{max-width:1600px;margin:0 auto;display:flex;align-items:center;padding:0 28px;height:100%;gap:8px}.top-wordmark{font-family:var(--display);font-size:24px;font-weight:900;letter-spacing:.06em;flex-shrink:0;margin-right:24px;cursor:pointer;text-transform:uppercase}.top-wordmark span{color:var(--red2)}.top-nav-links{display:flex;gap:2px;flex:1}.top-nav-btn{padding:7px 13px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);background:none;border:none;border-radius:6px;cursor:pointer;transition:all .18s;white-space:nowrap}.top-nav-btn:hover{color:var(--paper);background:rgba(255,255,255,.05)}.top-nav-btn.active{color:var(--paper);background:rgba(200,50,30,.15);border:1px solid rgba(200,50,30,.3)}.top-nav-right{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--red2);letter-spacing:.12em}.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red2);animation:blink 1.4s ease-in-out infinite;flex-shrink:0}.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(7,9,10,.97);border-top:1px solid var(--border);display:flex;z-index:600;padding:5px 0 env(safe-area-inset-bottom,5px)}.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;cursor:pointer;border:none;background:none;color:rgba(255,255,255,.25);transition:color .2s}.nav-item.active{color:var(--paper)}.nav-icon{font-size:17px;line-height:1}.nav-label{font-family:var(--mono);font-size:7.5px;letter-spacing:.06em;text-transform:uppercase}.nav-pip{width:16px;height:2px;border-radius:1px;background:var(--red2);opacity:0;transition:opacity .2s;margin-top:2px}.nav-item.active .nav-pip{opacity:1}.app-body{padding-top:var(--ticker-h);padding-bottom:72px}.screen{display:none;min-height:calc(100vh - var(--ticker-h) - 72px);animation:fadeIn .2s ease}.screen.active{display:block}@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}.page-head{padding:20px 18px 14px}.page-title{font-family:var(--display);font-size:38px;font-weight:900;letter-spacing:.04em;line-height:1;text-transform:uppercase}.page-sub{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-top:5px}.inner-pad{padding:0 18px}.pill{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:6px;font-family:var(--mono);font-size:10px;cursor:pointer;white-space:nowrap;border:1px solid var(--border);color:rgba(255,255,255,.4);transition:all .18s;letter-spacing:.04em;text-transform:uppercase;font-weight:500}.pill.active,.pill:hover{border-color:var(--red2);color:var(--paper);background:rgba(200,50,30,.12)}.pill.active{box-shadow:0 0 0 1px rgba(200,50,30,.2)}.scroll-row{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:8px 18px}.scroll-row::-webkit-scrollbar{display:none}.sev-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}.sev-critical{background:#c8321e;box-shadow:0 0 8px rgba(200,50,30,.6)}.sev-high{background:#d98c0a;box-shadow:0 0 6px rgba(217,140,10,.5)}.sev-medium{background:#c8b800}.sev-low{background:#1fa355}.up{color:#1fa355}.dn{color:#c8321e}.up-bg{background:rgba(31,163,85,.14);color:#4ade80;padding:2px 8px;border-radius:4px;font-weight:500}.dn-bg{background:rgba(200,50,30,.14);color:#f87171;padding:2px 8px;border-radius:4px;font-weight:500}.toast{position:fixed;top:calc(var(--ticker-h)+10px);left:50%;transform:translateX(-50%);background:#1a1d20;border:1px solid rgba(255,255,255,.14);color:var(--paper);border-radius:8px;padding:11px 20px;font-family:var(--mono);font-size:11px;white-space:nowrap;z-index:800;opacity:0;pointer-events:none;transition:opacity .25s;box-shadow:0 12px 40px rgba(0,0,0,.7)}.toast.show{opacity:1}.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 20px;gap:14px}.spinner{width:24px;height:24px;border:2px solid rgba(255,255,255,.08);border-top-color:var(--red);border-radius:50%;animation:spin .75s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.loading-text{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase}.error-box{margin:16px 18px;background:rgba(200,50,30,.08);border:1px solid rgba(200,50,30,.2);border-radius:10px;padding:16px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.45);line-height:1.8}.btn{width:100%;padding:14px;border:none;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .2s;display:block}.btn:active{transform:scale(.98)}.btn-red{background:var(--red2);color:#fff}.btn-red:hover{background:#d94530}.btn-amber{background:var(--amber);color:#07090a}.btn-amber:hover{background:#e89510}.btn-ghost{background:transparent;color:rgba(255,255,255,.3);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--border2);color:rgba(255,255,255,.5)}.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.84);z-index:700;align-items:flex-end;justify-content:center}.modal-overlay.open{display:flex}.modal-sheet{background:#111416;border-radius:18px 18px 0 0;width:100%;max-width:580px;border-top:1px solid rgba(255,255,255,.09);animation:slideUp .3s cubic-bezier(.16,1,.3,1);max-height:92vh;overflow-y:auto}@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}.modal-handle{width:40px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);margin:14px auto 0}.modal-pad{padding:22px 24px 44px}.email-input{width:100%;padding:13px 15px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--paper);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:10px;transition:border-color .2s}.email-input:focus{border-color:rgba(255,255,255,.22)}.map-header{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start}.wordmark{font-family:var(--display);font-size:28px;font-weight:900;letter-spacing:.06em;line-height:1;cursor:pointer;text-transform:uppercase}.wordmark span{color:var(--red2)}.slogan-text{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.12em;text-transform:uppercase;margin-top:3px}.live-row{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--red2);letter-spacing:.12em}#conflict-map{width:100%;height:320px;min-height:280px;max-height:420px;z-index:1;position:relative;background:#0b111e}.leaflet-container{background:#1c2236 !important}.leaflet-tile{filter:brightness(1.9) contrast(0.9) saturate(0.75)}.leaflet-control-attribution{display:none !important}.leaflet-popup-content-wrapper{background:#111416 !important;border:1px solid var(--border2) !important;border-radius:14px !important;box-shadow:0 12px 48px rgba(0,0,0,.8) !important;padding:0 !important}.leaflet-popup-content{margin:0 !important;padding:0 !important}.leaflet-popup-tip{background:#111416 !important}.leaflet-popup-close-button{color:rgba(255,255,255,.35) !important;top:10px !important;right:12px !important;font-size:18px !important}.conflict-marker{display:flex;flex-direction:column;align-items:center;cursor:pointer}.marker-pin{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid currentColor;background:rgba(7,9,10,.92)}.marker-pin.pulse{animation:mpulse 3s ease-out infinite;will-change:box-shadow}@keyframes mpulse{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}.marker-label{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.6);white-space:nowrap;margin-top:2px;letter-spacing:.04em;text-shadow:0 1px 5px #000,0 0 10px #000}.map-hint{text-align:center;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.18);padding:5px 0;letter-spacing:.06em}.map-popup{padding:15px 17px 17px}.mpp-flags{font-size:22px;margin-bottom:5px;letter-spacing:2px}.mpp-title{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:.04em;color:var(--paper);margin-bottom:2px;text-transform:uppercase}.mpp-region{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}.mpp-btn{width:100%;padding:10px;background:var(--red2);color:#fff;border:none;border-radius:8px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .2s}.mpp-btn:hover{background:#d94530}.map-legend{display:flex;gap:14px;padding:7px 18px 10px;flex-wrap:wrap}.ml-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.04em}.ml-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}.map-timeline-bar{margin:0 18px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px}.mtb-label{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}.mtb-range{display:flex;align-items:center;gap:8px}.mtb-track{flex:1;height:3px;background:rgba(255,255,255,.08);border-radius:2px;position:relative;cursor:pointer}.mtb-fill{height:100%;background:var(--red2);border-radius:2px;transition:width .3s}.mtb-handle{position:absolute;top:50%;right:0;transform:translate(50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--red2);border:2px solid var(--paper);cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.5)}.mtb-dates{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);margin-top:4px}.mtb-showing{font-family:var(--mono);font-size:10px;color:var(--paper)}.cat-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}.cat-tabs::-webkit-scrollbar{display:none}.cat-tab{flex:1;min-width:fit-content;padding:12px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);cursor:pointer;text-align:center;background:none;border:none;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;font-weight:500}.cat-tab.active{color:var(--paper);border-bottom-color:var(--red2)}.see-all-btn{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 18px 14px;padding:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s}.see-all-btn:hover{border-color:var(--red2);color:var(--paper);background:rgba(200,50,30,.08)}.see-all-count{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--red2);color:#fff;font-size:10px;font-weight:700}.event-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:8px;padding:16px 16px 13px;margin-bottom:7px;cursor:pointer;transition:all .18s ease}.event-card:hover{border-color:var(--border2);border-left-color:var(--red2);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,.3)}.ec-title{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.03em;line-height:1.1;flex:1;text-transform:uppercase}.ec-meta{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.28);margin-top:3px;letter-spacing:.04em}.ec-summary{font-family:var(--display);font-size:15px;font-weight:400;color:rgba(255,255,255,.45);line-height:1.65;margin-bottom:10px}.type-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:5px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;font-weight:500}.tb-military{background:rgba(200,50,30,.18);color:#ff8a7a;border:1px solid rgba(200,50,30,.3)}.tb-unrest{background:rgba(217,140,10,.18);color:#ffd47a;border:1px solid rgba(217,140,10,.3)}.tb-humanitarian{background:rgba(31,163,85,.14);color:#6fffa0;border:1px solid rgba(31,163,85,.25)}.tb-terrorism{background:rgba(155,77,202,.18);color:#d07ef5;border:1px solid rgba(155,77,202,.3)}.tb-cyber{background:rgba(103,232,249,.1);color:#67e8f9;border:1px solid rgba(103,232,249,.25)}.mkt-ribbon{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-top:10px;border-top:1px solid var(--border);margin-top:10px}.mkt-ribbon::-webkit-scrollbar{display:none}.mkt-chip{display:flex;flex-direction:column;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;flex-shrink:0;min-width:72px;cursor:pointer;transition:all .18s}.mkt-chip:hover{border-color:rgba(255,255,255,.18);transform:translateY(-1px)}.mc-name{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);margin-bottom:2px;letter-spacing:.05em}.mc-val{font-family:var(--mono);font-size:13px;font-weight:500}.mc-chg{font-family:var(--mono);font-size:9px;margin-top:1px}.detail-hero{padding:18px 18px 20px;background:linear-gradient(180deg,rgba(30,10,5,.8) 0%,var(--ink) 100%);border-bottom:1px solid var(--border)}.back-btn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.3);cursor:pointer;margin-bottom:14px;display:inline-flex;align-items:center;gap:5px;border:none;background:none;text-transform:uppercase;padding:0;transition:color .2s}.back-btn:hover{color:var(--paper)}.d-title{font-family:var(--display);font-size:36px;font-weight:900;letter-spacing:.04em;line-height:1;margin-bottom:8px;text-transform:uppercase}.news-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}.news-tabs::-webkit-scrollbar{display:none}.ntab{padding:12px 12px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;border:none;background:none;font-weight:500}.ntab.active{color:var(--paper);border-bottom-color:var(--red2)}.article-card{padding:15px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}.article-card:hover{background:rgba(255,255,255,.02)}.art-outlet{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.38);letter-spacing:.06em}.art-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2)}.art-headline{font-family:var(--display);font-size:17px;font-weight:700;line-height:1.3;margin:5px 0;letter-spacing:.02em}.art-excerpt{font-family:var(--display);font-size:14px;font-weight:400;color:rgba(255,255,255,.4);line-height:1.7;margin-bottom:8px}.align-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-family:var(--mono);font-size:9px;letter-spacing:.05em;font-weight:500}.locked-article{padding:15px 18px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}.locked-blur{filter:blur(5px);opacity:.35;pointer-events:none;user-select:none}.locked-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(7,9,10,.7);backdrop-filter:blur(3px);cursor:pointer}.locked-badge{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(217,140,10,.3);padding:5px 14px;border-radius:6px;background:rgba(217,140,10,.1)}.tl-item{display:flex;gap:14px;padding:0 18px 20px}.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--red2);flex-shrink:0;margin-top:4px;box-shadow:0 0 8px rgba(200,50,30,.5)}.tl-date{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);margin-bottom:4px;letter-spacing:.06em}.tl-event{font-family:var(--display);font-size:15px;font-weight:500;line-height:1.65;color:rgba(255,255,255,.75)}.tl-tag{display:inline-block;font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:3px;margin-top:5px;font-weight:500}.tl-graph{margin:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;overflow:hidden}.tl-graph-header{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}.tl-graph-range{font-family:var(--mono);font-size:9px;color:var(--red2);letter-spacing:.06em}.tl-graph-canvas{position:relative;overflow-x:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}.tl-graph-canvas::-webkit-scrollbar{height:3px}.tl-graph-canvas::-webkit-scrollbar-track{background:transparent}.tl-graph-canvas::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}.mkt-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s,box-shadow .2s}.mkt-card:hover{border-color:rgba(255,255,255,.12);transform:translateY(-1px);box-shadow:0 8px 32px rgba(0,0,0,.4)}.mkc-head{padding:15px 16px 10px;display:flex;align-items:center;gap:13px}.mkc-price{font-family:var(--mono);font-size:20px;font-weight:500}.mkt-context{padding:10px 16px 14px;border-top:1px solid var(--border);font-family:var(--display);font-size:14px;color:rgba(255,255,255,.45);line-height:1.75}.mkt-links{padding:0 16px 14px;display:flex;gap:7px;flex-wrap:wrap}.mkt-link-tag{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:5px;background:rgba(200,50,30,.1);color:var(--red2);border:1px solid rgba(200,50,30,.2);cursor:pointer;transition:background .15s;font-weight:500}.mkt-link-tag:hover{background:rgba(200,50,30,.22)}.mover-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .18s}.mover-row:hover{border-color:rgba(255,255,255,.14);transform:translateY(-1px)}.mr-name{font-family:var(--display);font-size:15px;font-weight:700;line-height:1.2;letter-spacing:.02em}.mr-ticker{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.04em}.assets-section{margin:0 0 20px}.assets-header{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:14px 18px 8px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:8px}.assets-header-dot{width:6px;height:6px;border-radius:50%}.asset-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}.asset-row:hover{background:rgba(255,255,255,.02)}.asset-rank{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.2);width:20px;text-align:center;flex-shrink:0}.asset-icon{font-size:20px;flex-shrink:0}.asset-info{flex:1}.asset-name{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.02em}.asset-ticker{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.04em}.asset-price{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right}.asset-mcap{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);text-align:right;margin-top:1px}.asset-chg{font-family:var(--mono);font-size:11px;font-weight:500;text-align:right;min-width:52px}.asset-bar{height:3px;border-radius:2px;margin-top:3px;transition:width .6s ease}.conflict-assets-section{margin:0 0 20px;background:rgba(200,50,30,.04);border-top:1px solid rgba(200,50,30,.15);border-bottom:1px solid rgba(200,50,30,.15)}.alert-item{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:background .15s}.alert-item:hover{background:rgba(255,255,255,.02)}.alert-item.unread{border-left:2px solid var(--red2);padding-left:16px}.al-conflict{font-family:var(--mono);font-size:9px;color:var(--red2);letter-spacing:.1em;margin-bottom:3px;text-transform:uppercase}.al-title{font-family:var(--display);font-size:16px;font-weight:600;line-height:1.35;margin-bottom:3px}.al-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2)}.lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 18px 28px}.lang-flag-code{font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.06em;background:rgba(255,255,255,.07);border:1px solid var(--border2);border-radius:4px;padding:2px 5px;color:var(--paper);flex-shrink:0}.lang-btn{padding:12px 8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .18s;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.04em;font-weight:400}.lang-btn:hover,.lang-btn.active{border-color:var(--red2);color:var(--paper);background:rgba(200,50,30,.12)}.lang-btn.active{box-shadow:0 0 0 1px rgba(200,50,30,.25)}.lang-name{font-size:11px;line-height:1.3}.econ-panel{margin:15px 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}.econ-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}.econ-title{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:500}.econ-context{padding:14px 16px;font-family:var(--display);font-size:14px;color:rgba(255,255,255,.5);line-height:1.75;border-bottom:1px solid var(--border)}.econ-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}.econ-row:last-child{border-bottom:none}.econ-row:hover{background:rgba(255,255,255,.02)}.er-name{font-family:var(--display);font-size:15px;font-weight:700}.er-why{font-family:var(--display);font-size:12px;color:rgba(255,255,255,.35);line-height:1.5}.er-price{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right;flex-shrink:0}.er-chg{font-family:var(--mono);font-size:10px;text-align:right;margin-top:2px}.profile-hero{padding:24px 18px 28px;background:linear-gradient(180deg,var(--surface) 0%,var(--ink) 100%);border-bottom:1px solid var(--border);text-align:center}.premium-box{margin:18px;background:linear-gradient(135deg,#140e00,#1a0e07);border:1px solid rgba(217,140,10,.28);border-radius:14px;padding:22px}.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}.settings-row:hover{background:rgba(255,255,255,.02)}.settings-row-label{font-family:var(--display);font-size:15px;font-weight:600}.toggle{width:42px;height:23px;border-radius:12px;background:rgba(255,255,255,.08);position:relative;transition:background .2s;flex-shrink:0}.toggle.on{background:var(--red2)}.t-knob{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}.toggle.on .t-knob{left:22px}@media(min-width:900px){:root{--nav-h:58px}.top-nav{display:flex;top:var(--ticker-h)}.bottom-nav{display:none}.app-body{padding-top:calc(var(--ticker-h)+var(--nav-h));padding-bottom:0}.screen{min-height:calc(100vh - var(--ticker-h) - var(--nav-h))}.dw{max-width:1600px;margin:0 auto;padding:24px 28px 48px}#screen-map .dw{display:grid;grid-template-columns:1fr 440px;gap:24px;align-items:start}#screen-map .map-col{position:sticky;top:calc(var(--ticker-h)+var(--nav-h)+20px)}#screen-map .map-header{padding:0 0 14px}#conflict-map{height:440px;border-radius:14px;border:1px solid var(--border)}#screen-map .scroll-row{padding:10px 0}#screen-map #conflict-list{padding:0}#screen-map .see-all-btn{margin:0 0 14px}#screen-markets .dw{display:grid;grid-template-columns:1fr 1fr;gap:24px}#screen-markets .page-head{grid-column:1/-1;padding:0 0 14px}#screen-markets .markets-right{grid-column:2;grid-row:2/5}#screen-markets .markets-left{grid-column:1;grid-row:2}#screen-markets .conflict-assets-full{grid-column:1/-1}.lang-grid{grid-template-columns:repeat(5,1fr)}.page-head{padding:0 0 16px}.scroll-row{padding:0 0 12px}#screen-detail .dw,#screen-alerts .dw,#screen-language .dw{max-width:860px}#screen-profile .dw{max-width:680px}}@media(min-width:1200px){#screen-map .dw{grid-template-columns:1fr 500px}#conflict-map{height:500px}.lang-grid{grid-template-columns:repeat(6,1fr)}.ec-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px}.ec-info{flex:1;min-width:0}.ec-title-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}.ec-footer{display:flex;justify-content:space-between;align-items:center;margin-top:5px}.ec-footer-label{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22)}.ec-cta{font-family:var(--mono);font-size:10px;color:var(--red2);font-weight:500}@media(max-width:768px){*{transition-duration:0.1s !important}.modal-sheet{transition:transform 0.2s ease !important}.bottom-sheet{transition:transform 0.2s ease !important}.event-card:active{transform:scale(0.98);transition:transform 0.1s}}@media(max-width:768px){.screen.active{transform:translateZ(0)}.event-card{transform:translateZ(0)}.bottom-nav{backdrop-filter:none;-webkit-backdrop-filter:none}.top-nav{backdrop-filter:none;-webkit-backdrop-filter:none}}.leaflet-container{will-change:transform}.screen:not(.active){content-visibility:auto;contain-intrinsic-size:0 600px}.screen{contain:layout style}.skel{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 75%);background-size:400% 100%;animation:skel-shine 1.4s ease infinite;border-radius:6px}@keyframes skel-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}.skel-card{height:96px;margin:0 18px 10px;border-radius:12px}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px;margin-bottom:16px}.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;overflow:hidden}.stat-num{font-family:var(--display);font-size:28px;font-weight:900;letter-spacing:.02em;line-height:1}.stat-lbl{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.12em;text-transform:uppercase;margin-top:4px}.stat-delta{font-family:var(--mono);font-size:10px;margin-top:6px}.casualty-bar-wrap{margin:0 18px 16px}.casualty-bar-item{margin-bottom:10px}.cb-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.cb-name{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.05em}.cb-val{font-family:var(--display);font-size:14px;font-weight:700}.cb-track{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}.cb-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.16,1,.3,1)}.viz-section{margin:0 18px 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}.viz-head{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}.viz-title{font-family:var(--display);font-size:16px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}.viz-body{padding:14px 16px}.map-ctrl-row{position:absolute;top:10px;right:10px;z-index:500;display:flex;flex-direction:column;gap:6px}.map-ctrl-btn{width:34px;height:34px;border-radius:8px;background:rgba(7,9,10,.92);border:1px solid rgba(255,255,255,.1);color:var(--paper);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.4)}.map-ctrl-btn:hover,.map-ctrl-btn.mctrl-active{background:rgba(200,50,30,.3);border-color:var(--red2)}.marker-cluster{background:rgba(200,50,30,.18) !important;border:2px solid rgba(200,50,30,.5) !important}.marker-cluster div{background:rgba(200,50,30,.85) !important;color:#fff !important;font-family:'DM Mono',monospace !important;font-size:11px !important}.bottom-sheet{position:fixed;bottom:0;left:0;right:0;z-index:800;background:var(--surface2);border-top:1px solid var(--border2);border-radius:20px 20px 0 0;transform:translateY(110%);transition:transform .4s cubic-bezier(.16,1,.3,1);padding-bottom:calc(env(safe-area-inset-bottom,0px)+80px);max-height:85vh;overflow-y:auto}.bottom-sheet.bs-open{transform:translateY(0)}.bs-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.14);margin:12px auto 16px}.bs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:799;opacity:0;pointer-events:none;transition:opacity .3s}.bs-overlay.bs-show{opacity:1;pointer-events:all}.ai-lock{text-align:center;padding:52px 24px}.ai-lock-icon{font-size:56px;margin-bottom:16px}.ai-lock-title{font-family:var(--display);font-size:34px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px}.ai-lock-desc{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);line-height:1.9;letter-spacing:.04em;margin-bottom:22px}.ai-feature-list{text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:22px}.ai-feature-item{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);padding:8px 0;border-bottom:1px solid var(--border);letter-spacing:.04em;display:flex;align-items:flex-start;gap:8px}.ai-feature-item:last-child{border-bottom:none;padding-bottom:0}.ai-feature-item .fi-icon{color:var(--amber);flex-shrink:0}.sev-bars{display:inline-flex;gap:2px;align-items:flex-end;vertical-align:middle}.sev-bar{width:3px;border-radius:1px;background:rgba(255,255,255,.1)}.sev-bar.lit{background:currentColor}.relation-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:9px;cursor:pointer;transition:all .18s;letter-spacing:.04em;color:rgba(255,255,255,.45)}.relation-chip:hover{border-color:var(--red2);color:var(--paper);background:rgba(200,50,30,.1)}@media(max-width:768px){#conflict-map{height:260px !important;max-height:260px !important;border-radius:10px;-webkit-transform:translateZ(0);transform:translateZ(0)}#screen-map .dw{grid-template-columns:1fr}#screen-map .map-col{position:static}.leaflet-container{-webkit-transform:translateZ(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.ec-flags .fi,.mpp-flags .fi{width:20px;height:15px;border-radius:2px;display:inline-block;background-size:cover;background-position:center;vertical-align:middle;}
+#d-flags .fi{width:28px;height:21px;border-radius:3px;display:inline-block;background-size:cover;}
+.marker-label .fi{width:14px;height:10px;border-radius:1px;display:inline-block;background-size:cover;vertical-align:middle;}
+</style>
+</head>
 
-// ── Referral system ────────────────────────────────────────────
-function getReferralCode() {
-  let code = safeStorage.getItem('wcl_ref_code');
-  if (!code) {
-    // Generate short unique code from timestamp + random
-    code = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-    safeStorage.setItem('wcl_ref_code', code);
-  }
-  return code;
-}
+</head>
+<body>
 
-function buildReferralLink() {
-  const base = window.location.origin || 'https://worldconflictslive.vercel.app';
-  return base + '/?ref=' + getReferralCode();
-}
-
-function copyReferralLink() {
-  const link = buildReferralLink();
-  // Update the displayed link
-  const el = document.getElementById('referral-link');
-  if (el) el.textContent = link;
-  // Copy to clipboard
-  navigator.clipboard?.writeText(link).then(() => {
-    const msg = document.getElementById('referral-copied');
-    if (msg) { msg.textContent = '✅ Link copied!'; setTimeout(() => msg.textContent = '', 2500); }
-  }).catch(() => {
-    // Fallback for older browsers
-    const ta = document.createElement('textarea');
-    ta.value = link; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-    const msg = document.getElementById('referral-copied');
-    if (msg) { msg.textContent = '✅ Link copied!'; setTimeout(() => msg.textContent = '', 2500); }
-  });
-}
-
-// Track incoming referral codes
-function trackReferral() {
-  const params = new URLSearchParams(window.location.search);
-  const ref = params.get('ref');
-  if (ref && /^r[a-z0-9]{6,16}$/.test(ref)) {
-    safeStorage.setItem('wcl_referred_by', ref);
-  }
-}
-
-// Update referral link display when thanks is shown
-function updateReferralDisplay() {
-  const el = document.getElementById('referral-link');
-  if (el) el.textContent = buildReferralLink();
-}
-// ── Waitlist signup ────────────────────────────────────────────
-async function submitWaitlist() {
-  const emailEl = document.getElementById('prem-email');
-  const msgEl   = document.getElementById('prem-msg');
-  const formEl  = document.getElementById('prem-form');
-  const thanksEl= document.getElementById('prem-thanks');
-
-  const email = sanitizeEmail(emailEl.value);
-  if (!email) {
-    msgEl.style.color = '#e03d27';
-    msgEl.textContent = 'Please enter a valid email address.';
-    return;
-  }
-
-  const btn = formEl.querySelector('button');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
-  msgEl.style.color = 'rgba(217,140,10,.7)';
-  msgEl.textContent = '';
-
-  try {
-    const res = await fetch('/api/waitlist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, ref: safeStorage.getItem('wcl_ref_code') || null })
-    });
-    const json = await res.json();
-
-    if (res.ok) {
-      formEl.style.display = 'none';
-      thanksEl.style.display = 'block';
-      updateReferralDisplay();
-      // Save locally so we don't prompt again
-      safeStorage.setItem('wcl_waitlist', email);
-    } else {
-      msgEl.style.color = '#e03d27';
-      msgEl.textContent = json.error || 'Something went wrong. Please try again.';
-      btn.disabled = false;
-      btn.textContent = 'GET EARLY ACCESS →';
-    }
-  } catch (e) {
-    msgEl.style.color = '#e03d27';
-    msgEl.textContent = 'Network error. Please try again.';
-    btn.disabled = false;
-    btn.textContent = 'GET EARLY ACCESS →';
-  }
-}
-
-// Auto-show thanks state if already signed up
-function checkWaitlistState() {
-  if (safeStorage.getItem('wcl_waitlist')) {
-    const f = document.getElementById('prem-form');
-    const t = document.getElementById('prem-thanks');
-    if (f) f.style.display = 'none';
-    if (t) t.style.display = 'block';
-    updateReferralDisplay();
-  }
-}
-
-// Convert flag emoji to styled country code (works on all platforms including Windows)
-function _emojiToISO(flagStr) {
-  if (!flagStr) return [];
-  const codes = [];
-  const chars = [...flagStr];
-  let i = 0;
-  while (i < chars.length) {
-    const cp = chars[i].codePointAt(0);
-    if (cp >= 0x1F1E6 && cp <= 0x1F1FF && chars[i+1]) {
-      const cp2 = chars[i+1].codePointAt(0);
-      if (cp2 >= 0x1F1E6 && cp2 <= 0x1F1FF) {
-        const a = String.fromCodePoint(cp  - 0x1F1E6 + 65);
-        const b = String.fromCodePoint(cp2 - 0x1F1E6 + 65);
-        codes.push(a + b);
-        i += 2; continue;
-      }
-    }
-    i++;
-  }
-  return codes;
-}
-// Returns HTML using flag-icons CSS — works on ALL platforms including Windows
-function flagsToCode(flagStr) {
-  const codes = _emojiToISO(flagStr);
-  if (!codes.length) return '';
-  return codes.map(c => '<span class="fi fi-' + c.toLowerCase() + '" title="' + c + '"></span>').join(' ');
-}
-// Plain text — for SVG elements, window.title, navigator.share text
-function flagsToText(flagStr) {
-  return _emojiToISO(flagStr).join('·');
-}
-
-
-
-function evEmoji(e){if(e.cat==='cyber')return'💻';if(e.cat==='terrorism')return'💥';if(e.cat==='humanitarian')return'🕊️';if(e.cat==='unrest')return'✊';return{critical:'🔴',high:'🟠',medium:'🟡'}[e.sev]||'⚪';}
-
-function initTimelineBar(){
-const track=document.getElementById('mtb-track');
-let dragging=false;
-const handle=document.getElementById('mtb-handle');
-track.addEventListener('click',(e)=>{
-const rect=track.getBoundingClientRect();
-const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
-updateTimelineRange(pct);
-});
-handle.addEventListener('mousedown',(e)=>{dragging=true;e.preventDefault();});
-document.addEventListener('mousemove',(e)=>{if(!dragging)return;const rect=track.getBoundingClientRect();const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));updateTimelineRange(pct);});
-document.addEventListener('mouseup',()=>{dragging=false;});
-handle.addEventListener('touchstart',(e)=>{dragging=true;e.preventDefault();},{passive:false});
-document.addEventListener('touchmove',(e)=>{if(!dragging)return;const rect=track.getBoundingClientRect();const pct=Math.max(0,Math.min(1,(e.touches[0].clientX-rect.left)/rect.width));updateTimelineRange(pct);},{passive:false});
-document.addEventListener('touchend',()=>{dragging=false;});
-}
-function updateTimelineRange(pct){
-document.getElementById('mtb-fill').style.width=(pct*100)+'%';
-const startYear=2022,endYear=2026;
-const cutoffYear=startYear+(endYear-startYear)*pct;
-const months=['Jan','Apr','Jul','Oct'];
-const cutoffDate=`${months[Math.floor((cutoffYear%1)*4)]} ${Math.floor(cutoffYear)}`;
-const visible=events.filter(e=>!e.startYear||(e.startYear<=(cutoffYear+.1)));
-document.getElementById('mtb-showing-label').textContent=`Up to ${cutoffDate} · ${visible.length} conflicts`;
-
-mapMarkers.forEach((m,i)=>{const ev=events[i];if(!ev)return;const show=!ev.startYear||(ev.startYear<=(cutoffYear+.1));m.setOpacity(show?1:0.15);});
-}
-
-function openAllConflictsModal(){
-const count=events.length;
-document.getElementById('all-conflicts-count').textContent=`${count} ${T("map_count_label")}`;
-document.getElementById('see-all-count').textContent=count;
-const grouped={military:[],unrest:[],humanitarian:[],terrorism:[],cyber:[]};
-events.forEach(e=>grouped[e.cat]?.push(e));
-const catLabel={military:'⚔️ Military Conflicts',unrest:'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crises',terrorism:'💥 Terrorism',cyber:'💻 Cyber Operations'};
-let html='';
-for(const[cat,evs]of Object.entries(grouped)){
-if(!evs.length)continue;
-html+=`<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;padding:10px 0 6px;">${catLabel[cat]}</div>`;
-html+=evs.map(ev=>`<div onclick="closeModal('modal-all-conflicts');openEvent(${ev.id});" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .18s;" onmouseover="this.style.borderColor='rgba(255,255,255,.14)'" onmouseout="this.style.borderColor='var(--border)'">
-<div class="ec-flags" style="font-size:11px;flex-shrink:0;">${flagsToCode(ev.flags)}</div>
-<div style="flex:1;"><div style="font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.02em;">${ev.title}</div><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);">${ev.region} · ${ev.parties}</div></div>
-<div style="display:flex;align-items:center;gap:6px;"><div class="sev-dot sev-${ev.sev}"></div><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);text-transform:uppercase;">${ev.sev}</span></div>
-</div>`).join('');
-}
-document.getElementById('all-conflicts-list').innerHTML=html;
-openModal('modal-all-conflicts');
-}
-
-async function fetchMarketData(){
-for(const s of [{id:'rtx',sym:'RTX'},{id:'lmt',sym:'LMT'},{id:'gold',sym:'GLD'},{id:'crude',sym:'USO'}]){
-try{
-const r=await fetch(`/api/markets?symbol=${s.sym}&fn=GLOBAL_QUOTE`);
-const d=await r.json();const q=d['Global Quote'];
-if(q&&q['05. price']){
-const p=parseFloat(q['05. price']).toFixed(2);
-const c=parseFloat(q['10. change percent']||'0').toFixed(2);
-liveMarkets[s.id]={price:`$${p}`,change:`${c>=0?'+':''}${c}%`,dir:c>=0?'up':'dn',raw:parseFloat(p)};
-}
-}catch(e){}
-}
-for(const[id,fb]of Object.entries(mktFallback)){if(!liveMarkets[id])liveMarkets[id]=fb;}
-updateTicker();
-addMapMarkers();
-
-if(tabRendered['markets']){
-renderTop10();renderConflictAssets();renderMarkets();renderMovers();
-}
-
-if(!tabRendered['markets']) tabRendered['markets'] = false;
-setTimeout(fetchMarketData,60000);
-}
-
-// Crypto prices — refresh every 90s via free CoinGecko API (no key needed)
-async function fetchCryptoPrices(){
-  try{
-    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true',{signal:AbortSignal.timeout(5000)});
-    if(!r.ok)return;
-    const d=await r.json();
-    if(d.bitcoin) cryptoData.BTC='$'+d.bitcoin.usd.toLocaleString()+(d.bitcoin.usd_24h_change>0?` <span class="t-up">+${d.bitcoin.usd_24h_change.toFixed(1)}%</span>`:`<span class="t-dn">${d.bitcoin.usd_24h_change.toFixed(1)}%</span>`);
-    if(d.ethereum) cryptoData.ETH='$'+d.ethereum.usd.toLocaleString()+(d.ethereum.usd_24h_change>0?` <span class="t-up">+${d.ethereum.usd_24h_change.toFixed(1)}%</span>`:`<span class="t-dn">${d.ethereum.usd_24h_change.toFixed(1)}%</span>`);
-    if(d.solana) cryptoData.SOL='$'+d.solana.usd.toFixed(0)+(d.solana.usd_24h_change>0?` <span class="t-up">+${d.solana.usd_24h_change.toFixed(1)}%</span>`:`<span class="t-dn">${d.solana.usd_24h_change.toFixed(1)}%</span>`);
-    updateTicker();
-  }catch(e){}
-  setTimeout(fetchCryptoPrices,90000);
-}
-
-const sparkCache = {};
-function makeSpark(id, dir, tall=false){
-const def = marketDefs.find(d=>d.id===id);
-const pts = def?.history || (sparkCache[id] = sparkCache[id] || Array.from({length:12},(_,i)=>{const b=liveMarkets[id]?.raw||100;return b+(dir==='up'?1:-1)*(i/11)*b*.04;}));
-const w=300, h=tall?88:44;
-const mn=Math.min(...pts), mx=Math.max(...pts);
-const sp=pts.map((v,i)=>`${(i/(pts.length-1))*w},${h-((v-mn)/(mx-mn||1))*(h-6)-3}`).join(' ');
-const col=dir==='up'?'#1fa355':'#c8321e';
-return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;"><defs><linearGradient id="sg${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity=".2"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs><polygon points="${sp} ${w},${h} 0,${h}" fill="url(#sg${id})"/><polyline points="${sp}" fill="none" stroke="${col}" stroke-width="${tall?2:1.8}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-}
-const miniSparkCache = {};
-function makeMiniSpark(dir, w=60, h=28){
-const key = dir+w+h;
-if (!miniSparkCache[key]) {
-const pts = Array.from({length:10},(_,i)=>50+(dir==='up'?1:-1)*i*2);
-const mn=Math.min(...pts), mx=Math.max(...pts);
-miniSparkCache[key] = pts.map((v,i)=>`${(i/9)*w},${h-((v-mn)/(mx-mn||1))*(h-4)-2}`).join(' ');
-}
-const col=dir==='up'?'#1fa355':'#c8321e';
-return`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:${w}px;height:${h}px;flex-shrink:0;"><polyline points="${miniSparkCache[key]}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-}
-
-function updateTicker(){
-const crypto=Object.entries(cryptoData).map(([s,p])=>`◆ ${s} <span class="t-up">${p}</span>`).join('  ');
-const mkts=[
-`◆ OIL <span class="${liveMarkets.crude?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.crude?.price||'—'} ${liveMarkets.crude?.change||''}</span>`,
-`◆ GOLD <span class="${liveMarkets.gold?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.gold?.price||'—'} ${liveMarkets.gold?.change||''}</span>`,
-`◆ SILVER <span class="t-up">$27.40 +1.1%</span>`,`◆ DXY <span class="t-dn">104.2 -0.3%</span>`,
-`◆ EUR/USD <span class="t-up">1.0821 +0.2%</span>`,`◆ USD/JPY <span class="t-dn">149.3 -0.4%</span>`,
-`◆ NATGAS <span class="${liveMarkets.natgas?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.natgas?.price||'—'} ${liveMarkets.natgas?.change||''}</span>`,
-`◆ WHEAT <span class="${liveMarkets.wheat?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.wheat?.price||'—'} ${liveMarkets.wheat?.change||''}</span>`,
-`◆ S&amp;P500 <span class="t-up">5,842 +0.6%</span>`,`◆ NASDAQ <span class="t-up">18,240 +0.8%</span>`,
-`◆ NVDA <span class="t-up">$875.40 +3.4%</span>`,`◆ AAPL <span class="t-up">$213.49 +1.2%</span>`,
-`◆ RTX <span class="${liveMarkets.rtx?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.rtx?.price||'—'} ${liveMarkets.rtx?.change||''}</span>`,
-`◆ LMT <span class="${liveMarkets.lmt?.dir==='up'?'t-up':'t-dn'}">${liveMarkets.lmt?.price||'—'} ${liveMarkets.lmt?.change||''}</span>`,
-].join('  ');
-const tickerAll = document.getElementById('ticker-all');
-tickerAll.innerHTML=crypto+'  &nbsp;  '+mkts;
-// Dynamic speed: scale duration to content length so text never bunches or rushes
-const textLen = tickerAll.textContent.length;
-const dur = Math.max(40, Math.min(130, textLen * 0.38));
-tickerAll.style.animationDuration = dur + 's';
-}
-
-function renderTop10(){
-document.getElementById('top10-list').innerHTML=TOP10_ASSETS.map(a=>{
-const barColor=a.dir==='up'?'rgba(31,163,85,.5)':'rgba(200,50,30,.5)';
-return`<div class="asset-row" onclick="showToast('${a.name} · ${a.price}')">
-<div class="asset-rank">${a.rank}</div>
-<div style="font-size:20px;flex-shrink:0;">${a.icon}</div>
-<div class="asset-info">
-<div class="asset-name">${a.name}</div>
-<div class="asset-ticker">${a.ticker}</div>
-${a.mcap!=='Commodity'?`<div style="height:2px;background:rgba(255,255,255,.05);border-radius:1px;margin-top:4px;width:100%;"><div class="asset-bar" style="width:${a.bar}%;background:${barColor};"></div></div>`:''}
+<div class="ticker-wrap">
+  <span class="ticker-lbl"><div class="live-pulse"></div>LIVE</span>
+  <div style="overflow:hidden;flex:1;">
+    <div class="ticker-inner" id="ticker-all">◆ Loading markets…</div>
+  </div>
 </div>
-<div style="text-align:right;flex-shrink:0;">
-<div class="asset-price ${a.dir==='up'?'up':'dn'}">${a.price}</div>
-<div class="asset-mcap">${a.mcap}</div>
+<div class="alert-banner" id="alert-banner" onclick="handleBannerClick()">
+  <div class="ab-dot"></div>
+  <span id="ab-text"></span>
+  <button class="ab-close" onclick="event.stopPropagation();dismissBanner()">✕</button>
 </div>
-<div class="asset-chg ${a.dir==='up'?'up':'dn'}">${a.change}</div>
-</div>`;
-}).join('');
-}
 
-function renderConflictAssets(){
-document.getElementById('conflict-assets-list').innerHTML=CONFLICT_ASSETS.map(a=>`
-<div class="mover-row" onclick="showToast('${a.name}: ${a.why}')">
-<div style="font-size:18px;flex-shrink:0;">${a.icon}</div>
-<div style="flex:1;">
-<div class="mr-name">${a.name}</div>
-<div class="mr-ticker">${a.ticker} · ${a.conflicts.join(', ')}</div>
-<div style="font-family:var(--display);font-size:12px;color:rgba(255,255,255,.35);margin-top:2px;">${a.why}</div>
+<nav class="top-nav" id="top-nav">
+  <div class="top-nav-inner">
+    <div class="top-wordmark" onclick="goHome()">WORLD<span>CONFLICTS</span>LIVE</div>
+    <div class="top-nav-links">
+      <button class="top-nav-btn active" onclick="switchTab('map',this)">🗺️ Map</button>
+      <button class="top-nav-btn" onclick="switchTab('unrest',this)">✊ Unrest</button>
+      <button class="top-nav-btn" onclick="switchTab('cyber',this)">🛡️ Cyber</button>
+      <button class="top-nav-btn" onclick="switchTab('viz',this)">📊 Data</button>
+      <button class="top-nav-btn" onclick="switchTab('markets',this)">📈 Markets</button>
+      <button class="top-nav-btn" onclick="switchTab('alerts',this)">🔔 Alerts</button>
+      <button class="top-nav-btn" onclick="switchTab('ai',this)">🤖 AI</button>
+      <button class="top-nav-btn" onclick="switchTab('language',this)">🌐 Lang</button>
+      <button class="top-nav-btn" onclick="switchTab('profile',this)" data-i18n="nav_profile">⚙️ Settings</button>
+    </div>
+    <div class="top-nav-right">
+      <button onclick="openModal('modal-account')" id="nav-acct-btn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .18s;letter-spacing:.06em;">👤 Account</button>
+      <div class="live-dot"></div><span style="font-size:10px;letter-spacing:.12em;">LIVE</span>
+    </div>
+  </div>
+</nav>
+
+<div class="app-body">
+
+<!-- ═══════════════════════════ MAP ═══════════════════════════ -->
+<div class="screen active" id="screen-map"><div class="dw">
+  <div class="map-col">
+    <div class="map-header">
+      <div>
+        <div class="wordmark" onclick="goHome()">WORLD<span>CONFLICTS</span>LIVE</div>
+        <div class="slogan-text" data-i18n="map_wordmark_sub">Every source · Every side · No agenda</div>
+      </div>
+      <div class="live-row"><div class="live-dot"></div><span>LIVE</span></div>
+    </div>
+    <div id="conflict-map"></div>
+    <div class="map-legend">
+      <div class="ml-item"><div class="ml-dot" style="background:#c8321e;box-shadow:0 0 6px rgba(200,50,30,.6);"></div><span data-i18n="map_legend_critical">Critical</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#d98c0a;box-shadow:0 0 5px rgba(217,140,10,.5);"></div><span data-i18n="map_legend_high">High</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#d07ef5;"></div><span data-i18n="map_legend_terrorism">Terrorism</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#ffd47a;"></div><span data-i18n="map_legend_unrest">Unrest</span></div>
+      <div class="ml-item"><div class="ml-dot" style="background:#6fffa0;"></div><span data-i18n="map_legend_humanitarian">Humanitarian</span></div>
+    </div>
+
+    <!-- MAP FILTER PILLS -->
+    <div class="scroll-row" id="map-filter-row">
+      <span class="pill active" onclick="filterMap('all',this)" data-i18n="filter_all">🌍 All</span>
+      <span class="pill" onclick="filterMap('military',this)" data-i18n="filter_military">⚔️ Military</span>
+      <span class="pill" onclick="filterMap('unrest',this)" data-i18n="filter_unrest">✊ Unrest</span>
+      <span class="pill" onclick="filterMap('humanitarian',this)" data-i18n="filter_humanitarian">🕊️ Humanitarian</span>
+      <span class="pill" onclick="filterMap('terrorism',this)" data-i18n="filter_terrorism">💥 Terrorism</span>
+      <span class="pill" onclick="filterMap('critical',this)" data-i18n="filter_critical">🔴 Critical</span>
+      <span class="pill" onclick="filterMap('cyber',this)">💻 Cyber</span>
+    </div>
+
+    <!-- TIMELINE RANGE BAR -->
+    <div class="map-timeline-bar">
+      <div class="mtb-label">
+        <span data-i18n="timeline_showing">Showing timeline</span>
+        <span class="mtb-showing" id="mtb-showing-label">All time · 13 conflicts</span>
+      </div>
+      <div class="mtb-range">
+        <span style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);">2022</span>
+        <div class="mtb-track" id="mtb-track">
+          <div class="mtb-fill" id="mtb-fill" style="width:100%;"></div>
+          <div class="mtb-handle" id="mtb-handle"></div>
+        </div>
+        <span style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);">Now</span>
+      </div>
+      <div class="mtb-dates" id="mtb-dates">
+        <span>Jan 2022</span><span>Jan 2023</span><span>Jan 2024</span><span>Jan 2025</span><span>Mar 2026</span>
+      </div>
+    </div>
+
+    <!-- PREMIUM TEASER BANNER -->
+    <div id="premium-teaser" onclick="openModal('modal-premium')" style="margin:0 18px 10px;padding:10px 14px;background:linear-gradient(90deg,rgba(217,140,10,.07),rgba(217,140,10,.03));border:1px solid rgba(217,140,10,.2);border-radius:8px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--amber);flex-shrink:0;animation:pulse 1.5s infinite;"></span>
+      <div style="flex:1;">
+        <span style="font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--amber);">Premium Coming Soon</span>
+        <span style="font-family:var(--body);font-size:11px;color:rgba(232,228,216,.35);margin-left:8px;">AI Analyst · Alerts · No Ads</span>
+      </div>
+      <span style="font-family:var(--mono);font-size:9px;color:rgba(217,140,10,.55);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">Join →</span>
+    </div>
+    <!-- SEE ALL CONFLICTS -->
+    <div class="see-all-btn" onclick="openAllConflictsModal()" id="see-all-btn">
+      <span data-i18n="see_all_conflicts">See all conflicts</span>
+      <span class="see-all-count" id="see-all-count">13</span>
+      <span style="font-size:12px;opacity:.5;">→</span>
+    </div>
+  </div>
+
+  <div class="list-col">
+    <div class="cat-tabs">
+      <button class="cat-tab active" onclick="setCatTab(this,'military')" data-i18n="cat_military">⚔️ Military</button>
+      <button class="cat-tab" onclick="setCatTab(this,'unrest')" data-i18n="cat_unrest">✊ Unrest</button>
+      <button class="cat-tab" onclick="setCatTab(this,'humanitarian')" data-i18n="cat_humanitarian">🕊️ Crises</button>
+      <button class="cat-tab" onclick="setCatTab(this,'terrorism')" data-i18n="cat_terrorism">💥 Terror</button>
+    </div>
+    <div style="padding:12px 18px 0;" id="conflict-list">
+      <div class="spinner-wrap"><div class="spinner"></div><div class="loading-text" data-i18n="loading">Loading…</div></div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ═══════════════════════════ UNREST ═══════════════════════════ -->
+<div class="screen" id="screen-unrest"><div class="dw">
+  <div class="page-head">
+    <div class="page-title" data-i18n="unrest_title">CIVIL UNREST</div>
+    <div class="page-sub" data-i18n="unrest_sub">Protests · Coups · Revolutions · Election Crises</div>
+  </div>
+  <div class="scroll-row" style="padding:0 18px 14px;">
+    <span class="pill active" onclick="filterUnrest('all',this)" data-i18n="filter_all">All</span>
+    <span class="pill" onclick="filterUnrest('protest',this)" data-i18n="filter_protest">✊ Protest</span>
+    <span class="pill" onclick="filterUnrest('coup',this)" data-i18n="filter_coup">👁️ Coup</span>
+    <span class="pill" onclick="filterUnrest('revolution',this)" data-i18n="filter_revolution">🔥 Revolution</span>
+    <span class="pill" onclick="filterUnrest('election',this)" data-i18n="filter_election">🗳️ Election Crisis</span>
+  </div>
+  <div style="padding:0 18px;" id="unrest-list"></div>
+</div></div>
+
+<!-- ═══════════════════════════ MARKETS ═══════════════════════════ -->
+<div class="screen" id="screen-markets"><div class="dw">
+  <div class="page-head">
+    <div class="page-title" data-i18n="markets_title">MARKETS</div>
+    <div class="page-sub" data-i18n="markets_sub">Conflict-driven price movements · Tap any asset for chart + context</div>
+  </div>
+
+  <!-- TOP 10 MOST VALUED ASSETS -->
+  <div class="assets-section markets-left">
+    <div class="assets-header">
+      <div class="assets-header-dot" style="background:#d98c0a;box-shadow:0 0 5px rgba(217,140,10,.5);"></div>
+      <span data-i18n="top10_title">Top 10 Most Valued Global Assets</span>
+    </div>
+    <div id="top10-list"></div>
+  </div>
+
+  <!-- CONFLICT-AFFECTED ASSETS -->
+  <div class="conflict-assets-section markets-right">
+    <div class="assets-header" style="padding:14px 18px 8px;">
+      <div class="assets-header-dot" style="background:#c8321e;box-shadow:0 0 6px rgba(200,50,30,.6);"></div>
+      <span data-i18n="conflict_assets_title">Assets Affected by Conflict</span>
+    </div>
+    <div id="conflict-assets-list" style="padding:0 18px 14px;display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <!-- MOVERS -->
+  <div class="conflict-assets-full" style="grid-column:1/-1;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border);margin-top:4px;">
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:13px 18px 8px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.4);">
+          <span style="color:#4ade80;">▲</span><span data-i18n="top_winning">Top 5 Benefiting</span>
+        </div>
+        <div id="winners-list" style="padding:0 18px 14px;display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
+      <div style="border-left:1px solid var(--border);">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:13px 18px 8px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.4);">
+          <span style="color:#f87171;">▼</span><span data-i18n="top_losing">Top 5 Declining</span>
+        </div>
+        <div id="losers-list" style="padding:0 18px 14px;display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAILED MARKET CARDS -->
+  <div style="grid-column:1/-1;padding:0;" id="markets-list">
+    <div class="spinner-wrap"><div class="spinner"></div><div class="loading-text" data-i18n="loading_markets">Fetching live data…</div></div>
+  </div>
+
+</div></div>
+
+<!-- ═══════════════════════════ DETAIL ═══════════════════════════ -->
+<div class="screen" id="screen-detail"><div class="dw">
+  <div class="detail-hero">
+    <button class="back-btn" onclick="goBack()" data-i18n="back">← Back</button>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div style="flex:1;">
+        <div style="font-size:26px;margin-bottom:6px;letter-spacing:3px;" id="d-flags"></div>
+        <div class="d-title" id="d-title"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;" id="d-meta"></div>
+      </div>
+      <div style="display:flex;gap:7px;flex-shrink:0;margin-left:12px;">
+        <button id="follow-btn" onclick="toggleFollow()" style="font-family:var(--mono);font-size:10px;padding:7px 12px;border-radius:6px;border:1px solid var(--border);background:none;color:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;letter-spacing:.05em;">★ Follow</button>
+        <button onclick="openShareModal()" style="font-family:var(--mono);font-size:10px;padding:7px 12px;border-radius:6px;border:1px solid var(--border);background:none;color:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;letter-spacing:.05em;">🔗 Share</button>
+      </div>
+    </div>
+  </div>
+  <div style="padding:14px 18px 12px;">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px;" data-i18n="source_class">Source Classification</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;">
+      <span class="align-badge" style="background:rgba(44,123,229,.2);color:#89c4f5;border:1px solid rgba(137,196,245,.2);">🏛️ State-funded</span>
+      <span class="align-badge" style="background:rgba(217,140,10,.18);color:#ffd47a;border:1px solid rgba(255,212,122,.2);">🗳️ Politically aligned</span>
+      <span class="align-badge" style="background:rgba(31,163,85,.14);color:#6fffa0;border:1px solid rgba(111,255,160,.2);">✊ Independent</span>
+      <span class="align-badge" style="background:rgba(155,77,202,.18);color:#d07ef5;border:1px solid rgba(208,126,245,.2);">📢 Opposition</span>
+    </div>
+    <div style="font-family:var(--display);font-size:15px;color:rgba(255,255,255,.4);line-height:1.7;" id="d-summary"></div>
+  </div>
+  <div id="econ-panel-wrap"></div>
+  <div class="news-tabs">
+    <button class="ntab active" onclick="setNTab(this,0)" data-i18n="tab_all">All</button>
+    <button class="ntab" onclick="setNTab(this,1)" data-i18n="tab_state">🏛️ State</button>
+    <button class="ntab" onclick="setNTab(this,2)" data-i18n="tab_aligned">🗳️ Aligned</button>
+    <button class="ntab" onclick="setNTab(this,3)" data-i18n="tab_indep">✊ Indep.</button>
+    <button class="ntab" onclick="setNTab(this,4)" data-i18n="tab_opp">📢 Opp.</button>
+    <button class="ntab" onclick="setNTab(this,5)" data-i18n="tab_timeline">📅 Timeline</button>
+    <button class="ntab" onclick="setNTab(this,6)" data-i18n="tab_economic">💰 Economic</button>
+  </div>
+  <div id="news-feed"></div>
+  <div id="tl-feed" style="display:none;padding-top:18px;"></div>
+  <div id="econ-feed" style="display:none;padding:14px 18px;"></div>
+</div></div>
+
+<!-- ═══════════════════════════ ALERTS ═══════════════════════════ -->
+<div class="screen" id="screen-alerts"><div class="dw">
+  <div class="page-head">
+    <div class="page-title" data-i18n="alerts_title">ALERTS</div>
+    <div class="page-sub" data-i18n="breaking_news">Breaking developments · Updated every 60 seconds</div>
+  </div>
+  <div class="scroll-row" style="padding:0 18px 12px;">
+    <span class="pill active" onclick="filterAlerts('all',this)" data-i18n="filter_all">All</span>
+    <span class="pill" onclick="filterAlerts('breaking',this)" data-i18n="filter_breaking">🔴 Breaking</span>
+    <span class="pill" onclick="filterAlerts('market',this)" data-i18n="filter_market">📈 Market</span>
+    <span class="pill" onclick="filterAlerts('following',this)" data-i18n="filter_following">★ Following</span>
+  </div>
+  <div id="alerts-list"></div>
+  <div style="padding:14px 18px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);text-align:center;" id="alerts-ts"></div>
+</div></div>
+
+<!-- ═══════════════════════════ LANGUAGE ═══════════════════════════ -->
+<div class="screen" id="screen-language"><div class="dw">
+  <div class="page-head">
+    <div class="page-title">🌐 LANGUAGE</div>
+    <div class="page-sub" data-i18n="language_sub">AI-powered translation · 45+ languages</div>
+  </div>
+  <div style="padding:0 18px 12px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.35);min-height:22px;" id="translate-status"></div>
+  <div class="lang-grid" id="lang-grid"></div>
+</div></div>
+
+<!-- ═══════════════════════════ PROFILE ═══════════════════════════ -->
+<div class="screen" id="screen-profile"><div class="dw">
+  <div class="profile-hero">
+    <div style="font-size:52px;margin-bottom:12px;filter:grayscale(.2);">🧭</div>
+    <div style="font-family:var(--display);font-size:30px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;" data-i18n="world_analyst">WORLD ANALYST</div>
+    <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.28);margin-top:5px;letter-spacing:.08em;" data-i18n="free_plan">Free Plan · Member since Mar 2025</div>
+  </div>
+  <div class="premium-box">
+    <div style="font-family:var(--display);font-size:26px;font-weight:900;color:var(--amber);letter-spacing:.05em;margin-bottom:4px;text-transform:uppercase;" data-i18n="go_premium">GO PREMIUM</div>
+    <div style="font-family:var(--mono);font-size:10px;color:rgba(217,140,10,.5);letter-spacing:.12em;margin-bottom:16px;" data-i18n="prem_price">$1.99 / MONTH · CANCEL ANYTIME</div>
+    <div style="font-family:var(--display);font-size:15px;font-weight:500;color:rgba(255,255,255,.6);line-height:2.1;">
+      <div data-i18n="prem_1">✓ All articles — every source, no limits</div>
+      <div data-i18n="prem_2">✓ Live market data 60s refresh</div>
+      <div data-i18n="prem_3">✓ Full historical timelines</div>
+      <div data-i18n="prem_4">✓ AI translations — 45+ languages</div>
+      <div data-i18n="prem_5">✓ Real-time push + email alerts</div>
+      <div data-i18n="prem_6">✓ Zero ads. Ever.</div>
+    </div>
+    <button class="btn btn-amber" style="margin-top:16px;" onclick="openModal('modal-premium')">🔔 GET EARLY ACCESS →</button>
+  </div>
+  <div style="padding:0 18px;margin-bottom:8px;">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:16px 0 8px;" data-i18n="settings">Settings</div>
+  </div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_breaking" data-i18n="s_breaking">Breaking conflict alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_market" data-i18n="s_market">Market impact alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_digest" data-i18n="s_digest">Daily digest email</span><div class="toggle"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_labels" data-i18n="s_labels">Source classification labels</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="toggleRow(this)"><span class="settings-row-label" data-i18n="s_security" data-i18n="s_security">Security alerts</span><div class="toggle on"><div class="t-knob"></div></div></div>
+  <div class="settings-row" onclick="switchTab('language')"><span class="settings-row-label" data-i18n="s_language">🌐 Change language</span><span style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.25);">→</span></div>
+</div></div>
+
+<!-- ═══════════════════════════ DATA VIZ ═══════════════════════════ -->
+<div class="screen" id="screen-viz"><div class="dw">
+  <div class="page-head">
+    <div class="page-title">DATA &amp; VIZ</div>
+    <div class="page-sub">Live casualties · Displaced persons · Refugee flows · Economic damage</div>
+  </div>
+
+  <!-- GLOBAL STATS -->
+  <div class="stat-grid" id="viz-stat-grid">
+    <div class="stat-card"><div class="stat-num" id="vz-conflicts" style="color:var(--red2);">—</div><div class="stat-lbl" data-i18n="viz_conflicts">Active Conflicts</div><div class="stat-delta dn">+3 vs 2024</div></div>
+    <div class="stat-card"><div class="stat-num" id="vz-displaced" style="color:var(--amber);">—</div><div class="stat-lbl" data-i18n="viz_displaced">Displaced Persons</div><div class="stat-delta dn">↑ 12% YoY</div></div>
+    <div class="stat-card"><div class="stat-num" id="vz-casualties" style="color:var(--red);">—</div><div class="stat-lbl" data-i18n="viz_casualties">Est. Casualties 2024</div><div class="stat-delta dn" data-i18n="viz_deaths_note">Conflict deaths only</div></div>
+    <div class="stat-card"><div class="stat-num" id="vz-cost" style="color:var(--green);">—</div><div class="stat-lbl" data-i18n="viz_cost">Economic Cost</div><div class="stat-delta dn">USD, direct damage</div></div>
+  </div>
+
+  <!-- CASUALTY BARS BY CONFLICT -->
+  <div class="viz-section">
+    <div class="viz-head"><span style="font-size:18px;">💀</span><span class="viz-title" data-i18n="viz_cas_title">Estimated Casualties by Conflict</span></div>
+    <div class="viz-body">
+      <div class="casualty-bar-wrap" id="casualty-bars" style="margin:0;"></div>
+    </div>
+  </div>
+
+  <!-- DISPLACED PERSONS -->
+  <div class="viz-section">
+    <div class="viz-head"><span style="font-size:18px;">🏕️</span><span class="viz-title" data-i18n="viz_dis_title">Displaced Persons (Millions)</span></div>
+    <div class="viz-body">
+      <div id="displaced-bars"></div>
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.2);margin-top:12px;letter-spacing:.06em;">Source: UNHCR / IOM estimates. Figures include both IDPs and refugees.</div>
+    </div>
+  </div>
+
+  <!-- REFUGEE FLOW CHART (SVG) -->
+  <div class="viz-section">
+    <div class="viz-head"><span style="font-size:18px;">🌊</span><span class="viz-title" data-i18n="viz_flow_title">Major Refugee Flows</span></div>
+    <div class="viz-body" style="padding:10px 16px 16px;">
+      <svg id="flow-svg" width="100%" height="200" viewBox="0 0 400 200" style="font-family:var(--mono);"></svg>
+    </div>
+  </div>
+
+  <!-- ECONOMIC DAMAGE -->
+  <div class="viz-section">
+    <div class="viz-head"><span style="font-size:18px;">💸</span><span class="viz-title" data-i18n="viz_econ_title">Economic Damage Estimates</span></div>
+    <div class="viz-body">
+      <div id="econ-damage-bars"></div>
+    </div>
+  </div>
+
+  <!-- CONFLICT TIMELINE CHART -->
+  <div class="viz-section" style="margin-bottom:28px;">
+    <div class="viz-head"><span style="font-size:18px;">📅</span><span class="viz-title" data-i18n="viz_timeline_title">Conflict Duration Timeline</span></div>
+    <div class="viz-body" style="padding:10px 16px 16px;overflow-x:auto;">
+      <svg id="timeline-svg" width="100%" height="240" viewBox="0 0 600 240" style="min-width:520px;font-family:var(--mono);"></svg>
+    </div>
+  </div>
+</div></div>
+
+<!-- ═══════════════════════════ AI ANALYST ═══════════════════════════ -->
+<div class="screen" id="screen-ai"><div class="dw">
+  <div class="page-head">
+    <div class="page-title">🤖 AI ANALYST</div>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(217,140,10,.1);border:1px solid rgba(217,140,10,.25);border-radius:20px;padding:4px 12px;margin-top:8px;cursor:pointer;" onclick="openModal('modal-premium')">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block;animation:pulse 1.5s infinite;"></span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:.14em;text-transform:uppercase;">Premium Coming Soon · Join Waitlist</span>
+    </div>
+    <div class="page-sub" data-i18n="ai_sub">Ask anything about any conflict · Premium feature</div>
+  </div>
+  <div class="ai-lock">
+    <div class="ai-lock-icon">🔒</div>
+    <div class="ai-lock-title" data-i18n="ai_lock_icon_label">Premium Feature</div>
+    <div class="ai-lock-desc" data-i18n="ai_lock_desc">AI Analyst gives you instant, sourced answers to any question about active conflicts — from casualty trends to diplomatic context to market impact analysis.</div>
+    <div class="ai-feature-list">
+      <div class="ai-feature-item"><span class="fi-icon">⚡</span>"Why did gold spike 3% today?" — gets a conflict-linked analysis</div>
+      <div class="ai-feature-item"><span class="fi-icon">🗺️</span>"What's the latest in Sudan?" — pulls live articles + summary</div>
+      <div class="ai-feature-item"><span class="fi-icon">📊</span>"Compare Ukraine and Gaza economic impact" — side-by-side</div>
+      <div class="ai-feature-item"><span class="fi-icon">🌐</span>"Explain the Sahel coups in simple terms" — in any language</div>
+      <div class="ai-feature-item"><span class="fi-icon">📰</span>"How is Fox News vs Al Jazeera covering this differently?" — media analysis</div>
+    </div>
+    <button class="btn btn-red" style="max-width:340px;margin:0 auto 10px;" onclick="openModal('modal-premium')">UNLOCK AI ANALYST — $1.99/MO →</button>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.2);letter-spacing:.06em;">Cancel anytime · Free 7-day trial</div>
+  </div>
+</div></div>
+
+<!-- BOTTOM SHEET OVERLAY -->
+<div class="bs-overlay" id="bs-overlay" onclick="closeBottomSheet()"></div>
+
+<!-- CONFLICT QUICK SHEET (bottom sheet for map taps on mobile) -->
+<div class="bottom-sheet" id="bs-conflict">
+  <div class="bs-handle"></div>
+  <div style="padding:0 20px 12px;" id="bs-conflict-body"></div>
 </div>
-<div style="text-align:right;flex-shrink:0;">
-<div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="${a.dir==='up'?'up':'dn'}">${a.price}</div>
-<div style="font-family:var(--mono);font-size:10px;" class="${a.dir==='up'?'up':'dn'}">${a.change}</div>
+
+</div><!-- end app-body -->
+<div class="screen" id="screen-cyber"><div class="dw">
+  <div class="page-head">
+    <div class="page-title" data-i18n="cyber_title">CYBER CONFLICTS</div>
+    <div class="page-sub" data-i18n="cyber_sub">State-sponsored attacks · Ransomware · Infrastructure threats</div>
+  </div>
+
+  <!-- THREAT LEVEL BAR -->
+  <div style="margin:0 18px 16px;background:var(--surface);border:1px solid rgba(200,50,30,.2);border-radius:12px;padding:14px 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.14em;text-transform:uppercase;" data-i18n="cyber_threat_title">Global Cyber Threat Level</div>
+      <div style="font-family:var(--mono);font-size:11px;color:#ff6b4a;font-weight:500;letter-spacing:.08em;">HIGH — SEVERE</div>
+    </div>
+    <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
+      <div style="width:78%;height:100%;background:linear-gradient(90deg,#d98c0a,#c8321e);border-radius:3px;box-shadow:0 0 8px rgba(200,50,30,.4);"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:5px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.2);">
+      <span>LOW</span><span>MODERATE</span><span>HIGH</span><span>SEVERE</span><span>CRITICAL</span>
+    </div>
+  </div>
+
+  <!-- LIVE THREAT FEED -->
+  <div style="padding:0 18px;margin-bottom:14px;">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:10px;" data-i18n="cyber_threats_title">Live Threat Indicators</div>
+    <div id="cyber-threat-feed" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <!-- CYBER EVENTS -->
+  <div class="scroll-row" style="padding:0 18px 10px;">
+    <span class="pill active" onclick="filterCyber('all',this)">🌐 All</span>
+    <span class="pill" onclick="filterCyber('state',this)">🏴 State-Sponsored</span>
+    <span class="pill" onclick="filterCyber('ransomware',this)">💰 Ransomware</span>
+    <span class="pill" onclick="filterCyber('espionage',this)">🕵️ Espionage</span>
+    <span class="pill" onclick="filterCyber('infrastructure',this)">⚡ Infrastructure</span>
+  </div>
+  <div style="padding:0 18px;" id="cyber-list"></div>
+</div></div>
+
+</div><!-- end app-body -->
+
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchTab('map',this)"><span class="nav-icon">🗺️</span><span class="nav-label" data-i18n="nav_map">Map</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('unrest',this)"><span class="nav-icon">✊</span><span class="nav-label" data-i18n="nav_unrest">Unrest</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('cyber',this)"><span class="nav-icon">🛡️</span><span class="nav-label" data-i18n="nav_cyber">Cyber</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('viz',this)"><span class="nav-icon">📊</span><span class="nav-label" data-i18n="nav_viz">Data</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('markets',this)"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav_markets">Markets</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('alerts',this)"><span class="nav-icon">🔔</span><span class="nav-label" data-i18n="nav_alerts">Alerts</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('ai',this)"><span class="nav-icon">🤖</span><span class="nav-label" data-i18n="nav_ai">AI</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('language',this)"><span class="nav-icon">🌐</span><span class="nav-label" data-i18n="nav_language">Lang</span><div class="nav-pip"></div></button>
+  <button class="nav-item" onclick="switchTab('profile',this)"><span class="nav-icon">⚙️</span><span class="nav-label">Profile</span><div class="nav-pip"></div></button>
+</nav>
+
+<!-- ═══════════════════════════ MODALS ═══════════════════════════ -->
+<!-- ALL CONFLICTS MODAL -->
+<div class="modal-overlay" id="modal-all-conflicts">
+  <div class="modal-sheet" style="max-height:85vh;">
+    <div class="modal-handle"></div>
+    <div class="modal-pad" style="padding-bottom:20px;">
+      <div style="font-family:var(--display);font-size:24px;font-weight:900;letter-spacing:.04em;margin-bottom:4px;text-transform:uppercase;" data-i18n="all_conflicts_title" data-i18n="all_conflicts_title">All Conflicts</div>
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.08em;margin-bottom:16px;" id="all-conflicts-count">13 active conflicts tracked</div>
+      <div id="all-conflicts-list" style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto;"></div>
+      <button onclick="closeModal('modal-all-conflicts')" class="btn btn-ghost" style="margin-top:16px;" data-i18n="close">Close</button>
+    </div>
+  </div>
 </div>
-${makeMiniSpark(a.dir)}
-</div>`).join('');
-}
 
-function renderMarkets(){
-const months=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
-document.getElementById('markets-list').innerHTML=`
-<div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:18px 18px 10px;color:rgba(255,255,255,.3);border-top:1px solid var(--border);">Detailed Asset Analysis</div>
-<div style="padding:0 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
-${marketDefs.map(m=>{
-const live=liveMarkets[m.id]||{price:'—',change:'—',dir:'up'};
-return`<div class="mkt-card" onclick="openMarket('${m.id}')">
-<div class="mkc-head">
-<div style="font-size:28px;flex-shrink:0;">${m.icon}</div>
-<div style="flex:1;">
-<div style="font-family:var(--display);font-size:17px;font-weight:800;letter-spacing:.02em;">${m.name}</div>
-<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.04em;">${m.ticker}</div>
+<!-- ARTICLE MODAL -->
+<div class="modal-overlay" id="modal-article">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div id="m-align" style="margin-bottom:10px;"></div>
+    <div id="m-outlet" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.32);margin-bottom:8px;letter-spacing:.08em;"></div>
+    <div id="m-headline" style="font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:.03em;line-height:1.1;margin-bottom:14px;"></div>
+    <div id="m-body" style="font-family:var(--display);font-size:15px;line-height:1.85;color:rgba(255,255,255,.55);margin-bottom:22px;"></div>
+    <a id="m-url" href="#" target="_blank" rel="noopener noreferrer" style="display:block;width:100%;padding:14px;background:var(--red2);color:#fff;border:none;border-radius:8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-align:center;" data-i18n="read_full">Read Full Article at Source →</a>
+    <button onclick="closeModal('modal-article')" class="btn btn-ghost" style="margin-top:8px;" data-i18n="close">Close</button>
+  </div></div>
 </div>
-<div style="text-align:right;">
-<div class="mkc-price ${live.dir==='up'?'up':'dn'}">${live.price}</div>
-<div style="font-family:var(--mono);font-size:11px;margin-top:3px;"><span class="${live.dir==='up'?'up-bg':'dn-bg'}">${live.change}</span></div>
+
+<!-- MARKET MODAL -->
+<div class="modal-overlay" id="modal-market">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div id="mm-icon" style="font-size:44px;margin-bottom:10px;"></div>
+    <div id="mm-name" style="font-family:var(--display);font-size:30px;font-weight:900;letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase;"></div>
+    <div id="mm-price-row" style="display:flex;align-items:baseline;gap:12px;margin-bottom:18px;"></div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;" data-i18n="why_moving">Why It's Moving</div>
+    <div id="mm-why" style="font-family:var(--display);font-size:15px;line-height:1.8;color:rgba(255,255,255,.55);margin-bottom:20px;"></div>
+    <div id="mm-chart" style="margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;"></div>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;" data-i18n="related">Related Conflicts</div>
+    <div id="mm-events" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;"></div>
+    <button onclick="closeModal('modal-market')" class="btn btn-ghost" data-i18n="close">Close</button>
+  </div></div>
 </div>
+
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="modal-email">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div style="font-size:38px;margin-bottom:14px;">🔔</div>
+    <div style="font-family:var(--display);font-size:30px;font-weight:900;letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase;" data-i18n="stay_informed">STAY INFORMED</div>
+    <div style="font-family:var(--display);font-size:15px;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:22px;" data-i18n="email_desc">Get breaking conflict alerts and weekly market impact digests. Free forever.</div>
+    <input class="email-input" id="email-input" type="email" placeholder="your@email.com"/>
+    <button class="btn btn-red" onclick="submitEmail()" data-i18n="get_alerts">GET FREE ALERTS →</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modal-email')" data-i18n="maybe_later">Maybe later</button>
+    <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.16);text-align:center;margin-top:14px;line-height:1.8;" data-i18n="privacy">No spam. Unsubscribe anytime. Your data is never sold.</div>
+  </div></div>
 </div>
-<div style="padding:0 16px 4px;">${makeSpark(m.id,live.dir,false)}</div>
-<div style="display:flex;justify-content:space-between;padding:0 16px 10px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.18);">
-<span>${months[0]}</span><span>${months[3]}</span><span>${months[6]}</span><span>${months[9]}</span><span>Now</span>
-<span style="color:rgba(200,50,30,.6);">12m</span>
+
+<!-- PREMIUM MODAL -->
+<div class="modal-overlay" id="modal-premium">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad" style="text-align:center;">
+
+    <!-- Badge -->
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(217,140,10,.12);border:1px solid rgba(217,140,10,.3);border-radius:20px;padding:5px 14px;margin-bottom:20px;">
+      <span style="color:var(--amber);font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;">Coming Soon</span>
+    </div>
+
+    <!-- Headline -->
+    <div style="font-family:var(--display);font-size:32px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;line-height:1;margin-bottom:8px;">WORLD CONFLICTS<br><span style="color:var(--amber);">PREMIUM</span></div>
+    <div style="font-family:var(--body);font-size:13px;color:rgba(232,228,216,.5);margin-bottom:24px;line-height:1.6;">Intelligence-grade conflict analysis.<br>No ads. No noise. Just signal.</div>
+
+    <!-- Features -->
+    <div style="text-align:left;margin-bottom:24px;display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+        <span style="font-size:18px;flex-shrink:0;">🤖</span>
+        <div><div style="font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px;">AI Analyst</div><div style="font-family:var(--body);font-size:11px;color:rgba(232,228,216,.45);line-height:1.5;">Ask anything. Get sourced, conflict-linked answers instantly.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+        <span style="font-size:18px;flex-shrink:0;">🔔</span>
+        <div><div style="font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px;">Escalation Alerts</div><div style="font-family:var(--body);font-size:11px;color:rgba(232,228,216,.45);line-height:1.5;">Email + push alerts the moment a conflict escalates.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+        <span style="font-size:18px;flex-shrink:0;">📊</span>
+        <div><div style="font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px;">Portfolio Impact</div><div style="font-family:var(--body);font-size:11px;color:rgba(232,228,216,.45);line-height:1.5;">See how conflicts move your specific assets. No ads. Ever.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+        <span style="font-size:18px;flex-shrink:0;">🌐</span>
+        <div><div style="font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px;">Daily Briefing</div><div style="font-family:var(--body);font-size:11px;color:rgba(232,228,216,.45);line-height:1.5;">Top 3 conflicts + market impact every morning in your inbox.</div></div>
+      </div>
+    </div>
+
+    <!-- Price teaser -->
+    <div style="font-family:var(--mono);font-size:10px;color:rgba(232,228,216,.3);letter-spacing:.1em;margin-bottom:16px;text-transform:uppercase;">Early access · $6.99/mo · 14-day free trial</div>
+
+    <!-- Email capture -->
+    <div id="prem-form">
+      <input id="prem-email" type="email" placeholder="your@email.com" class="email-input" style="margin-bottom:10px;" />
+      <button class="btn btn-amber" style="width:100%;" onclick="submitWaitlist()">GET EARLY ACCESS →</button>
+      <div id="prem-msg" style="font-family:var(--mono);font-size:10px;color:rgba(217,140,10,.7);letter-spacing:.08em;margin-top:10px;min-height:16px;text-align:center;"></div>
+    </div>
+    <div id="prem-thanks" style="display:none;margin-bottom:12px;">
+      <!-- Success message -->
+      <div style="padding:16px;background:rgba(217,140,10,.08);border:1px solid rgba(217,140,10,.2);border-radius:8px;margin-bottom:12px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:8px;">🎉</div>
+        <div style="font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--amber);margin-bottom:6px;">You're on the list!</div>
+        <div style="font-family:var(--body);font-size:12px;color:rgba(232,228,216,.55);line-height:1.6;">We'll email you the moment Premium launches with your exclusive early-access offer.</div>
+      </div>
+      <!-- Referral CTA -->
+      <div style="padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;">
+        <div style="font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;">🎁 Get a free month</div>
+        <div style="font-family:var(--body);font-size:11px;color:rgba(232,228,216,.45);line-height:1.6;margin-bottom:10px;">Refer a friend who subscribes to Premium and you both get your first month free.</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="referral-link" style="flex:1;font-family:var(--mono);font-size:9px;color:rgba(232,228,216,.4);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;padding:8px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.04em;">worldconflictslive.vercel.app/?ref=...</div>
+          <button onclick="copyReferralLink()" style="flex-shrink:0;padding:8px 12px;background:rgba(217,140,10,.15);border:1px solid rgba(217,140,10,.3);border-radius:6px;font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:.08em;cursor:pointer;text-transform:uppercase;white-space:nowrap;">Copy Link</button>
+        </div>
+        <div id="referral-copied" style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:.08em;margin-top:6px;min-height:14px;text-align:center;"></div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="margin-top:4px;width:100%;" onclick="closeModal('modal-premium')">Maybe later</button>
+  </div></div>
 </div>
-<div class="mkt-context">${m.why}</div>
-<div class="mkt-links">${m.events.map(en=>`<span class="mkt-link-tag" onclick="event.stopPropagation();openEventByName('${en}')">⚔️ ${en}</span>`).join('')}</div>
-</div>`;
-}).join('')}
-</div>`;
-}
 
-function renderMovers(){
-document.getElementById('winners-list').innerHTML=winnerDefs.map(w=>{
-const live=liveMarkets[w.id]||{price:'—',change:'+—',dir:'up'};
-return`<div class="mover-row" onclick="openMarket('${w.id}')"><div style="font-size:18px;flex-shrink:0;">${w.icon}</div><div style="flex:1;"><div class="mr-name">${w.name}</div><div class="mr-ticker">${w.ticker}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="up">${live.price}</div><div style="font-family:var(--mono);font-size:10px;" class="up">${live.change}</div></div></div>`;
-}).join('');
-document.getElementById('losers-list').innerHTML=loserDefs.map(l=>`<div class="mover-row"><div style="font-size:18px;flex-shrink:0;">${l.icon}</div><div style="flex:1;"><div class="mr-name">${l.name}</div><div class="mr-ticker">${l.ticker}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:14px;font-weight:500;" class="dn">—</div><div style="font-family:var(--mono);font-size:10px;" class="dn">${l.change}</div></div></div>`).join('');
-}
-
-function openMarket(id){
-const m=liveMarkets[id]||{};const def=marketDefs.find(d=>d.id===id);if(!def)return;
-document.getElementById('mm-icon').textContent=def.icon;
-document.getElementById('mm-name').textContent=def.name;
-document.getElementById('mm-price-row').innerHTML=`<span style="font-family:var(--mono);font-size:28px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</span><span class="${m.dir==='up'?'up-bg':'dn-bg'}" style="font-size:14px;">${m.change||'—'}</span>`;
-document.getElementById('mm-why').textContent=def.why;
-const months=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
-document.getElementById('mm-chart').innerHTML=`
-<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-<span>12-Month Price History</span>
-<span style="color:rgba(200,50,30,.6);font-size:8px;">Mar 2025 → Mar 2026</span>
+<!-- UNLOCK MODAL -->
+<div class="modal-overlay" id="modal-unlock">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div style="font-size:38px;margin-bottom:14px;">🔒</div>
+    <div style="font-family:var(--display);font-size:28px;font-weight:900;letter-spacing:.04em;margin-bottom:12px;text-transform:uppercase;" data-i18n="unlock_title">UNLOCK FULL SPECTRUM</div>
+    <div style="font-family:var(--display);font-size:15px;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:22px;" data-i18n="unlock_desc">Free users get 3 articles per source category. Upgrade to read every perspective without limits.</div>
+    <button class="btn btn-amber" style="margin-bottom:9px;" onclick="closeModal('modal-unlock');openModal('modal-premium')" data-i18n="upgrade_cta">UPGRADE FOR $1.99/MO →</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-unlock')" data-i18n="stay_free">Stay on free plan</button>
+  </div></div>
 </div>
-${makeSpark(id,m.dir||'up',true)}
-<div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.2);">
-<span>${months[0]}</span><span>${months[2]}</span><span>${months[4]}</span><span>${months[6]}</span><span>${months[8]}</span><span>${months[10]}</span><span>Now</span>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="modal-share">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div style="font-size:38px;margin-bottom:12px;">🔗</div>
+    <div style="font-family:var(--display);font-size:26px;font-weight:900;letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase;" data-i18n="modal_share_title">Share Conflict</div>
+    <div id="share-conflict-name" style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.35);margin-bottom:18px;letter-spacing:.06em;"></div>
+    <div id="share-url-box" style="background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.6);word-break:break-all;margin-bottom:12px;cursor:pointer;" onclick="copyShareUrl()"></div>
+    <button class="btn btn-red" onclick="copyShareUrl()" style="margin-bottom:8px;">📋 Copy Link</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-ghost" onclick="shareToX()" style="padding:11px;">𝕏 Post</button>
+      <button class="btn btn-ghost" onclick="shareToWhatsApp()" style="padding:11px;">💬 WhatsApp</button>
+    </div>
+    <button onclick="closeModal('modal-share')" class="btn btn-ghost" data-i18n="close">Close</button>
+  </div></div>
 </div>
-<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-<div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-<div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.28);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase;">CURRENT</div>
-<div style="font-family:var(--mono);font-size:16px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div>
+
+<!-- USER ACCOUNT MODAL -->
+<div class="modal-overlay" id="modal-account">
+  <div class="modal-sheet"><div class="modal-handle"></div><div class="modal-pad">
+    <div id="account-logged-in" style="display:none;">
+      <div style="text-align:center;margin-bottom:18px;">
+        <div id="acct-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--red2);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 10px;"></div>
+        <div id="acct-name" style="font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:.03em;"></div>
+        <div id="acct-email" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);margin-top:3px;"></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--border);">
+          <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">Following</div>
+          <div id="acct-following" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div style="padding:12px 14px;">
+          <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">Plan</div>
+          <div id="acct-plan" style="font-family:var(--display);font-size:15px;font-weight:700;color:var(--amber);">Free Plan</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="logoutUser()" style="margin-bottom:8px;">Sign Out</button>
+    </div>
+    <div id="account-logged-out">
+      <div style="font-size:36px;margin-bottom:14px;">👤</div>
+      <div style="font-family:var(--display);font-size:26px;font-weight:900;letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase;" data-i18n="profile_create">Create Account</div>
+      <div style="font-family:var(--display);font-size:14px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:20px;">Save followed conflicts, sync alerts across devices, unlock your history.</div>
+      <input class="email-input" id="acct-email-input" type="email" placeholder="Email address"/>
+      <input class="email-input" id="acct-name-input" type="text" placeholder="Display name" style="margin-top:0;"/>
+      <button class="btn btn-red" onclick="createAccount()" style="margin-bottom:8px;">CREATE FREE ACCOUNT →</button>
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.18);text-align:center;line-height:1.8;">Already have an account? <span style="color:var(--red2);cursor:pointer;" onclick="loginUser()">Sign in</span></div>
+    </div>
+    <button onclick="closeModal('modal-account')" class="btn btn-ghost" style="margin-top:8px;" data-i18n="close">Close</button>
+  </div></div>
 </div>
-<div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-<div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.28);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase;">CHANGE</div>
-<div style="font-family:var(--mono);font-size:16px;font-weight:500;" class="${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div>
-</div>
-<div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-<div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.28);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase;">TREND</div>
-<div style="font-size:20px;">${m.dir==='up'?'📈':'📉'}</div>
-</div>
-</div>`;
-document.getElementById('mm-events').innerHTML=def.events.map(en=>`<span class="mkt-link-tag" onclick="closeModal('modal-market');openEventByName('${en}')">⚔️ ${en}</span>`).join('');
-openModal('modal-market');
-}
 
-const FREE_LIMIT=3;
-async function fetchNewsStub(id){
-  // Wire to real RSS fetch for the conflict's query
-  const ev = events.find(e => e.id === id);
-  if (!ev) return;
-  const now = Date.now();
-  if (liveNews[id] && newsCacheTimes[id] && (now - newsCacheTimes[id]) < NEWS_CACHE_TTL) return;
-  // Show quick placeholder while loading
-  const quick = getFallbackArticles(ev);
-  liveNews[id] = quick;
-  renderFeedHTML(quick, currentTabIdx);
-  // Fetch real articles
-  try {
-    const feeds = getNewsFeeds(ev);
-    const results = await Promise.allSettled(
-      feeds.slice(0,3).map(f => fetchRssFeed(f))
-    );
-    let articles = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
-    if (articles.length === 0) articles = quick;
-    articles.sort((a,b) => b.ts - a.ts);
-    liveNews[id] = articles;
-    newsCacheTimes[id] = now;
-    if (currentEvent === id) {
-      if (currentLang !== 'en') {
-        const tx = await translateArticles(articles, currentLang);
-        liveNews[id] = tx;
-      }
-      renderFeedHTML(liveNews[id], currentTabIdx);
-    }
-  } catch(e) {
-    console.warn('[news] fetch failed:', e.message);
-    renderFeedHTML(quick, currentTabIdx);
-  }
-}
-
-function startNewsRefresh(){
-stopNewsRefresh();
-// Every 8s: update timestamps (e.g. "3m ago" → "4m ago")
-newsRefreshTimer=setInterval(()=>{
-  const arts=liveNews[currentEvent];
-  if(!arts)return;
-  arts.forEach(a=>{a.time=timeAgo(a.ts);});
-  arts.sort((a,b)=>b.ts-a.ts);
-  renderFeedHTML(arts,currentTabIdx);
-},8000);
-// Every 3 min: re-fetch fresh articles for current conflict
-newsRefetchTimer=setInterval(()=>{
-  if(currentEvent!=null){
-    delete newsCacheTimes[currentEvent]; // bust cache
-    fetchNewsStub(currentEvent);
-  }
-},180000);
-}
-function stopNewsRefresh(){
-if(newsRefreshTimer){clearInterval(newsRefreshTimer);newsRefreshTimer=null;}
-if(newsRefetchTimer){clearInterval(newsRefetchTimer);newsRefetchTimer=null;}
-}
-
-function timeAgo(d){
-if(!d)return'';const diff=(Date.now()-(typeof d==='number'?d:new Date(d)))/1000;
-if(diff<60)return`${Math.floor(diff)}s ago`;if(diff<3600)return`${Math.floor(diff/60)}m ago`;
-if(diff<86400)return`${Math.floor(diff/3600)}h ago`;return`${Math.floor(diff/86400)}d ago`;
-}
-
-async function openEvent(id){
-haptic('light');
-currentEvent=id;stopNewsRefresh();if(leafletMap)leafletMap.closePopup();
-closeBottomSheet();
-const ev=events.find(e=>e.id===id);
-if(!ev){console.warn('[openEvent] event not found:',id);return;}
-// Update meta tags for social sharing / browser tab
-const desc=`${ev.title} — Live tracking: casualties, market impact, news sources on World Conflicts Live`;
-document.title=`${ev.title} | World Conflicts Live`;
-document.querySelector('meta[name="description"]')?.setAttribute('content',desc);
-document.querySelector('meta[property="og:title"]')?.setAttribute('content',`${ev.title} | World Conflicts Live`);
-document.querySelector('meta[property="og:description"]')?.setAttribute('content',desc);
-document.querySelector('meta[property="og:url"]')?.setAttribute('content',`${location.origin}/?conflict=${id}`);
-document.querySelector('meta[name="twitter:title"]')?.setAttribute('content',`${ev.title} | World Conflicts Live`);
-document.querySelector('meta[name="twitter:description"]')?.setAttribute('content',desc);
-// Update URL without reload (enables back button + sharing)
-history.pushState({conflict:id},ev.title,`?conflict=${id}`);lastScreen=ev.cat==='unrest'?'unrest':ev.cat==='cyber'?'cyber':'map';
-document.getElementById('d-flags').innerHTML=flagsToCode(ev.flags);
-document.getElementById('d-title').textContent=ev.title;
-document.getElementById('d-summary').textContent=(ev.econContext||'').substring(0,200);
-document.getElementById('d-meta').innerHTML=`
-<div class="sev-dot sev-${ev.sev}"></div>
-<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.38);">${ev.parties}</span>
-<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.22);">· ${ev.region}</span>
-${ev.sevScore?`<span style="margin-left:4px;">${sevScoreBars(ev.sevScore,evColor(ev))}</span>`:''}
-${ev.casualties?`<span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);margin-left:4px;">· ${fmtNum(ev.casualties)} casualties</span>`:''}
-${ev.displaced?`<span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);">· ${fmtNum(ev.displaced)} displaced</span>`:''}
-`;
-const chips=(ev.markets||[]).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<div class="econ-row" onclick="openMarket('${mid}')"><div style="font-size:20px;flex-shrink:0;">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why.substring(0,70)}…</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;}).join('');
-document.getElementById('econ-panel-wrap').innerHTML=(chips?`<div class="econ-panel"><div class="econ-header"><span style="font-size:18px;">💹</span><span class="econ-title">Price Impact & Economic Fallout</span></div><div class="econ-context">${ev.econContext||''}</div>${chips}</div>`:'')+renderRelated(ev);
-currentTabIdx=0;
-document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('active',i===0));
-document.getElementById('tl-feed').style.display='none';document.getElementById('econ-feed').style.display='none';document.getElementById('news-feed').style.display='block';
-document.getElementById('news-feed').innerHTML=`<div class="spinner-wrap"><div class="spinner"></div><div class="loading-text">${T('detail_loading')}</div></div>`;
-switchTab('detail',null);
-updateFollowBtn();
-
-delete newsCacheTimes[id];
-await fetchNews(id);
-if(currentLang!=='en'&&liveNews[id]){const tx=await translateArticles(liveNews[id],currentLang);liveNews[id]=tx;}
-renderNewsFeed(0);startNewsRefresh();
-}
-
-function renderNewsFeed(tabIdx){
-currentTabIdx=tabIdx;const arts=liveNews[currentEvent];
-if(!arts){document.getElementById('news-feed').innerHTML=`<div class="error-box">⚠️ Live news loads on worldconflictslive.vercel.app</div>${getFallback()}`;return;}
-renderFeedHTML(arts,tabIdx);
-}
-
-function renderFeedHTML(arts,tabIdx){
-if(tabIdx===0){
-const groups={state:[],aligned:[],independent:[],opposition:[],unverified:[]};
-arts.forEach(a=>{const t=a.alignment?.type||'unverified';if(groups[t])groups[t].push(a);else groups.unverified.push(a);});
-const labels={state:'🏛️ STATE MEDIA',aligned:'🗳️ POLITICALLY ALIGNED',independent:'✊ INDEPENDENT',opposition:'📢 OPPOSITION',unverified:'❓ UNVERIFIED'};
-const html=Object.entries(groups).map(([grp,ga])=>{
-if(!ga.length)return'';
-const free=ga.slice(0,FREE_LIMIT),locked=ga.slice(FREE_LIMIT);
-return`<div style="padding:10px 18px 5px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.22);">${labels[grp]}<span style="color:rgba(31,163,85,.7);">· ${free.length} free</span>${locked.length?`<span style="color:rgba(217,140,10,.55);">· +${locked.length} premium</span>`:''}</div>${free.map(a=>artCard(a)).join('')}${locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.38);">Unlock all · $1.99/mo →</div></div></div>`:''}`;
-}).join('');
-document.getElementById('news-feed').innerHTML=html||emptyState();return;
-}
-const typeMap={1:'state',2:'aligned',3:'independent',4:'opposition'};
-let filtered=typeMap[tabIdx]?arts.filter(a=>a.alignment?.type===typeMap[tabIdx]):arts;
-if(!filtered.length){document.getElementById('news-feed').innerHTML=emptyState();return;}
-const free=filtered.slice(0,FREE_LIMIT),locked=filtered.slice(FREE_LIMIT);
-document.getElementById('news-feed').innerHTML=free.map(a=>artCard(a)).join('')+(locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.38);">Unlock all · $1.99/mo →</div></div></div>`:'');
-}
-
-function emptyState(){return`<div style="text-align:center;padding:52px 20px;"><div style="font-size:36px;margin-bottom:12px;opacity:.4;">📰</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.12em;text-transform:uppercase;">No articles in this category</div></div>`;}
-function artCardInner(a){
-const al=a.alignment||getAlign(a.outlet);
-return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:6px;height:6px;border-radius:50%;background:${alignDot[al.type]||'rgba(255,255,255,.2)'};flex-shrink:0;"></div><div class="art-outlet">${a.outlet}</div><div class="art-time" style="margin-left:auto;">${a.time}</div></div><div class="art-headline">${a.headline}</div><div class="art-excerpt">${(a.excerpt||'').substring(0,140)}${(a.excerpt||'').length>140?'…':''}</div><div style="margin-top:5px;">${alignBadge(al)}</div>`;
-}
-function artCard(a){return`<div class="article-card" onclick='openArticle(${JSON.stringify(a).replace(/'/g,"&#39;")})'>${artCardInner(a)}</div>`;}
-
-function getFallback(){
-const base=[
-{outlet:'Reuters',alignment:{type:'independent',label:'Independent',flag:'🇬🇧'},time:'4m ago',ts:Date.now()-240000,headline:'Diplomatic efforts intensify as international pressure mounts',excerpt:'Foreign ministers convened in emergency session to discuss de-escalation.',url:'#'},
-{outlet:'Al Jazeera',alignment:{type:'state',label:'State-Qatar',flag:'🇶🇦'},time:'12m ago',ts:Date.now()-720000,headline:'Aid convoys blocked at crossing for third consecutive day',excerpt:'Humanitarian organisations report critical shortages of food, medicine and fuel.',url:'#'},
-{outlet:'BBC News',alignment:{type:'state',label:'State-BBC',flag:'🇬🇧'},time:'28m ago',ts:Date.now()-1680000,headline:'Diplomatic channels remain open despite continued hostilities',excerpt:'Officials confirm backchannel communications are ongoing.',url:'#'},
-{outlet:'Fox News',alignment:{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},time:'45m ago',ts:Date.now()-2700000,headline:'US officials weigh options as tensions escalate',excerpt:'Pentagon confirms additional assets repositioned as precaution.',url:'#'},
-{outlet:'Haaretz',alignment:{type:'opposition',label:'Opp-Likud',flag:'🇮🇱'},time:'1h ago',ts:Date.now()-3600000,headline:'Critics question strategic rationale as civilian toll mounts',excerpt:'Opposition figures call for an independent inquiry.',url:'#'},
-];
-const free=base.slice(0,FREE_LIMIT),locked=base.slice(FREE_LIMIT);
-return free.map(a=>artCard(a)).join('')+(locked.length?`<div class="locked-article" onclick="openModal('modal-unlock')"><div class="locked-blur">${artCardInner(locked[0])}</div><div class="locked-overlay"><div class="locked-badge">🔒 +${locked.length} more articles</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.38);">Unlock all · $1.99/mo →</div></div></div>`:'');
-}
-
-function openArticle(a){
-const al=a.alignment||{type:'unverified',label:'Unverified',flag:'❓'};
-document.getElementById('m-align').innerHTML=alignBadge(al);
-document.getElementById('m-outlet').textContent=a.outlet.toUpperCase();
-document.getElementById('m-headline').textContent=a.headline;
-document.getElementById('m-body').textContent=a.body||a.excerpt||'';
-const urlEl=document.getElementById('m-url');urlEl.href=a.url||'#';urlEl.target=a.url&&a.url!=='#'?'_blank':'_self';
-openModal('modal-article');
-}
-
-function renderTimeline(){
-const ev=events.find(e=>e.id===currentEvent);
-if(!ev?.timeline?.length){document.getElementById('tl-feed').innerHTML=`<div style="text-align:center;padding:36px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.2);">${T('detail_no_timeline')}</div>`;return;}
-
-const startY=ev.startYear||2022,now=2026;
-const totalSpan=now-startY;
-const graphHTML=`<div class="tl-graph">
-<div class="tl-graph-header">
-<span>Conflict Timeline</span>
-<span class="tl-graph-range">${startY} → ${now} · ${Math.round(totalSpan)} years</span>
-</div>
-<div class="tl-graph-canvas">
-<div style="position:relative;height:48px;min-width:400px;">
-<div style="position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(255,255,255,.08);transform:translateY(-50%);border-radius:1px;"></div>
-${ev.timeline.map((t,i)=>{
-const year=parseFloat(t.date);const pct=isNaN(year)?((i+1)/(ev.timeline.length+1)*100):((year-startY)/totalSpan*100);
-return`<div style="position:absolute;left:${Math.min(95,Math.max(2,pct))}%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;">
-<div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.35);white-space:nowrap;">${t.date}</div>
-<div style="width:12px;height:12px;border-radius:50%;background:${t.tc.replace(/\.\d+\)/,'.9)')};border:2px solid rgba(255,255,255,.4);flex-shrink:0;cursor:pointer;" title="${t.event}"></div>
-<div style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:3px;background:${t.tc};color:rgba(255,255,255,.8);white-space:nowrap;">${t.tag}</div>
-</div>`;
-}).join('')}
-</div>
-</div>
-</div>`;
-document.getElementById('tl-feed').innerHTML=graphHTML+ev.timeline.map((t,i)=>`<div class="tl-item"><div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:14px;"><div class="tl-dot"></div>${i<ev.timeline.length-1?'<div style="width:1px;flex:1;background:rgba(255,255,255,.07);margin-top:3px;"></div>':''}</div><div style="padding-bottom:3px;"><div class="tl-date">${t.date}</div><div class="tl-event">${t.event}</div><div class="tl-tag" style="background:${t.tc};color:rgba(255,255,255,.8);">${t.tag}</div></div></div>`).join('');
-}
-
-function renderEconFeed(){
-const ev=events.find(e=>e.id===currentEvent);
-document.getElementById('econ-feed').innerHTML=`
-<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;">
-<div style="font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:10px;">Economic Context</div>
-<div style="font-family:var(--display);font-size:15px;line-height:1.8;color:rgba(255,255,255,.55);">${ev?.econContext||''}</div>
-</div>
-${(ev?.markets||[]).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<div class="econ-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;" onclick="openMarket('${mid}')"><div style="font-size:20px;flex-shrink:0;">${def.icon}</div><div style="flex:1;"><div class="er-name">${def.name}</div><div class="er-why">${def.why}</div></div><div><div class="er-price ${m.dir==='up'?'up':'dn'}">${m.price||'—'}</div><div class="er-chg ${m.dir==='up'?'up':'dn'}">${m.change||'—'}</div></div></div>`;}).join('')}`;
-}
-
-function setNTab(el,idx){
-currentTabIdx=idx;stopNewsRefresh();
-document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
-document.getElementById('tl-feed').style.display='none';document.getElementById('econ-feed').style.display='none';document.getElementById('news-feed').style.display='none';
-if(idx===5){document.getElementById('tl-feed').style.display='block';renderTimeline();}
-else if(idx===6){document.getElementById('econ-feed').style.display='block';renderEconFeed();}
-else{document.getElementById('news-feed').style.display='block';renderNewsFeed(idx);startNewsRefresh();}
-}
-
-const baseAlerts=[
-{id:'a1',icon:'💥',type:'breaking',title:'Ceasefire in Gaza under pressure — both sides allege violations',conflict:'Gaza Conflict',eventId:0,time:'Just now',ts:Date.now()-60000,unread:true},
-{id:'a2',icon:'₿',type:'market',title:'BTC surges past $83k on geopolitical safe-haven demand',conflict:'MARKET · CRYPTO',eventId:null,time:'4m ago',ts:Date.now()-240000,unread:true},
-{id:'a3',icon:'🔴',type:'breaking',title:'Russia launches large-scale drone strike on Ukrainian energy grid',conflict:'Russia–Ukraine War',eventId:1,time:'18m ago',ts:Date.now()-1080000,unread:true},
-{id:'a4',icon:'✊',type:'breaking',title:'Serbia protesters block key motorway for 12th consecutive day',conflict:'Serbia Protests',eventId:100,time:'1h ago',ts:Date.now()-3600000,unread:false},
-{id:'a5',icon:'📈',type:'market',title:'Lockheed Martin LMT hits 52-week high after NATO spending announcement',conflict:'MARKET · DEFENCE',eventId:null,time:'2h ago',ts:Date.now()-7200000,unread:false},
-{id:'a6',icon:'🌾',type:'market',title:'Wheat surges 4.3% after Black Sea corridor incident',conflict:'MARKET · COMMODITIES',eventId:null,time:'4h ago',ts:Date.now()-14400000,unread:false},
-{id:'a7',icon:'🕊️',type:'breaking',title:'UN declares famine emergency in northern Darfur — 5m at risk',conflict:'Darfur Crisis',eventId:200,time:'5h ago',ts:Date.now()-18000000,unread:false},
-{id:'a8',icon:'💥',type:'breaking',title:'Al-Shabaab claims attack on Somali government compound',conflict:'Al-Shabaab — Somalia',eventId:301,time:'7h ago',ts:Date.now()-25200000,unread:false},
-];
-alertsData=[...baseAlerts];
-
-function filterAlerts(type,el){
-document.querySelectorAll('#screen-alerts .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
-const filtered=type==='all'?alertsData:type==='following'?alertsData.filter(a=>a.unread):alertsData.filter(a=>a.type===type);
-renderAlertsList(filtered);
-}
-function renderAlerts(){renderAlertsList(alertsData);}
-function renderAlertsList(list){
-document.getElementById('alerts-list').innerHTML=list.length?list.map(a=>{
-const onclick=a.eventId!=null?`openEvent(${a.eventId})`:`openModal('modal-premium')`;
-return`<div class="alert-item ${a.unread?'unread':''}" onclick="${onclick}"><div style="font-size:20px;flex-shrink:0;">${a.icon}</div><div style="flex:1;"><div class="al-conflict">${a.conflict}</div><div class="al-title">${a.title}</div><div class="al-time">${a.time}</div></div>${a.unread?'<div style="width:7px;height:7px;border-radius:50%;background:var(--red2);flex-shrink:0;margin-top:6px;"></div>':''}</div>`;
-}).join(''):`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No alerts in this category</div>`;
-document.getElementById('alerts-ts').textContent=`Last updated: ${new Date().toLocaleTimeString()}`;
-}
-async function pollAlerts(){
-try{
-const criticalEvents=events.filter(e=>e.sev==='critical').slice(0,2);
-for(const ev of criticalEvents){
-// Use RSS feed instead of missing /api/news endpoint
-const feeds=getNewsFeeds(ev);
-if(!feeds.length) continue;
-const articles=await fetchRssFeed(feeds[0]);
-if(articles.length){
-const latest=articles[0];const latestTs=new Date(latest.ts||Date.now()).getTime();
-if(latestTs>(alertsData[0]?.ts||0)&&latest.title!==latestAlertHeadline){
-latestAlertHeadline=latest.title;
-alertsData.unshift({id:`live_${Date.now()}`,icon:'🔴',type:'breaking',title:latest.title,conflict:ev.title,eventId:ev.id,time:'Just now',ts:latestTs,unread:true});
-showAlertBanner(latest.title,ev.id);
-if(document.getElementById('screen-alerts').classList.contains('active'))renderAlerts();
-}
-}
-}
-}catch(e){}
-setTimeout(pollAlerts,60000);
-}
-function showAlertBanner(text,eventId){
-bannerEventId=eventId;
-document.getElementById('ab-text').textContent=`Breaking: ${text.substring(0,80)}${text.length>80?'…':''}`;
-document.getElementById('alert-banner').classList.add('show');
-setTimeout(()=>document.getElementById('alert-banner').classList.remove('show'),12000);
-}
-function handleBannerClick(){if(bannerEventId!=null)openEvent(bannerEventId);dismissBanner();}
-function dismissBanner(){document.getElementById('alert-banner').classList.remove('show');}
-
-function eventCard(ev){
-const tbClass={military:'tb-military',unrest:'tb-unrest',humanitarian:'tb-humanitarian',terrorism:'tb-terrorism',cyber:'tb-cyber'}[ev.cat]||'tb-military';
-const _tbRaw={military:'⚔️ Armed Conflict',unrest:{protest:'✊ Mass Protest',coup:'👁️ Coup',revolution:'🔥 Revolution',election:'🗳️ Election Crisis'}[ev.subtype]||'✊ Civil Unrest',humanitarian:'🕊️ Humanitarian Crisis',terrorism:'💥 Terrorism',cyber:'💻 Cyber Operation'}[ev.cat];
-const _tbKeys={military:'type_military',unrest:'type_unrest_'+( ev.subtype||'all'),humanitarian:'type_humanitarian',terrorism:'type_terrorism',cyber:'type_cyber'};
-const tbLabel=T(_tbKeys[ev.cat])||_tbRaw;
-const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def||!m.price)return'';return`<div class="mkt-chip" onclick="event.stopPropagation();openMarket('${mid}')"><div class="mc-name">${def.ticker}</div><div class="mc-val ${m.dir==='up'?'up':'dn'}">${m.price}</div><div class="mc-chg ${m.dir==='up'?'up':'dn'}">${m.change}</div></div>`;}).join('');
-return`<div class="event-card" onclick="openEvent(${ev.id})">
-<div class="ec-row">
-<div class="ec-flags">${flagsToCode(ev.flags)}</div>
-<div class="ec-info">
-<div class="ec-title-row"><div class="sev-dot sev-${ev.sev}"></div><div class="ec-title">${ev.title}</div></div>
-<div class="ec-meta">${ev.parties} · ${ev.region}</div>
-</div>
-</div>
-<div class="type-badge ${tbClass}">${tbLabel}</div>
-<div class="ec-summary">${(ev.econContext||'').substring(0,100)}…</div>
-<div class="ec-footer">
-<span class="ec-footer-label">${ev.startYear||''} · ${ev.casualties?(ev.casualties>999?Math.round(ev.casualties/1000)+'k cas.':ev.casualties+' cas.'):ev.region}</span> <span class="ec-cta">${T('detail_read')}</span>
-</div>
-${chips?`<div class="mkt-ribbon">${chips}</div>`:''}
-</div>`;
-}
-
-function renderList(cat){
-currentCat=cat;
-let filtered=events.filter(e=>e.cat===cat);
-// Sort: most recent start year first, then by severity score
-filtered.sort((a,b)=>(b.startYear||0)-(a.startYear||0)||(b.sevScore||0)-(a.sevScore||0));
-if(typeof currentFilter!=='undefined'&&currentFilter&&currentFilter!=='all'){
-if(currentFilter==='critical') filtered=filtered.filter(e=>e.sev==='critical');
-else filtered=filtered.filter(e=>e.cat===currentFilter);
-}
-const el=document.getElementById('conflict-list');
-if(!filtered.length){
-el.innerHTML=`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events in this category</div>`;
-return;
-}
-
-el.innerHTML = filtered.slice(0,6).map(e=>eventCard(e)).join('');
-if(filtered.length > 6){
-const renderRest = () => {
-el.innerHTML += filtered.slice(6).map(e=>eventCard(e)).join('') + '<div style="height:8px;"></div>';
-};
-requestIdleCallback ? requestIdleCallback(renderRest) : setTimeout(renderRest, 200);
-}
-}
-function renderUnrestList(filter='all'){
-const filtered=events.filter(e=>e.cat==='unrest'&&(filter==='all'||e.subtype===filter));
-document.getElementById('unrest-list').innerHTML=filtered.length?filtered.map(e=>eventCard(e)).join(''):`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events</div>`;
-}
-
-function setCatTab(el,cat){
-document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderList(cat);
-}
-function filterMap(type,el){
-document.querySelectorAll('#map-filter-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');
-// Filter map markers
-mapMarkers.forEach((m,i)=>{
-const ev=events[i];if(!m||!ev)return;
-let show=false;
-if(type==='all')show=true;
-else if(type==='critical')show=ev.sev==='critical';
-else show=ev.cat===type;
-show?m.addTo(leafletMap):leafletMap.removeLayer(m);
-});
-// Also filter the conflict card list
-currentFilter=type;
-renderList(currentCat);
-}
-function filterUnrest(type,el){
-document.querySelectorAll('#screen-unrest .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderUnrestList(type);
-}
-
-function switchTab(tab,el){
-if(tab!=='detail')stopNewsRefresh();
-document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-document.querySelectorAll('.nav-item,.top-nav-btn').forEach(n=>n.classList.remove('active'));
-const scr=document.getElementById('screen-'+tab);
-if(scr)scr.classList.add('active');
-if(tab==='map'&&leafletMap){
-  leafletMap.invalidateSize(true);
-  setTimeout(()=>leafletMap.invalidateSize(true),100);
-  setTimeout(()=>leafletMap.invalidateSize(true),400);
-}
-if(el&&el.classList){el.classList.add('active');}
-else{
-  const order=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
-  const i=order.indexOf(tab);
-  if(i>-1){document.querySelectorAll('.nav-item')[i]?.classList.add('active');document.querySelectorAll('.top-nav-btn')[i]?.classList.add('active');}
-}
-if(!tabRendered[tab]){
-  tabRendered[tab]=true;
-  if(tab==='unrest')renderUnrestList();
-  else if(tab==='markets'){renderTop10();renderConflictAssets();renderMarkets();renderMovers();}
-  else if(tab==='alerts')renderAlerts();
-  else if(tab==='language')buildLangGrid();
-  else if(tab==='cyber')renderCyberScreen();
-  else if(tab==='viz'){requestIdleCallback?requestIdleCallback(renderVizScreen):setTimeout(renderVizScreen,50);}
-}
-}
-
-function showSkeletons(containerId,n=3){
-document.getElementById(containerId).innerHTML=Array(n).fill('<div class="skel skel-card"></div>').join('');
-}
-function lazyRenderList(items,renderFn,containerId,batchSize=8){
-const el=document.getElementById(containerId);
-if(!el)return;
-let i=0;
-function renderBatch(){
-const frag=document.createDocumentFragment();
-const end=Math.min(i+batchSize,items.length);
-for(;i<end;i++){
-const div=document.createElement('div');
-div.innerHTML=renderFn(items[i]);
-frag.appendChild(div.firstChild||div);
-}
-el.appendChild(frag);
-if(i<items.length)(requestIdleCallback||setTimeout)(renderBatch,0);
-}
-el.innerHTML='';
-renderBatch();
-}
-
-let mapMode='default';let clusterGroup=null;let tileLayers={};
-function initMap(){
-if(typeof L === 'undefined'){
-  setTimeout(initMap, 150); return;
-}
-// Ensure container has height before Leaflet init (fixes iOS Safari)
-const mapEl = document.getElementById('conflict-map');
-if(mapEl && mapEl.offsetHeight === 0){
-  mapEl.style.height = '300px';
-}
-leafletMap=L.map('conflict-map',{center:[20,18],zoom:2,zoomControl:false,scrollWheelZoom:false,minZoom:1,maxZoom:10,tap:false});
-L.control.zoom({position:'bottomright'}).addTo(leafletMap);
-
-
-tileLayers.dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19});
-tileLayers.labels = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{attribution:'',subdomains:'abcd',maxZoom:19,zIndex:200,pane:'overlayPane'});
-tileLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'',maxZoom:19});
-tileLayers.dark.addTo(leafletMap);
-tileLayers.labels.addTo(leafletMap);
-
-clusterGroup=L.markerClusterGroup({
-maxClusterRadius:60,spiderfyOnMaxZoom:true,showCoverageOnHover:false,
-iconCreateFunction:function(c){
-const cnt=c.getChildCount();
-return L.divIcon({html:`<div style="width:36px;height:36px;border-radius:50%;background:rgba(200,50,30,.85);border:2px solid rgba(200,50,30,.6);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:500;color:#fff;box-shadow:0 0 12px rgba(200,50,30,.4);">${cnt}</div>`,className:'',iconSize:[36,36]});
-}
-});
-leafletMap.addLayer(clusterGroup);
-
-
-const ctrlDiv=document.createElement('div');
-ctrlDiv.className='map-ctrl-row';
-ctrlDiv.innerHTML=`
-<button class="map-ctrl-btn" title="Satellite" id="mctrl-sat" onclick="toggleSatellite(this)">🛰️</button>
-<button class="map-ctrl-btn" title="Cluster" id="mctrl-cluster" onclick="toggleCluster(this)" style="font-size:12px;font-family:var(--mono);">CLR</button>
-<button class="map-ctrl-btn" title="Reset view" onclick="leafletMap.setView([20,18],2)">🎯</button>`;
-document.getElementById('conflict-map').appendChild(ctrlDiv);
-
-addMapMarkers();
-}
-
-function toggleSatellite(btn){
-if(mapMode==='satellite'){
-leafletMap.removeLayer(tileLayers.satellite);
-tileLayers.dark.addTo(leafletMap);
-tileLayers.labels.addTo(leafletMap);
-mapMode='default';btn.classList.remove('mctrl-active');
-}else{
-leafletMap.removeLayer(tileLayers.dark);
-leafletMap.removeLayer(tileLayers.labels);
-tileLayers.satellite.addTo(leafletMap);
-mapMode='satellite';btn.classList.add('mctrl-active');
-}
-}
-
-let clusterEnabled=true;
-function toggleCluster(btn){
-clusterEnabled=!clusterEnabled;
-if(clusterEnabled){
-leafletMap.addLayer(clusterGroup);btn.classList.add('mctrl-active');
-}else{
-leafletMap.removeLayer(clusterGroup);btn.classList.remove('mctrl-active');
-
-mapMarkers.forEach(m=>m.addTo(leafletMap));
-}
-btn.title=clusterEnabled?T('map_cluster_on'):T('map_cluster_off');
-}
-
-function addMapMarkers(){
-if(clusterGroup)clusterGroup.clearLayers();
-mapMarkers.forEach(m=>{try{leafletMap.removeLayer(m);}catch(e){}});
-mapMarkers=[];
-events.forEach(ev=>{
-if(!ev.lat||!ev.lng)return;
-const color=evColor(ev);
-const icon=L.divIcon({className:'',html:`<div class="conflict-marker" style="color:${color};"><div class="marker-pin${ev.sev==='critical'?' pulse':''}" style="border-color:${color};">${evEmoji(ev)}</div><div class="marker-label">${flagsToCode(ev.flags)} ${ev.parties}</div></div>`,iconSize:[180,46],iconAnchor:[90,18],popupAnchor:[0,-24]});
-const marker=L.marker([ev.lat,ev.lng],{icon});
-const chips=(ev.markets||[]).slice(0,3).map(mid=>{const m=liveMarkets[mid]||{};const def=marketDefs.find(d=>d.id===mid);if(!def)return'';return`<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);" class="${m.dir==='up'?'up':'dn'}">${def.ticker} ${m.price||'—'}</span>`;}).join('');
-marker.bindPopup(`<div class="map-popup"><div class="mpp-flags">${flagsToCode(ev.flags)}</div><div class="mpp-title">${ev.title}</div><div class="mpp-region">${ev.region} · ${ev.parties}</div>${chips?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;">${chips}</div>`:''}<button class="mpp-btn" onclick="openEvent(${ev.id})">${T('detail_read')}</button></div>`,{maxWidth:280,minWidth:230});
-
-marker.on('click',()=>{if(window.innerWidth<768)openConflictSheet(ev.id);});
-if(clusterEnabled&&clusterGroup){clusterGroup.addLayer(marker);}else{marker.addTo(leafletMap);}
-mapMarkers.push(marker);
-});
-// Ensure map redraws correctly on all browsers
-setTimeout(()=>{if(leafletMap)leafletMap.invalidateSize(true);},100);
-}
-
-function openConflictSheet(id){
-const ev=events.find(e=>e.id===id);if(!ev)return;
-document.getElementById('bs-conflict-body').innerHTML=`
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-<div class="ec-flags" style="font-size:13px;">${flagsToCode(ev.flags)}</div>
-<div><div style="font-family:var(--display);font-size:22px;font-weight:900;letter-spacing:.04em;">${ev.title}</div>
-<div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);">${ev.region} · ${ev.parties}</div></div>
-</div>
-<div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;">
-<div class="sev-dot sev-${ev.sev}"></div>
-<span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.1em;">${ev.sev}</span>
-${ev.sevScore?`<span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.2);">· Score ${ev.sevScore}/10</span>`:''}
-${ev.casualties?`<span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);">· ${fmtNum(ev.casualties)} casualties</span>`:''}
-</div>
-<p style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:16px;">${(ev.econContext||'').substring(0,180)}…</p>
-<button class="btn btn-red" onclick="closeBottomSheet();openEvent(${ev.id})">${T('detail_read')}</button>`;
-document.getElementById('bs-overlay').classList.add('bs-show');
-document.getElementById('bs-conflict').classList.add('bs-open');
-}
-function closeBottomSheet(){
-document.getElementById('bs-overlay').classList.remove('bs-show');
-document.querySelectorAll('.bottom-sheet').forEach(s=>s.classList.remove('bs-open'));
-}
-
-const tabOrder=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
-let swipeStartX=0;let swipeStartY=0;let swipeActive=false;
-document.addEventListener('touchstart',e=>{swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;swipeActive=true;},{passive:true});
-document.addEventListener('touchend',e=>{
-if(!swipeActive)return;swipeActive=false;
-const dx=e.changedTouches[0].clientX-swipeStartX;
-const dy=e.changedTouches[0].clientY-swipeStartY;
-if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx)*0.8)return;
-const active=document.querySelector('.screen.active');if(!active)return;
-const curTab=active.id.replace('screen-','');
-const cur=tabOrder.indexOf(curTab);if(cur<0)return;
-if(dx<-60&&cur<tabOrder.length-1)switchTab(tabOrder[cur+1]);
-if(dx>60&&cur>0)switchTab(tabOrder[cur-1]);
-},{passive:true});
-
-function haptic(type='light'){
-if(!navigator.vibrate)return;
-({light:()=>navigator.vibrate(8),medium:()=>navigator.vibrate(18),heavy:()=>navigator.vibrate([20,10,20])})[type]?.();
-}
-
-function fmtNum(n){if(!n)return'0';if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return Math.round(n/1000)+'K';return n.toLocaleString();}
-function fmtBn(n){if(!n)return'—';if(n>=1000)return'$'+(n/1000).toFixed(1)+'T';return'$'+n+'B';}
-
-function animateCount(el,target,duration=1200,prefix='',suffix=''){
-const start=Date.now();const from=0;
-function step(){
-const p=Math.min((Date.now()-start)/duration,1);
-const ease=1-Math.pow(1-p,3);
-const val=Math.round(from+(target-from)*ease);
-el.textContent=prefix+fmtNum(val)+suffix;
-if(p<1)requestAnimationFrame(step);
-}
-requestAnimationFrame(step);
-}
-
-let vizRendered=false;
-function renderVizScreen(){
-if(vizRendered)return;vizRendered=true;
-
-
-const totalCasualties=events.reduce((s,e)=>s+(e.casualties||0),0);
-const totalDisplaced=events.reduce((s,e)=>s+(e.displaced||0),0);
-const activeConflicts=events.filter(e=>e.cat!=='cyber').length;
-const totalDamage=events.reduce((s,e)=>s+(e.econDamage||0),0);
-
-animateCount(document.getElementById('vz-conflicts'),activeConflicts,800);
-animateCount(document.getElementById('vz-displaced'),totalDisplaced,1200);
-animateCount(document.getElementById('vz-casualties'),totalCasualties,1400);
-document.getElementById('vz-cost').textContent=fmtBn(totalDamage);
-
-
-const topCas=events.filter(e=>e.casualties>0).sort((a,b)=>b.casualties-a.casualties).slice(0,8);
-const maxCas=topCas[0]?.casualties||1;
-document.getElementById('casualty-bars').innerHTML=topCas.map(ev=>`
-<div class="casualty-bar-item">
-<div class="cb-label">
-<span class="cb-name">${flagsToCode(ev.flags)} ${ev.title}</span>
-<span class="cb-val" style="color:var(--red2);">${fmtNum(ev.casualties)}</span>
-</div>
-<div class="cb-track"><div class="cb-fill" style="width:0%;background:var(--red2);" data-pct="${(ev.casualties/maxCas*100).toFixed(1)}"></div></div>
-</div>`).join('');
-setTimeout(()=>document.querySelectorAll('.cb-fill[data-pct]').forEach(el=>{el.style.width=el.dataset.pct+'%';}),100);
-
-
-const topDis=events.filter(e=>e.displaced>0).sort((a,b)=>b.displaced-a.displaced).slice(0,8);
-const maxDis=topDis[0]?.displaced||1;
-document.getElementById('displaced-bars').innerHTML=topDis.map(ev=>`
-<div class="casualty-bar-item">
-<div class="cb-label">
-<span class="cb-name">${flagsToCode(ev.flags)} ${ev.title}</span>
-<span class="cb-val" style="color:var(--amber);">${fmtNum(ev.displaced)}</span>
-</div>
-<div class="cb-track"><div class="cb-fill" style="width:0%;background:var(--amber);" data-pct="${(ev.displaced/maxDis*100).toFixed(1)}"></div></div>
-</div>`).join('');
-setTimeout(()=>document.querySelectorAll('.cb-fill[data-pct]').forEach(el=>{el.style.width=el.dataset.pct+'%';}),200);
-
-
-const topEcon=events.filter(e=>e.econDamage>0).sort((a,b)=>b.econDamage-a.econDamage).slice(0,8);
-const maxEcon=topEcon[0]?.econDamage||1;
-document.getElementById('econ-damage-bars').innerHTML=topEcon.map(ev=>`
-<div class="casualty-bar-item">
-<div class="cb-label">
-<span class="cb-name">${flagsToCode(ev.flags)} ${ev.title}</span>
-<span class="cb-val" style="color:var(--green);">${fmtBn(ev.econDamage)}</span>
-</div>
-<div class="cb-track"><div class="cb-fill" style="width:0%;background:var(--green);" data-pct="${(ev.econDamage/maxEcon*100).toFixed(1)}"></div></div>
-</div>`).join('');
-setTimeout(()=>document.querySelectorAll('.cb-fill[data-pct]').forEach(el=>{el.style.width=el.dataset.pct+'%';}),300);
-
-
-renderFlowSVG();
-
-
-renderTimelineSVG();
-}
-
-function renderFlowSVG(){
-const flows=[
-{from:'Sudan/Darfur',to:'Egypt/Chad',n:4.2,col:'#c8321e'},
-{from:'Ukraine',to:'Europe',n:6.5,col:'#2c7be5'},
-{from:'Syria',to:'Turkey/Lebanon',n:5.0,col:'#d98c0a'},
-{from:'Afghanistan',to:'Pakistan/Iran',n:2.8,col:'#9b4dca'},
-{from:'Myanmar',to:'Thailand/Bangladesh',n:1.5,col:'#1fa355'},
-];
-const svg=document.getElementById('flow-svg');
-const W=400,H=200;
-svg.innerHTML=flows.map((f,i)=>{
-const y=20+i*36;const barW=Math.round(f.n/6.5*260);
-return`<g>
-<text x="0" y="${y+12}" font-size="9" fill="rgba(255,255,255,.4)">${f.from}</text>
-<rect x="110" y="${y}" width="${barW}" height="18" rx="4" fill="${f.col}" opacity="0.7"/>
-<text x="${116+barW}" y="${y+12}" font-size="9" fill="rgba(255,255,255,.5)">${f.n}M → ${f.to}</text>
-</g>`;
-}).join('');
-}
-
-function renderTimelineSVG(){
-const svg=document.getElementById('timeline-svg');
-const W=600,H=240,now=2025.25,earliest=2006;
-const timeEvents=events.filter(e=>e.startYear&&e.cat!=='cyber').sort((a,b)=>a.startYear-b.startYear).slice(0,12);
-const toX=y=>Math.round((y-earliest)/(now-earliest)*(W-80)+40);
-
-let html=`<line x1="40" y1="${H-30}" x2="${W-40}" y2="${H-30}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>`;
-for(let yr=2008;yr<=2025;yr+=3){
-const x=toX(yr);
-html+=`<text x="${x}" y="${H-12}" font-size="8" fill="rgba(255,255,255,.2)" text-anchor="middle">${yr}</text>
-<line x1="${x}" y1="${H-34}" x2="${x}" y2="${H-26}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>`;
-}
-timeEvents.forEach((ev,i)=>{
-const x1=toX(ev.startYear),x2=toX(now),y=12+i*18;
-const col=evColor(ev);
-html+=`<line x1="${x1}" y1="${y+5}" x2="${x2}" y2="${y+5}" stroke="${col}" stroke-width="8" opacity="0.35" stroke-linecap="round"/>
-<circle cx="${x1}" cy="${y+5}" r="4" fill="${col}" opacity="0.9"/>
-<text x="${Math.max(x1-4,40)}" y="${y}" font-size="8" fill="rgba(255,255,255,.45)">${flagsToText(ev.flags)} ${ev.title.substring(0,22)}</text>`;
-});
-svg.innerHTML=html;
-}
-
-function sevScoreBars(score,color='var(--red2)'){
-const bars=Array.from({length:10},(_,i)=>`<div class="sev-bar${i<score?' lit':''}" style="height:${6+i*1.5}px;color:${color};${i<score?'background:'+color:''}"></div>`).join('');
-return`<span class="sev-bars" title="Severity ${score}/10">${bars}</span>`;
-}
-
-function renderRelated(ev){
-if(!ev.related?.length)return'';
-const chips=ev.related.map(id=>{
-const rel=events.find(e=>e.id===id);if(!rel)return'';
-return`<span class="relation-chip" onclick="openEvent(${rel.id})"><span class="emoji">${rel.flags}</span>${rel.title}</span>`;
-}).join('');
-return`<div style="padding:12px 18px 0;"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">Related Conflicts</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${chips}</div></div>`;
-}
-function goHome(){
-stopNewsRefresh();
-switchTab('map');
-
-document.getElementById('screen-map')?.scrollTo(0,0);
-window.scrollTo(0,0);
-}
-function goBack(){
-// Reset meta tags to default
-document.title='World Conflicts Live — Every Source · Every Side · No Agenda';
-document.querySelector('meta[name="description"]')?.setAttribute('content','Real-time conflict tracking across 27+ active conflicts. Live market impact, AI analysis, every source, every side. No agenda.');
-document.querySelector('meta[property="og:title"]')?.setAttribute('content','World Conflicts Live — Every Source · Every Side · No Agenda');
-document.querySelector('meta[property="og:url"]')?.setAttribute('content','https://worldconflictslive.vercel.app/');
-history.pushState({},'','/');
-const order=['map','unrest','cyber','viz','markets','alerts','ai','language','profile'];
-const i=order.indexOf(lastScreen);
-switchTab(lastScreen,document.querySelectorAll('.nav-item')[Math.max(0,i)]);
-}
-function openEventByName(name){const ev=events.find(e=>e.title===name);if(ev)openEvent(ev.id);}
-
-function openModal(id){document.getElementById(id)?.classList.add('open');if(id==='modal-premium')checkWaitlistState();}
-function closeModal(id){document.getElementById(id)?.classList.remove('open');}
-document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
-
-let toastTimer;
-function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
-function toggleRow(row){
-  const t=row.querySelector('.toggle');
-  if(!t)return;
-  t.classList.toggle('on');
-  showToast(t.classList.contains('on')?T('toast_enabled'):T('toast_disabled'));
-  // Persist all toggle states to localStorage
-  const states={};
-  document.querySelectorAll('.settings-row').forEach((r,i)=>{
-    const tog=r.querySelector('.toggle');
-    if(tog) states['toggle_'+i]=tog.classList.contains('on');
-  });
-  try{safeStorage.setItem('wcl_settings',JSON.stringify(states));}catch(e){}
-}
-function loadSettings(){
-  try{
-    const saved=JSON.parse(safeStorage.getItem('wcl_settings')||'{}');
-    document.querySelectorAll('.settings-row').forEach((r,i)=>{
-      const tog=r.querySelector('.toggle');
-      if(tog&&saved['toggle_'+i]!==undefined){
-        tog.classList.toggle('on',saved['toggle_'+i]);
-      }
-    });
-  }catch(e){}
-}
-
-function submitEmail(){
-const email=sanitizeEmail(document.getElementById('email-input').value);
-if(!email||!email.includes('@')||!email.includes('.')){showToast('⚠️ Please enter a valid email');return;}
-const safe=email.replace(/[<>'"]/g,'').substring(0,254);
-try{const s=JSON.parse(safeStorage.getItem('wcl_emails')||'[]');if(!s.includes(safe)){s.push(safe);safeStorage.setItem('wcl_emails',JSON.stringify(s));}}catch(e){}
-closeModal('modal-email');closeModal('modal-premium');
-showToast("✅ You're on the list! First alert coming soon.");
-}
-
-async function detectNewConflicts(){
-try{
-const r=await fetch('/api/detect-conflicts');const data=await r.json();
-if(data.conflicts?.length){data.conflicts.forEach(c=>{
-if(!events.find(x=>x.title===c.title)){
-events.push({id:events.length+500,cat:c.cat||'military',flags:c.flags||'🌍',title:c.title,region:c.region||'Unknown',parties:c.parties||c.title,sev:c.sev||'medium',lat:null,lng:null,query:c.query||c.title,markets:c.markets||['gold'],econContext:c.summary||'',timeline:[]});
-renderList(currentCat);showToast(`🌍 New conflict detected: ${c.title}`);
-}
-});}
-}catch(e){}
-}
-
-const cyberSubtype={400:'state',401:'espionage',402:'state',403:'ransomware'};
-const cyberThreats=[
-{actor:'Volt Typhoon (China)',target:'US Power Grid',type:'Infrastructure',severity:'critical',time:'Active now',icon:'⚡'},
-{actor:'Sandworm (Russia)',target:'European telecoms',type:'Disruption',severity:'high',time:'12h ago',icon:'📡'},
-{actor:'LockBit 4.0',target:'US hospital chain',type:'Ransomware',severity:'high',time:'3h ago',icon:'🏥'},
-{actor:'Charming Kitten (Iran)',target:'EU defence contractors',type:'Espionage',severity:'high',time:'1d ago',icon:'🕵️'},
-{actor:'Lazarus Group (DPRK)',target:'Crypto exchanges',type:'Financial',severity:'high',time:'2d ago',icon:'₿'},
-];
-
-function renderCyberScreen(){
-
-document.getElementById('cyber-threat-feed').innerHTML=cyberThreats.map(t=>`
-<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--surface);border:1px solid ${t.severity==='critical'?'rgba(200,50,30,.3)':'var(--border)'};border-radius:10px;">
-<div style="font-size:20px;flex-shrink:0;">${t.icon}</div>
-<div style="flex:1;">
-<div style="font-family:var(--mono);font-size:9px;color:${t.severity==='critical'?'#ff6b4a':'#ffd47a'};letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;">${t.type} · ${t.time}</div>
-<div style="font-family:var(--display);font-size:14px;font-weight:700;">${t.actor}</div>
-<div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);">Target: ${t.target}</div>
-</div>
-<div class="sev-dot sev-${t.severity}"></div>
-</div>`).join('');
-
-filterCyber('all',null);
-}
-
-function filterCyber(type,el){
-if(el){document.querySelectorAll('#screen-cyber .scroll-row .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');}
-const cyberEvents=events.filter(e=>e.cat==='cyber');
-const filtered=type==='all'?cyberEvents:cyberEvents.filter(e=>(cyberSubtype[e.id]||'state')===type);
-document.getElementById('cyber-list').innerHTML=filtered.length
-?filtered.map(e=>eventCard(e)).join('')
-:`<div style="text-align:center;padding:52px 20px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.1em;text-transform:uppercase;">No events in this category</div>`;
-}
-
-function openShareModal(){
-const ev=events.find(e=>e.id===currentEvent);if(!ev)return;
-const url=`${location.origin}${location.pathname}?conflict=${ev.id}`;
-const shareText=`${flagsToText(ev.flags)} ${ev.title} — Live conflict tracking on World Conflicts Live`;
-// Use native share sheet on mobile if available
-if(navigator.share){
-  navigator.share({title:ev.title,text:shareText,url}).catch(()=>{});
-  return;
-}
-// Fallback: show share modal with copy link
-document.getElementById('share-conflict-name').innerHTML=flagsToCode(ev.flags)+' <span style="font-weight:600">'+ev.title+'</span>';
-document.getElementById('share-url-box').textContent=url;
-document.getElementById('share-url-box').dataset.url=url;
-openModal('modal-share');
-}
-function copyShareUrl(){
-const url=document.getElementById('share-url-box').dataset.url||document.getElementById('share-url-box').textContent;
-navigator.clipboard?.writeText(url).then(()=>showToast(T('toast_copied'))).catch(()=>showToast('📋 Copy from the box above'));
-closeModal('modal-share');
-}
-function shareToX(){
-const ev=events.find(e=>e.id===currentEvent);
-const url=`${location.origin}${location.pathname}?conflict=${ev?.id||0}`;
-window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(`${ev?.flags||''} ${ev?.title||'Conflict'} — Every source, every side, no agenda.`)}&url=${encodeURIComponent(url)}`,'_blank');
-}
-function shareToWhatsApp(){
-const ev=events.find(e=>e.id===currentEvent);
-const url=`${location.origin}${location.pathname}?conflict=${ev?.id||0}`;
-window.open(`https://wa.me/?text=${encodeURIComponent(`${ev?.flags||''} ${ev?.title||''} — ${url}`)}`,'_blank');
-}
-
-function checkSharedConflict(){
-const p=new URLSearchParams(location.search).get('conflict');
-if(p!==null){const id=parseInt(p);const ev=events.find(e=>e.id===id);if(ev)setTimeout(()=>openEvent(id),400);}
-}
-
-let currentUser=null;
-function loadUser(){
-try{const u=safeStorage.getItem('wcl_user');if(u)currentUser=JSON.parse(u);}catch(e){}
-updateAccountUI();
-}
-function saveUser(){if(currentUser)safeStorage.setItem('wcl_user',JSON.stringify(currentUser));}
-function createAccount(){
-const email=sanitizeEmail(document.getElementById('acct-email-input').value);
-const name=sanitizeInput(document.getElementById('acct-name-input').value, 80);
-if(!email||!email.includes('@')){showToast('⚠️ Please enter a valid email');return;}
-if(!name){showToast('⚠️ Please enter your name');return;}
-currentUser={email,name,plan:'free',following:[],created:Date.now()};
-saveUser();updateAccountUI();closeModal('modal-account');
-showToast(`✅ Welcome, ${name}!`);
-}
-function loginUser(){
-const email=document.getElementById('acct-email-input')?.value?.trim();
-if(!email)return;
-currentUser={email,name:email.split('@')[0],plan:'free',following:[],created:Date.now()};
-saveUser();updateAccountUI();closeModal('modal-account');showToast('✅ Signed in!');
-}
-function logoutUser(){currentUser=null;safeStorage.removeItem('wcl_user');updateAccountUI();showToast('👋 Signed out');}
-function updateAccountUI(){
-const li=document.getElementById('account-logged-in');
-const lo=document.getElementById('account-logged-out');
-const btn=document.getElementById('nav-acct-btn');
-if(currentUser){
-li.style.display='block';lo.style.display='none';
-document.getElementById('acct-avatar').textContent=currentUser.name[0].toUpperCase();
-document.getElementById('acct-name').textContent=currentUser.name;
-document.getElementById('acct-email').textContent=currentUser.email;
-document.getElementById('acct-plan').textContent=currentUser.plan==='premium'?'⭐ Premium':'Free Plan';
-const fw=currentUser.following||[];
-document.getElementById('acct-following').innerHTML=fw.length
-?fw.map(id=>{const ev=events.find(e=>e.id===id);return ev?`<span style="font-family:var(--mono);font-size:9px;padding:3px 8px;background:rgba(200,50,30,.12);border:1px solid rgba(200,50,30,.2);border-radius:4px;cursor:pointer;" onclick="closeModal('modal-account');openEvent(${id})">${flagsToCode(ev.flags)} ${ev.title}</span>`:''}).join('')
-:`<span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);">Not following any conflicts yet</span>`;
-if(btn)btn.textContent=`👤 ${currentUser.name.split(' ')[0]}`;
-}else{
-li.style.display='none';lo.style.display='block';
-if(btn)btn.textContent='👤 Account';
-}
-}
-function toggleFollow(){
-const ev=events.find(e=>e.id===currentEvent);if(!ev)return;
-if(!currentUser){openModal('modal-account');return;}
-const fw=currentUser.following||[];
-const idx=fw.indexOf(currentEvent);
-if(idx>-1){fw.splice(idx,1);showToast(`☆ Unfollowed ${ev.title}`);}
-else{fw.push(currentEvent);showToast(`★ Following ${ev.title}`);}
-currentUser.following=fw;saveUser();updateFollowBtn();updateAccountUI();
-}
-function updateFollowBtn(){
-const btn=document.getElementById('follow-btn');if(!btn)return;
-const following=currentUser?.following?.includes(currentEvent);
-btn.textContent=following?T('detail_following'):T('detail_follow');
-btn.style.color=following?'var(--amber)':'rgba(255,255,255,.4)';
-btn.style.borderColor=following?'rgba(217,140,10,.4)':'var(--border)';
-}
-
-const NEWS_CACHE_TTL = 180000; // 3 min
-const newsCacheTimes = {};
-
-function getRssFeeds(ev) {
-const qEnc = encodeURIComponent(ev.query);
-return [
-{ url:`https://news.google.com/rss/search?q=${qEnc}&hl=en-US&gl=US&ceid=US:en`, outlet:'Google News', al:{type:'independent',label:'Aggregator',flag:'🌐'} },
-{ url:`https://feeds.reuters.com/reuters/search/news?q=${encodeURIComponent(ev.query.replace(/\s+/g,'+'))}`, outlet:'Reuters', al:{type:'independent',label:'Independent',flag:'🇬🇧'} },
-{ url:'https://feeds.bbci.co.uk/news/world/rss.xml', outlet:'BBC News', al:{type:'state',label:'State-BBC',flag:'🇬🇧'} },
-{ url:'https://www.aljazeera.com/xml/rss/all.xml', outlet:'Al Jazeera', al:{type:'state',label:'State-Qatar',flag:'🇶🇦'} },
-{ url:'https://www.theguardian.com/world/rss', outlet:'The Guardian', al:{type:'independent',label:'Independent',flag:'🇬🇧'} },
-{ url:'https://feeds.apnews.com/rss/apf-topnews', outlet:'Associated Press', al:{type:'independent',label:'Independent',flag:'🇺🇸'} },
-];
-}
-
-const CORS_PROXIES = [
-url => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=15`,
-url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-];
-
-async function fetchRssFeed(feed, proxyIdx=0) {
-if(proxyIdx >= CORS_PROXIES.length) return [];
-try {
-const r = await fetch(CORS_PROXIES[proxyIdx](feed.url), {signal:AbortSignal.timeout(5000)});
-if(!r.ok) throw new Error();
-const data = await r.json();
-
-if(data.items?.length) {
-return data.items.map(item => {
-const ts = item.pubDate ? new Date(item.pubDate).getTime() : 0;
-return {outlet:feed.outlet, alignment:feed.al,
-headline:stripHtml(item.title||''),
-excerpt:stripHtml(item.description||item.content||'').substring(0,220),
-url:item.link||item.guid||'#', ts, time:timeAgo(ts)};
-}).filter(a=>a.headline && a.ts>0);
-}
-
-const xml = data.contents || (typeof data==='string'?data:'');
-if(xml) return parseRssXml(xml, feed);
-} catch(e) {
-return fetchRssFeed(feed, proxyIdx+1);
-}
-return [];
-}
-
-function parseRssXml(xml, feed) {
-try {
-const doc = new DOMParser().parseFromString(xml,'text/xml');
-return [...doc.querySelectorAll('item')].slice(0,15).map(item=>{
-const title = stripHtml(item.querySelector('title')?.textContent||'');
-const desc  = stripHtml(item.querySelector('description')?.textContent||'').substring(0,220);
-const link  = item.querySelector('link')?.textContent?.trim() || item.querySelector('guid')?.textContent || '#';
-const ts    = new Date(item.querySelector('pubDate')?.textContent||0).getTime();
-if(!title||!ts) return null;
-return {outlet:feed.outlet, alignment:feed.al, headline:title, excerpt:desc, url:link, ts, time:timeAgo(ts)};
-}).filter(Boolean);
-} catch(e){return[];}
-}
-
-function stripHtml(s){
-return s.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&nbsp;/g,' ').trim();
-}
-
-function isRelevant(article, ev) {
-const text = (article.headline+' '+article.excerpt).toLowerCase();
-const keywords = [
-...ev.title.toLowerCase().split(/[\s\-–·,\/]+/),
-...ev.region.toLowerCase().split(/[\s,\/]+/),
-...(ev.query||'').toLowerCase().split(/\s+/),
-].filter(w=>w.length>3);
-const unique = [...new Set(keywords)];
-return unique.filter(k=>text.includes(k)).length >= 2;
-}
-
-async function fetchNewsReal(id) {
-const now = Date.now();
-if(liveNews[id] && newsCacheTimes[id] && (now-newsCacheTimes[id]) < NEWS_CACHE_TTL) return;
-
-const ev = events.find(e=>e.id===id);
-
-
-const feeds = getRssFeeds(ev);
-const [googleResults, reutersResults, bbcResults] = await Promise.all([
-fetchRssFeed(feeds[0]),
-fetchRssFeed(feeds[1]),
-fetchRssFeed(feeds[2]),
-]);
-
-
-const extraPromise = Promise.all([
-fetchRssFeed(feeds[3]),
-fetchRssFeed(feeds[4]),
-fetchRssFeed(feeds[5]),
-]);
-
-let all = [...googleResults, ...reutersResults, ...bbcResults];
-
-
-if(all.length >= 3) {
-const quick = processArticles(all, ev);
-liveNews[id] = quick;
-newsCacheTimes[id] = now;
-renderNewsFeed(0);
-}
-
-
-const extras = await extraPromise;
-all = [...all, ...extras.flat()];
-const final = processArticles(all, ev);
-
-if(final.length >= 3) {
-liveNews[id] = final;
-newsCacheTimes[id] = now;
-if(currentEvent === id) renderNewsFeed(currentTabIdx);
-} else if(!liveNews[id]?.length) {
-liveNews[id] = generateMultiSideArticles(ev);
-newsCacheTimes[id] = now;
-if(currentEvent === id) renderNewsFeed(currentTabIdx);
-}
-}
-
-function processArticles(all, ev) {
-
-const relevant = all.filter(a=>isRelevant(a,ev));
-const pool = relevant.length >= 4 ? relevant : all;
-const seen = new Set();
-return pool
-.filter(a=>{
-const key = a.headline.substring(0,45).toLowerCase().replace(/[^a-z]/g,'');
-if(seen.has(key)) return false;
-seen.add(key); return true;
-})
-.sort((a,b)=>b.ts-a.ts)
-.slice(0,15);
-}
-
-function generateMultiSideArticles(ev) {
-const now = Date.now();
-const sides = [
-{outlet:'Reuters',          al:{type:'independent',label:'Independent',flag:'🇬🇧'}, m:2+Math.floor(Math.random()*10)},
-{outlet:'Associated Press', al:{type:'independent',label:'Independent',flag:'🇺🇸'}, m:15+Math.floor(Math.random()*20)},
-{outlet:'BBC News',         al:{type:'state',label:'State-BBC',flag:'🇬🇧'},         m:30+Math.floor(Math.random()*30)},
-{outlet:'Al Jazeera',       al:{type:'state',label:'State-Qatar',flag:'🇶🇦'},       m:55+Math.floor(Math.random()*40)},
-{outlet:'The Guardian',     al:{type:'independent',label:'Independent',flag:'🇬🇧'}, m:80+Math.floor(Math.random()*50)},
-{outlet:'Fox News',         al:{type:'aligned',label:'Pro-GOP',flag:'🇺🇸'},         m:110+Math.floor(Math.random()*50)},
-{outlet:'CNN',              al:{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},    m:140+Math.floor(Math.random()*60)},
-{outlet:'New York Times',   al:{type:'aligned',label:'Pro-Democrat',flag:'🇺🇸'},    m:180+Math.floor(Math.random()*60)},
-];
-const p1 = ev.parties.split('·')[0]?.trim()||'Forces';
-const hlines = [
-`BREAKING: ${p1} reports major developments in ${ev.region}`,
-`Civilian toll rises in ${ev.title} — aid groups demand access`,
-`Diplomatic pressure mounts as ${ev.region} situation worsens`,
-`Markets react to ${ev.title}: oil, gold move on escalation fears`,
-`${ev.region}: UN emergency session called as crisis deepens`,
-`Analysis — What the latest ${ev.title} developments mean`,
-`${ev.title}: Key parties exchange accusations amid stalled talks`,
-`How ${ev.region} could reshape global alliances this year`,
-];
-return [...sides].sort((a,b)=>a.m-b.m).map((s,i)=>{
-const ts = now-(s.m*60000);
-return{outlet:s.outlet, alignment:s.al, time:timeAgo(ts), ts,
-headline:hlines[i]||hlines[0],
-excerpt:`${s.outlet} reporting on ${ev.title}. ${ev.econContext?.substring(0,120)||''}`,
-url:'#'};
-});
-}
-
-window.fetchNews = fetchNewsReal;
-
-document.getElementById('see-all-count').textContent = events.length;
-loadUser();
-renderList('military');
-tabRendered['map'] = true;
-
-// ── Visibility API — pause timers when tab is hidden ───────────
-let _refreshPaused = false;
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    _refreshPaused = true;
-  } else {
-    _refreshPaused = false;
-    // Immediate refresh on return: markets, alerts, news timestamps
-    fetchMarketData();
-    fetchCryptoPrices();
-    if(currentEvent != null) fetchNewsStub(currentEvent);
-    const arts = liveNews[currentEvent];
-    if(arts){ arts.forEach(a=>{a.time=timeAgo(a.ts);}); renderFeedHTML(arts,currentTabIdx); }
-  }
-});
-
-// Refresh on window focus (user switches back from another window)
-window.addEventListener('focus', () => {
-  if(!_refreshPaused){
-    fetchMarketData();
-    updateTicker();
-  }
-});
-
-
-// Browser back/forward button support
-window.addEventListener('popstate', (e) => {
-  if(e.state?.conflict != null){
-    openEvent(e.state.conflict);
-  } else {
-    goBack();
-  }
-});
-initMap();
-initTimelineBar();
-fetchCryptoPrices();
-trackReferral();
-loadSettings();
-// Ensure map renders correctly on first load (fixes Safari/Chrome mobile)
-// Multiple invalidateSize calls handle iOS Safari's delayed rendering
-setTimeout(()=>{if(leafletMap){leafletMap.invalidateSize(true);}},300);
-setTimeout(()=>{if(leafletMap){leafletMap.invalidateSize(true);}},800);
-setTimeout(()=>{if(leafletMap){leafletMap.invalidateSize(true);}},1500);
-
-
-requestAnimationFrame(() => {
-  setTimeout(() => {
-    fetchMarketData();
-    setTimeout(pollAlerts, 5000);
-    setTimeout(detectNewConflicts, 8000);
-    setInterval(detectNewConflicts, 4*60*60*1000);
-    setTimeout(() => {
-      if (!safeStorage.getItem('wcl_email_prompted')) {
-        safeStorage.setItem('wcl_email_prompted','1');
-        openModal('modal-email');
-      }
-    }, 45000);
-  }, 300);
-});
-
-if (currentLang !== 'en') {
-document.getElementById('html-root').setAttribute('dir', LANGUAGES.find(l=>l.code===currentLang)?.rtl?'rtl':'ltr');
-if (txCache[currentLang]) applyTranslations(txCache[currentLang]);
-}
-checkSharedConflict();
+<div class="toast" id="toast"></div>
+
+  <!-- Leaflet MUST load before data.js and app.js -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';document.head.appendChild(s);"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
