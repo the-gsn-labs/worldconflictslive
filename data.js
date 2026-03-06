@@ -291,15 +291,12 @@ source_class_label:'Source Classification',
 // Convert a single flag emoji to its ISO 2-letter country code (cross-platform)
 function flagCode(flag) {
   if (!flag) return '';
-  // On non-Windows: return emoji directly for native rendering
-  if (typeof _isWindows !== 'undefined' && !_isWindows) return flag;
-  // On Windows: convert to 2-letter ISO code
   const chars = [...flag];
   const cp1 = chars[0]?.codePointAt(0);
   const cp2 = chars[1]?.codePointAt(0);
   if (cp1 >= 0x1F1E6 && cp1 <= 0x1F1FF && cp2 >= 0x1F1E6 && cp2 <= 0x1F1FF) {
-    return String.fromCodePoint(cp1 - 0x1F1E6 + 65) +
-           String.fromCodePoint(cp2 - 0x1F1E6 + 65);
+    const code = (String.fromCodePoint(cp1-0x1F1E6+65)+String.fromCodePoint(cp2-0x1F1E6+65)).toLowerCase();
+    return '<span class="fi fi-' + code + '" style="font-size:22px;border-radius:3px;"></span>';
   }
   return flag;
 }
