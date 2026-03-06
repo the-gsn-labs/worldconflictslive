@@ -629,6 +629,22 @@ const filtered=type==='all'?alertsData:type==='following'?alertsData.filter(a=>a
 renderAlertsList(filtered);
 }
 function renderAlerts(){renderAlertsList(alertsData);}
+
+function buildLangGrid(){
+  var el=document.getElementById('lang-grid');
+  if(!el||el.children.length>0)return;
+  var html='';
+  LANGUAGES.forEach(function(l){
+    var active=l.code===currentLang?' lang-active':'';
+    var fc=flagCode(l.flag);
+    html+='<div class="lang-tile'+active+'" data-lang="'+l.code+'" onclick="setLang(this.dataset.lang)">'
+      +'<span class="fi fi-'+fc+'" style="width:20px;height:15px;display:inline-block;margin-bottom:4px;"></span>'
+      +'<div style="font-family:var(--mono);font-size:10px;letter-spacing:.04em;">'+l.native+'</div>'
+      +'</div>';
+  });
+  el.innerHTML=html;
+}
+
 function renderAlertsList(list){
 document.getElementById('alerts-list').innerHTML=list.length?list.map(a=>{
 const onclick=a.eventId!=null?`openEvent(${a.eventId})`:`openModal('modal-premium')`;
