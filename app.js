@@ -467,6 +467,23 @@ if(diff<60)return`${Math.floor(diff)}s ago`;if(diff<3600)return`${Math.floor(dif
 if(diff<86400)return`${Math.floor(diff/3600)}h ago`;return`${Math.floor(diff/86400)}d ago`;
 }
 
+
+// Translation stub - returns articles as-is (full translation via /api/translate)
+async function translateArticles(articles, lang){
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({articles, lang})
+    });
+    if(!res.ok) return articles;
+    const data = await res.json();
+    return data.articles || articles;
+  } catch(e) {
+    return articles;
+  }
+}
+
 async function openEvent(id){
 haptic('light');
 currentEvent=id;stopNewsRefresh();if(leafletMap)leafletMap.closePopup();
@@ -1478,11 +1495,14 @@ window.addEventListener('popstate', (e) => {
     goBack();
   }
 });
-initMap();
-initTimelineBar();
-fetchCryptoPrices();
-trackReferral();
-loadSettings();
+// Wrap startup in window load to guarantee DOM+CSS ready (fixes iOS Safari map)
+window.addEventListener('load', function(){
+  initMap();
+  initTimelineBar();
+  fetchCryptoPrices();
+  trackReferral();
+  loadSettings();
+});
 // Ensure map renders correctly on first load (fixes Safari/Chrome mobile)
 // Multiple invalidateSize calls handle iOS Safari's delayed rendering
 setTimeout(()=>{if(leafletMap){leafletMap.invalidateSize(true);}},300);
