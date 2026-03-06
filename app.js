@@ -19,11 +19,11 @@ function sanitizeEmail(str) {
 
 // ── Referral system ────────────────────────────────────────────
 function getReferralCode() {
-  let code = localStorage.getItem('wcl_ref_code');
+  let code = safeStorage.getItem('wcl_ref_code');
   if (!code) {
     // Generate short unique code from timestamp + random
     code = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-    localStorage.setItem('wcl_ref_code', code);
+    safeStorage.setItem('wcl_ref_code', code);
   }
   return code;
 }
@@ -58,7 +58,7 @@ function trackReferral() {
   const params = new URLSearchParams(window.location.search);
   const ref = params.get('ref');
   if (ref && /^r[a-z0-9]{6,16}$/.test(ref)) {
-    localStorage.setItem('wcl_referred_by', ref);
+    safeStorage.setItem('wcl_referred_by', ref);
   }
 }
 
@@ -91,7 +91,7 @@ async function submitWaitlist() {
     const res = await fetch('/api/waitlist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, ref: localStorage.getItem('wcl_ref_code') || null })
+      body: JSON.stringify({ email, ref: safeStorage.getItem('wcl_ref_code') || null })
     });
     const json = await res.json();
 
@@ -100,7 +100,7 @@ async function submitWaitlist() {
       thanksEl.style.display = 'block';
       updateReferralDisplay();
       // Save locally so we don't prompt again
-      localStorage.setItem('wcl_waitlist', email);
+      safeStorage.setItem('wcl_waitlist', email);
     } else {
       msgEl.style.color = '#e03d27';
       msgEl.textContent = json.error || 'Something went wrong. Please try again.';
@@ -117,7 +117,7 @@ async function submitWaitlist() {
 
 // Auto-show thanks state if already signed up
 function checkWaitlistState() {
-  if (localStorage.getItem('wcl_waitlist')) {
+  if (safeStorage.getItem('wcl_waitlist')) {
     const f = document.getElementById('prem-form');
     const t = document.getElementById('prem-thanks');
     if (f) f.style.display = 'none';
@@ -1084,11 +1084,11 @@ function toggleRow(row){
     const tog=r.querySelector('.toggle');
     if(tog) states['toggle_'+i]=tog.classList.contains('on');
   });
-  try{localStorage.setItem('wcl_settings',JSON.stringify(states));}catch(e){}
+  try{safeStorage.setItem('wcl_settings',JSON.stringify(states));}catch(e){}
 }
 function loadSettings(){
   try{
-    const saved=JSON.parse(localStorage.getItem('wcl_settings')||'{}');
+    const saved=JSON.parse(safeStorage.getItem('wcl_settings')||'{}');
     document.querySelectorAll('.settings-row').forEach((r,i)=>{
       const tog=r.querySelector('.toggle');
       if(tog&&saved['toggle_'+i]!==undefined){
@@ -1102,7 +1102,7 @@ function submitEmail(){
 const email=sanitizeEmail(document.getElementById('email-input').value);
 if(!email||!email.includes('@')||!email.includes('.')){showToast('⚠️ Please enter a valid email');return;}
 const safe=email.replace(/[<>'"]/g,'').substring(0,254);
-try{const s=JSON.parse(localStorage.getItem('wcl_emails')||'[]');if(!s.includes(safe)){s.push(safe);localStorage.setItem('wcl_emails',JSON.stringify(s));}}catch(e){}
+try{const s=JSON.parse(safeStorage.getItem('wcl_emails')||'[]');if(!s.includes(safe)){s.push(safe);safeStorage.setItem('wcl_emails',JSON.stringify(s));}}catch(e){}
 closeModal('modal-email');closeModal('modal-premium');
 showToast("✅ You're on the list! First alert coming soon.");
 }
@@ -1191,10 +1191,10 @@ if(p!==null){const id=parseInt(p);const ev=events.find(e=>e.id===id);if(ev)setTi
 
 let currentUser=null;
 function loadUser(){
-try{const u=localStorage.getItem('wcl_user');if(u)currentUser=JSON.parse(u);}catch(e){}
+try{const u=safeStorage.getItem('wcl_user');if(u)currentUser=JSON.parse(u);}catch(e){}
 updateAccountUI();
 }
-function saveUser(){if(currentUser)localStorage.setItem('wcl_user',JSON.stringify(currentUser));}
+function saveUser(){if(currentUser)safeStorage.setItem('wcl_user',JSON.stringify(currentUser));}
 function createAccount(){
 const email=sanitizeEmail(document.getElementById('acct-email-input').value);
 const name=sanitizeInput(document.getElementById('acct-name-input').value, 80);
@@ -1210,7 +1210,7 @@ if(!email)return;
 currentUser={email,name:email.split('@')[0],plan:'free',following:[],created:Date.now()};
 saveUser();updateAccountUI();closeModal('modal-account');showToast('✅ Signed in!');
 }
-function logoutUser(){currentUser=null;localStorage.removeItem('wcl_user');updateAccountUI();showToast('👋 Signed out');}
+function logoutUser(){currentUser=null;safeStorage.removeItem('wcl_user');updateAccountUI();showToast('👋 Signed out');}
 function updateAccountUI(){
 const li=document.getElementById('account-logged-in');
 const lo=document.getElementById('account-logged-out');
@@ -1473,8 +1473,8 @@ requestAnimationFrame(() => {
     setTimeout(detectNewConflicts, 8000);
     setInterval(detectNewConflicts, 4*60*60*1000);
     setTimeout(() => {
-      if (!localStorage.getItem('wcl_email_prompted')) {
-        localStorage.setItem('wcl_email_prompted','1');
+      if (!safeStorage.getItem('wcl_email_prompted')) {
+        safeStorage.setItem('wcl_email_prompted','1');
         openModal('modal-email');
       }
     }, 45000);
